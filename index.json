@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-06-01T01:34:23.394Z",
+  "tree": [
+    {
+      "name": "示例",
+      "type": "folder",
+      "path": "示例",
+      "children": [
+        {
+          "name": "子目录",
+          "type": "folder",
+          "path": "示例/子目录",
+          "children": [
+            {
+              "name": "测试页面",
+              "type": "file",
+              "path": "示例/子目录/测试页面.html"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "首页说明",
+      "type": "file",
+      "path": "首页说明.html"
+    }
+  ]
+}
