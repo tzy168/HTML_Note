@@ -1,6 +1,33 @@
 {
-  "generatedAt": "2026-06-01T01:47:11.720Z",
+  "generatedAt": "2026-06-01T01:47:57.263Z",
   "tree": [
+    {
+      "name": "AI",
+      "type": "folder",
+      "path": "AI",
+      "children": [
+        {
+          "name": "agents-and-claude",
+          "type": "file",
+          "path": "AI/agents-and-claude.html"
+        },
+        {
+          "name": "ai-dev-landscape",
+          "type": "file",
+          "path": "AI/ai-dev-landscape.html"
+        },
+        {
+          "name": "hermes-agent",
+          "type": "file",
+          "path": "AI/hermes-agent.html"
+        },
+        {
+          "name": "桌面AI_Agent",
+          "type": "file",
+          "path": "AI/桌面AI_Agent.html"
+        }
+      ]
+    },
     {
       "name": "示例",
       "type": "folder",
