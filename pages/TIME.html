@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>首页</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #eae8e4;
+    color: #2c2c2c;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 柔和色块 */
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(100px);
+    pointer-events: none; z-index: 0; opacity: 0.3;
+    animation: drift ease-in-out infinite alternate;
+  }
+  .orb.a { width: 600px; height: 600px; background: #d8d4ce; top: -15%; left: -8%; animation-duration: 20s; }
+  .orb.b { width: 500px; height: 500px; background: #cdd0d4; bottom: -12%; right: -8%; animation-duration: 24s; animation-delay: -6s; }
+  .orb.c { width: 350px; height: 350px; background: #d4d6d0; top: 55%; left: 55%; animation-duration: 18s; animation-delay: -10s; }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, -40px) scale(1.1); }
+  }
+
+  /* 极细噪点 */
+  .grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* 鼠标光晕 */
+  .glow {
+    position: fixed; width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(180,175,168,0.1), transparent 60%);
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 1;
+    opacity: 0; transition: opacity 0.6s;
+  }
+
+  /* 主内容 */
+  .wrap {
+    position: fixed; inset: 0; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    user-select: none;
+  }
+
+  .clock-wrap {
+    display: flex; align-items: baseline; gap: 0;
+    line-height: 1;
+  }
+
+  .clock-main {
+    font-size: clamp(100px, 22vw, 280px);
+    font-weight: 350;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    color: #2c2c2c;
+  }
+
+  .clock-sep {
+    font-size: clamp(80px, 18vw, 220px);
+    font-weight: 200;
+    color: #b5afa7;
+    margin: 0 0.02em;
+    position: relative;
+    top: -0.05em;
+  }
+
+  .clock-sec {
+    font-size: clamp(40px, 9vw, 110px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: #8a8580;
+    margin-left: 0.1em;
+    align-self: flex-end;
+    padding-bottom: 0.35em;
+  }
+
+  .date {
+    margin-top: 36px;
+    font-size: clamp(12px, 1.8vw, 15px);
+    color: #9e9a94;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .divider {
+    width: 48px; height: 1px; background: #c8c4be;
+    margin: 28px auto 0;
+    opacity: 0.5;
+  }
+
+  .greeting {
+    margin-top: 20px;
+    font-size: clamp(13px, 2vw, 16px);
+    color: #b5afa7;
+    letter-spacing: 0.12em;
+    font-weight: 350;
+  }
+
+  /* 底部微标 */
+  .mark {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    z-index: 2; display: flex; align-items: center; gap: 10px;
+    font-size: 10px; color: #c8c4be; letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+  .mark::before, .mark::after {
+    content: ""; width: 24px; height: 1px; background: #c8c4be; opacity: 0.35;
+  }
+</style>
+</head>
+<body>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+  <div class="grain"></div>
+  <div class="glow" id="glow"></div>
+
+  <div class="wrap">
+    <div class="clock-wrap" id="clock">
+      <span class="clock-main" id="h">00</span>
+      <span class="clock-sep">:</span>
+      <span class="clock-main" id="m">00</span>
+      <span class="clock-sec" id="s">00</span>
+    </div>
+    <div class="date" id="date">——</div>
+    <div class="divider"></div>
+    <div class="greeting" id="greeting">——</div>
+  </div>
+
+  <div class="mark">HTML Note</div>
+
+<script>
+  /* 鼠标光晕 */
+  const glow = document.getElementById('glow');
+  if (window.matchMedia('(pointer:fine)').matches) {
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+      glow.style.opacity = 1;
+    });
+    document.addEventListener('mouseleave', () => { glow.style.opacity = 0; });
+    (function loop() {
+      cx += (tx - cx) * 0.08;
+      cy += (ty - cy) * 0.08;
+      glow.style.left = cx + 'px';
+      glow.style.top = cy + 'px';
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  /* 时钟 */
+  const hEl = document.getElementById('h');
+  const mEl = document.getElementById('m');
+  const sEl = document.getElementById('s');
+  const dateEl = document.getElementById('date');
+  const greetEl = document.getElementById('greeting');
+  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function update() {
+    const now = new Date();
+    hEl.textContent = String(now.getHours()).padStart(2, '0');
+    mEl.textContent = String(now.getMinutes()).padStart(2, '0');
+    sEl.textContent = String(now.getSeconds()).padStart(2, '0');
+
+    const y = now.getFullYear();
+    const mo = months[now.getMonth()];
+    const d = String(now.getDate()).padStart(2, '0');
+    const wd = weekdays[now.getDay()];
+    dateEl.textContent = `${wd} · ${mo} ${d}, ${y}`;
+
+    const hour = now.getHours();
+    if (hour < 6) greetEl.textContent = '夜安';
+    else if (hour < 9) greetEl.textContent = '早安';
+    else if (hour < 12) greetEl.textContent = '上午好';
+    else if (hour < 14) greetEl.textContent = '午安';
+    else if (hour < 18) greetEl.textContent = '下午好';
+    else if (hour < 22) greetEl.textContent = '晚上好';
+    else greetEl.textContent = '夜深了';
+  }
+  update();
+  setInterval(update, 1000);
+</script>
+</body>
+</html>

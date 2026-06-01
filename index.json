@@ -29,9 +29,14 @@
       ]
     },
     {
-      "name": "首页说明",
+      "name": "codeGraph",
       "type": "file",
-      "path": "首页说明.html"
+      "path": "codeGraph.html"
+    },
+    {
+      "name": "TIME",
+      "type": "file",
+      "path": "TIME.html"
     }
   ]
 }
