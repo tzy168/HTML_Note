@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CodeGraph · 让代码结构一目了然</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-elevated: #111118;
+    --bg-card: #13131f;
+    --bg-code: #0d0d14;
+    --line: #1e1e2e;
+    --line-strong: #2a2a3e;
+    --ink: #e8e8f0;
+    --ink-2: #a0a0b8;
+    --ink-3: #6b6b85;
+    --accent: #6366f1;
+    --accent-2: #8b5cf6;
+    --accent-3: #06b6d4;
+    --accent-glow: rgba(99, 102, 241, 0.25);
+    --good: #34d399;
+    --warn: #fbbf24;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.3);
+    --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.12);
+    --radius: 16px;
+    --radius-sm: 12px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  ::selection { background: rgba(99, 102, 241, 0.3); color: var(--ink); }
+
+  /* ---------- Canvas background ---------- */
+  #graphCanvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+
+  /* ---------- Noise overlay ---------- */
+  .noise {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- Progress bar ---------- */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    z-index: 1000; transition: width 0.1s linear;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* ---------- Spotlight cursor effect ---------- */
+  .spotlight {
+    position: fixed; width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 65%);
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 2;
+    opacity: 0; transition: opacity 0.4s;
+  }
+
+  .wrap { position: relative; z-index: 5; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    background: rgba(10, 10, 15, 0.7);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  nav.scrolled { border-bottom-color: var(--line); background: rgba(10, 10, 15, 0.85); }
+  nav .nav-inner {
+    max-width: 1100px; margin: 0 auto; padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+  .brand .logo-mark {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; font-size: 14px; color: #fff;
+    box-shadow: 0 0 20px var(--accent-glow), var(--shadow-sm);
+    position: relative; overflow: hidden;
+  }
+  .brand .logo-mark::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 100%);
+  }
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-links a {
+    color: var(--ink-2); text-decoration: none; font-size: 13.5px;
+    padding: 8px 16px; border-radius: 999px; transition: all 0.3s var(--ease);
+    position: relative;
+  }
+  .nav-links a:hover { color: var(--ink); background: var(--line); }
+  .nav-links a::after {
+    content: ""; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 2px; border-radius: 1px; background: var(--accent);
+    transition: width 0.3s var(--ease);
+  }
+  .nav-links a:hover::after { width: 20px; }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 110px 0 90px; text-align: center; position: relative;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-3); padding: 8px 18px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--bg-card);
+    margin-bottom: 32px; position: relative;
+  }
+  .eyebrow .live {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--good);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); animation: livePulse 2.5s infinite;
+  }
+  @keyframes livePulse {
+    0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6.5vw, 72px); line-height: 1.05;
+    font-weight: 700; letter-spacing: -0.03em;
+    background: linear-gradient(180deg, #f0f0f8 0%, #7c7c9a 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    min-height: 1.2em;
+  }
+  .hero h1 .cursor {
+    display: inline-block; width: 3px; height: 0.9em; background: var(--accent);
+    margin-left: 4px; vertical-align: middle; border-radius: 1px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  .hero .sub {
+    max-width: 580px; margin: 24px auto 0;
+    font-size: clamp(15px, 2vw, 18px); color: var(--ink-2);
+  }
+  .hero-cta { margin-top: 40px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    text-decoration: none; font-size: 14.5px; font-weight: 500;
+    padding: 13px 28px; border-radius: 12px; transition: all 0.35s var(--ease);
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid transparent;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; box-shadow: 0 4px 24px var(--accent-glow), var(--shadow-md);
+  }
+  .btn-primary::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 100%);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(99, 102, 241, 0.35), var(--shadow-md);
+  }
+  .btn-ghost {
+    background: var(--bg-card); color: var(--ink); border-color: var(--line-strong);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-ghost:hover { transform: translateY(-2px); background: var(--bg-elevated); border-color: var(--ink-3); }
+
+  /* Hero stats */
+  .hero-stats {
+    display: flex; justify-content: center; gap: 48px; margin-top: 56px; flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat .num {
+    font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+    background: linear-gradient(180deg, var(--ink) 0%, var(--ink-3));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat .num::after { content: attr(data-suffix); font-size: 0.6em; margin-left: 2px; }
+  .stat .label { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; letter-spacing: 0.05em; }
+
+  /* ---------- Section ---------- */
+  section { padding: 64px 0; position: relative; }
+  .sec-head { margin-bottom: 48px; }
+  .sec-tag {
+    font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; font-family: var(--font-mono);
+  }
+  .sec-head h2 {
+    font-size: clamp(26px, 3.5vw, 40px); font-weight: 700;
+    letter-spacing: -0.02em; margin-top: 10px;
+  }
+  .sec-head p { color: var(--ink-2); margin-top: 12px; max-width: 640px; font-size: 15.5px; }
+
+  /* ---------- Feature cards ---------- */
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  }
+  @media (max-width: 820px) { .feature-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .feature-grid { grid-template-columns: 1fr; } }
+
+  .feature-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px;
+    position: relative; overflow: hidden;
+    transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease), border-color 0.5s;
+    transform-style: preserve-3d; perspective: 1000px;
+  }
+  .feature-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(400px 200px at var(--mx, 50%) var(--my, 0%), rgba(99,102,241,0.08), transparent 60%);
+    opacity: 0; transition: opacity 0.4s; pointer-events: none;
+  }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-glow), var(--shadow-md);
+  }
+  .feature-card .icon-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 20px;
+    margin-bottom: 18px; position: relative;
+    background: linear-gradient(135deg, var(--bg-elevated), var(--line));
+    border: 1px solid var(--line-strong);
+  }
+  .feature-card .icon-wrap::after {
+    content: ""; position: absolute; inset: -1px; border-radius: 12px;
+    padding: 1px; background: linear-gradient(135deg, var(--accent), var(--accent-3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .feature-card:hover .icon-wrap::after { opacity: 1; }
+  .feature-card h4 { font-size: 16.5px; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .feature-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.7; }
+
+  /* ---------- Why section ---------- */
+  .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .why-grid { grid-template-columns: 1fr; } }
+  .why-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px; display: flex; gap: 18px;
+    transition: all 0.4s var(--ease);
+  }
+  .why-card:hover { border-color: var(--line-strong); transform: translateX(4px); }
+  .why-card .num {
+    font-family: var(--font-mono); font-size: 13px; color: var(--accent);
+    font-weight: 600; flex-shrink: 0; margin-top: 2px;
+  }
+  .why-card h4 { font-size: 16px; margin-bottom: 6px; }
+  .why-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.7; }
+
+  /* ---------- Install section ---------- */
+  .install-wrap {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .platform-tabs {
+    display: flex; border-bottom: 1px solid var(--line);
+    background: var(--bg-elevated);
+  }
+  .platform-tabs button {
+    flex: 1; padding: 16px; border: none; background: transparent;
+    color: var(--ink-3); font-family: inherit; font-size: 13.5px;
+    cursor: pointer; transition: all 0.3s; position: relative;
+    font-weight: 500;
+  }
+  .platform-tabs button:hover { color: var(--ink-2); }
+  .platform-tabs button.active { color: var(--accent); }
+  .platform-tabs button.active::after {
+    content: ""; position: absolute; bottom: 0; left: 20%; right: 20%;
+    height: 2px; border-radius: 1px; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .install-body { padding: 0; }
+  .install-panel { display: none; animation: panelIn 0.5s var(--ease); }
+  .install-panel.active { display: block; }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* Code block */
+  .code-wrap { background: var(--bg-code); padding: 24px; }
+  .code-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+  }
+  .code-head .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .code-head .dot:nth-child(1) { background: #ff5f57; }
+  .code-head .dot:nth-child(2) { background: #febc2e; }
+  .code-head .dot:nth-child(3) { background: #28c840; }
+  .code-head .copy {
+    margin-left: auto; font-size: 12px; color: var(--ink-3);
+    background: var(--bg-card); border: 1px solid var(--line);
+    padding: 5px 14px; border-radius: 7px; cursor: pointer;
+    transition: all 0.25s; font-family: inherit;
+  }
+  .code-head .copy:hover { background: var(--line); color: var(--ink); }
+  pre {
+    margin: 0; overflow-x: auto; font-size: 13.5px; line-height: 1.8;
+    font-family: var(--font-mono); color: #c9c9d8;
+  }
+  pre .c { color: #5a5a75; }
+  pre .k { color: #c084fc; }
+  pre .s { color: #6ee7b7; }
+  pre .n { color: #60a5fa; }
+  pre .f { color: #fbbf24; }
+  pre .v { color: #f472b6; }
+
+  /* Install note */
+  .install-note {
+    padding: 20px 24px; border-top: 1px solid var(--line);
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .install-note .info-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--accent); color: var(--accent);
+    display: grid; place-items: center; font-size: 11px; font-weight: 700;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .install-note p { font-size: 13px; color: var(--ink-3); line-height: 1.7; }
+  .install-note a { color: var(--accent); text-decoration: none; }
+  .install-note a:hover { text-decoration: underline; }
+
+  /* ---------- Usage timeline ---------- */
+  .usage-timeline { position: relative; padding-left: 40px; }
+  .usage-timeline::before {
+    content: ""; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 2px;
+    background: linear-gradient(var(--line-strong), var(--line) 80%, transparent);
+  }
+  .usage-step { position: relative; padding: 0 0 40px; }
+  .usage-step:last-child { padding-bottom: 0; }
+  .usage-step .node {
+    position: absolute; left: -37px; top: 2px; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--bg); border: 2px solid var(--line-strong);
+    display: grid; place-items: center; font-size: 10px; color: var(--ink-3);
+    font-weight: 700; font-family: var(--font-mono);
+    transition: all 0.4s var(--ease); box-shadow: 0 0 0 4px var(--bg);
+  }
+  .usage-step:hover .node {
+    border-color: var(--accent); color: var(--accent);
+    box-shadow: 0 0 0 4px var(--bg), 0 0 16px var(--accent-glow);
+  }
+  .usage-step h4 { font-size: 17px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .usage-step .tag {
+    font-size: 10.5px; padding: 2px 10px; border-radius: 999px;
+    background: var(--line); color: var(--ink-3); font-weight: 600;
+    letter-spacing: 0.03em; font-family: var(--font-mono);
+  }
+  .usage-step p { font-size: 14px; color: var(--ink-2); max-width: 680px; line-height: 1.75; margin-bottom: 14px; }
+  .usage-step .code-snippet {
+    background: var(--bg-code); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 16px 20px;
+    font-family: var(--font-mono); font-size: 13px; color: #c9c9d8;
+    overflow-x: auto; position: relative;
+  }
+  .usage-step .code-snippet .prompt { color: var(--accent-3); }
+  .usage-step .code-snippet .cmd { color: var(--good); }
+  .usage-step .code-snippet .output { color: var(--ink-3); }
+
+  /* ---------- Command palette preview ---------- */
+  .palette-wrap {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .palette-header {
+    padding: 14px 20px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .palette-header .search-sim {
+    flex: 1; padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--line);
+    color: var(--ink-3); font-size: 13px;
+  }
+  .palette-body { padding: 8px 0; }
+  .palette-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .palette-item:hover { background: var(--line); }
+  .palette-item .ico { font-size: 16px; width: 24px; text-align: center; }
+  .palette-item .text { flex: 1; font-size: 13.5px; }
+  .palette-item .text .name { color: var(--ink); }
+  .palette-item .text .desc { color: var(--ink-3); font-size: 12px; }
+  .palette-item .key {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+    background: var(--bg-elevated); padding: 3px 8px; border-radius: 5px;
+    border: 1px solid var(--line);
+  }
+  .palette-item.highlight { background: rgba(99, 102, 241, 0.08); }
+  .palette-item.highlight .text .name { color: var(--accent); }
+
+  /* ---------- Keyboard shortcuts ---------- */
+  .kbd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 600px) { .kbd-grid { grid-template-columns: 1fr; } }
+  .kbd-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); transition: all 0.3s;
+  }
+  .kbd-item:hover { border-color: var(--line-strong); transform: translateX(3px); }
+  .kbd-item span { font-size: 13.5px; color: var(--ink-2); }
+  .kbd-item code {
+    font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+    background: var(--bg-elevated); padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+
+  /* ---------- Footer ---------- */
+  footer {
+    padding: 50px 0 60px; border-top: 1px solid var(--line); margin-top: 40px;
+    text-align: center;
+  }
+  footer .foot-brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 600; font-size: 15px; margin-bottom: 12px;
+  }
+  footer .foot-brand .logo-mark {
+    width: 24px; height: 24px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; font-size: 10px; color: #fff;
+  }
+  footer p { font-size: 13px; color: var(--ink-3); }
+  footer .date { font-family: var(--font-mono); color: var(--accent); font-size: 12px; margin-top: 8px; }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- Glow blob decorations ---------- */
+  .glow-blob {
+    position: absolute; width: 400px; height: 400px; border-radius: 50%;
+    filter: blur(100px); opacity: 0.15; pointer-events: none; z-index: 1;
+  }
+  .glow-blob.a { background: var(--accent); top: 10%; right: -10%; }
+  .glow-blob.b { background: var(--accent-3); bottom: 20%; left: -10%; }
+  .glow-blob.c { background: var(--accent-2); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+</style>
+</head>
+<body>
+  <canvas id="graphCanvas"></canvas>
+  <div class="noise"></div>
+  <div class="spotlight" id="spotlight"></div>
+  <div class="progress" id="progress"></div>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="logo-mark">◈</div>
+        <span>CodeGraph</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">特性</a>
+        <a href="#why">优势</a>
+        <a href="#install">安装</a>
+        <a href="#usage">使用</a>
+        <a href="#shortcuts">快捷键</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <header class="hero">
+      <span class="eyebrow"><span class="live"></span>2026.6.1 正式发布</span>
+      <h1 id="typewriter">让代码结构一目了然<span class="cursor"></span></h1>
+      <p class="sub">CodeGraph 是专为开发者打造的代码可视化工具。自动解析项目依赖、函数调用链与模块关系，将复杂的代码库转化为交互式图谱，助你秒懂任何代码架构。</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#install">立即安装 ↓</a>
+        <a class="btn btn-ghost" href="#features">了解特性</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat reveal"><div class="num" data-suffix="ms" data-target="50">0</div><div class="label">图谱生成耗时</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="+" data-target="15">0</div><div class="label">支持语言</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="K" data-target="50">0</div><div class="label">代码文件解析</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="x" data-target="10">0</div><div class="label">理解速度提升</div></div>
+      </div>
+    </header>
+
+    <!-- Features -->
+    <section id="features">
+      <div class="glow-blob a"></div>
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Features</span>
+        <h2>六大核心特性</h2>
+        <p>从依赖分析到交互探索，CodeGraph 覆盖代码理解的全链路需求。</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">🕸️</div>
+          <h4>自动依赖图谱</h4>
+          <p>扫描项目后自动生成模块依赖关系图，文件引用、导入导出一目了然，无需手动维护。</p>
+        </div>
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">🔍</div>
+          <h4>函数调用链追踪</h4>
+          <p>点击任意函数即可查看完整的调用链路，向上追溯调用者，向下探索被调函数，深度不限。</p>
+        </div>
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">⚡</div>
+          <h4>增量实时更新</h4>
+          <p>监听文件变更，图谱随代码修改实时同步，保持可视化始终与源码一致。</p>
+        </div>
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">🎨</div>
+          <h4>交互式探索</h4>
+          <p>拖拽、缩放、聚焦、过滤——图谱支持完整的交互操作，按需查看任意粒度的结构。</p>
+        </div>
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">🔌</div>
+          <h4>IDE 深度集成</h4>
+          <p>VS Code / JetBrains / Vim 插件一键安装，侧边栏直接展示图谱，编码与浏览无缝切换。</p>
+        </div>
+        <div class="feature-card reveal" data-tilt>
+          <div class="icon-wrap">📤</div>
+          <h4>一键导出分享</h4>
+          <p>支持导出 SVG、PNG、JSON 多种格式，生成可分享的交互式网页链接，团队协作零摩擦。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why -->
+    <section id="why">
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Why CodeGraph</span>
+        <h2>为什么选择 CodeGraph</h2>
+        <p>面对大型代码库，传统阅读方式的效率瓶颈愈发明显。</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card reveal">
+          <span class="num">01</span>
+          <div>
+            <h4>入职即上手</h4>
+            <p>新成员无需逐行阅读数万行代码，通过图谱 10 分钟把握项目骨架，大幅缩短 onboarding 周期。</p>
+          </div>
+        </div>
+        <div class="why-card reveal">
+          <span class="num">02</span>
+          <div>
+            <h4>重构有底气</h4>
+            <p>改动前先看清影响范围——CodeGraph 高亮显示所有关联模块，避免牵一发而动全身的意外。</p>
+          </div>
+        </div>
+        <div class="why-card reveal">
+          <span class="num">03</span>
+          <div>
+            <h4>Code Review 提效</h4>
+            <p>Reviewer 通过调用链快速理解 PR 改动的影响面，不再迷失在 diff 文件的海洋中。</p>
+          </div>
+        </div>
+        <div class="why-card reveal">
+          <span class="num">04</span>
+          <div>
+            <h4>技术债可视化</h4>
+            <p>循环依赖、过度耦合、孤儿模块……架构问题在图谱中无处遁形，成为重构优先级决策的依据。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section id="install">
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Installation</span>
+        <h2>三步完成安装</h2>
+        <p>支持 macOS、Linux 与 Windows，也提供 Docker 镜像与 IDE 插件。</p>
+      </div>
+      <div class="install-wrap reveal">
+        <div class="platform-tabs" id="platformTabs">
+          <button class="active" data-platform="macos">macOS</button>
+          <button data-platform="linux">Linux</button>
+          <button data-platform="win">Windows</button>
+          <button data-platform="docker">Docker</button>
+        </div>
+        <div class="install-body">
+          <!-- macOS -->
+          <div class="install-panel active" data-panel="macos">
+            <div class="code-wrap">
+              <div class="code-head">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="copy" onclick="copyCode(this)">复制</span>
+              </div>
+              <pre><span class="c"># 使用 Homebrew 安装（推荐）</span>
+<span class="n">brew</span> <span class="k">install</span> codegraph
+
+<span class="c"># 或使用 curl 脚本</span>
+<span class="n">curl</span> <span class="k">-fsSL</span> https://codegraph.dev/install.sh | <span class="n">sh</span>
+
+<span class="c"># 验证安装</span>
+<span class="n">codegraph</span> <span class="k">--version</span>
+<span class="output">CodeGraph v2.1.0 — build 2026.06.01</span></pre>
+            </div>
+            <div class="install-note">
+              <span class="info-icon">i</span>
+              <p>macOS 10.15+ 支持原生 Apple Silicon 与 Intel 芯片。首次运行如遇安全提示，请前往「系统偏好设置 → 安全性与隐私」允许。</p>
+            </div>
+          </div>
+          <!-- Linux -->
+          <div class="install-panel" data-panel="linux">
+            <div class="code-wrap">
+              <div class="code-head">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="copy" onclick="copyCode(this)">复制</span>
+              </div>
+              <pre><span class="c"># Debian / Ubuntu</span>
+<span class="n">wget</span> <span class="k">-qO-</span> https://codegraph.dev/deb/codegraph.asc | <span class="n">sudo</span> <span class="n">apt-key</span> <span class="k">add</span> -
+<span class="n">echo</span> <span class="s">"deb https://codegraph.dev/deb stable main"</span> | <span class="n">sudo</span> <span class="n">tee</span> /etc/apt/sources.list.d/codegraph.list
+<span class="n">sudo</span> <span class="n">apt</span> <span class="k">update</span> && <span class="n">sudo</span> <span class="n">apt</span> <span class="k">install</span> codegraph
+
+<span class="c"># Arch Linux</span>
+<span class="n">yay</span> <span class="k">-S</span> codegraph
+
+<span class="c"># 验证</span>
+<span class="n">codegraph</span> <span class="k">--version</span></pre>
+            </div>
+            <div class="install-note">
+              <span class="info-icon">i</span>
+              <p>支持 x86_64 与 ARM64 架构。若使用其他发行版，可从 <a href="#">GitHub Releases</a> 下载预编译二进制文件。</p>
+            </div>
+          </div>
+          <!-- Windows -->
+          <div class="install-panel" data-panel="win">
+            <div class="code-wrap">
+              <div class="code-head">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="copy" onclick="copyCode(this)">复制</span>
+              </div>
+              <pre><span class="c"># PowerShell (推荐)</span>
+<span class="n">winget</span> <span class="k">install</span> CodeGraph.CodeGraph
+
+<span class="c"># 或使用 Scoop</span>
+<span class="n">scoop</span> <span class="k">install</span> codegraph
+
+<span class="c"># 验证</span>
+<span class="n">codegraph</span> <span class="k">--version</span></pre>
+            </div>
+            <div class="install-note">
+              <span class="info-icon">i</span>
+              <p>Windows 10 19041+ / Windows 11 支持。安装后会自动加入 PATH，重启终端即可使用 codegraph 命令。</p>
+            </div>
+          </div>
+          <!-- Docker -->
+          <div class="install-panel" data-panel="docker">
+            <div class="code-wrap">
+              <div class="code-head">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="copy" onclick="copyCode(this)">复制</span>
+              </div>
+              <pre><span class="c"># 拉取镜像</span>
+<span class="n">docker</span> <span class="k">pull</span> codegraph/codegraph:latest
+
+<span class="c"># 扫描当前目录并启动 Web 服务</span>
+<span class="n">docker</span> <span class="k">run</span> <span class="k">--rm</span> <span class="k">-p</span> 8080:8080 <span class="k">-v</span> <span class="s">"$(pwd):/project"</span> codegraph/codegraph <span class="k">serve</span> /project
+
+<span class="c"># 访问 http://localhost:8080 查看图谱</span></pre>
+            </div>
+            <div class="install-note">
+              <span class="info-icon">i</span>
+              <p>Docker 镜像内置完整运行环境，适合 CI/CD 流水线中自动生成并部署图谱报告。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Usage -->
+    <section id="usage">
+      <div class="glow-blob b"></div>
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Quick Start</span>
+        <h2>快速上手</h2>
+        <p>从初始化到深入探索，五分钟掌握 CodeGraph 的核心工作流。</p>
+      </div>
+      <div class="usage-timeline">
+        <div class="usage-step reveal">
+          <span class="node">1</span>
+          <h4>初始化项目扫描 <span class="tag">必须</span></h4>
+          <p>进入项目根目录，运行 scan 命令。CodeGraph 会自动识别项目类型（Node.js、Python、Go、Rust 等）并解析源码结构。</p>
+          <div class="code-snippet">
+            <span class="prompt">$</span> <span class="cmd">codegraph scan</span> <span class="output">--depth 3</span><br>
+            <span class="output">✓ Detected Node.js project (package.json)<br>
+            ✓ Parsing 1,247 files... done (0.8s)<br>
+            ✓ Building dependency graph... done<br>
+            ✓ Graph saved to .codegraph/graph.json</span>
+          </div>
+        </div>
+        <div class="usage-step reveal">
+          <span class="node">2</span>
+          <h4>启动可视化界面 <span class="tag">推荐</span></h4>
+          <p>serve 命令会在本地启动一个交互式 Web 界面，自动打开浏览器，支持实时热更新。</p>
+          <div class="code-snippet">
+            <span class="prompt">$</span> <span class="cmd">codegraph serve</span><br>
+            <span class="output">🚀 CodeGraph server running at http://localhost:8080<br>
+            📝 Watching for file changes...<br>
+            ⌨️  Press q to quit, h for help</span>
+          </div>
+        </div>
+        <div class="usage-step reveal">
+          <span class="node">3</span>
+          <h4>交互式探索图谱</h4>
+          <p>在浏览器中，你可以缩放拖拽整个图谱，点击节点查看详情，使用搜索框定位模块，或者通过筛选器按文件类型/依赖层级缩小范围。</p>
+        </div>
+        <div class="usage-step reveal">
+          <span class="node">4</span>
+          <h4>导出与分享 <span class="tag">可选</span></h4>
+          <p>将图谱导出为静态文件或生成在线分享链接，方便在文档、PR 或会议中引用。</p>
+          <div class="code-snippet">
+            <span class="prompt">$</span> <span class="cmd">codegraph export</span> <span class="output">--format svg --output architecture.svg</span><br>
+            <span class="prompt">$</span> <span class="cmd">codegraph share</span> <span class="output">--expires 7d</span><br>
+            <span class="output">🔗 Share link: https://codegraph.dev/s/x8k2m9p (expires in 7 days)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Command Palette -->
+    <section>
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Commands</span>
+        <h2>核心命令一览</h2>
+        <p>简洁一致的 CLI 设计，所有命令遵循 <code style="color:var(--accent);font-family:var(--font-mono);font-size:14px;">codegraph &lt;verb&gt; [options]</code> 范式。</p>
+      </div>
+      <div class="palette-wrap reveal">
+        <div class="palette-header">
+          <span style="color:var(--ink-3);font-size:13px;">❖</span>
+          <div class="search-sim">输入命令或按 ↑↓ 导航</div>
+          <span style="color:var(--ink-3);font-size:12px;font-family:var(--font-mono);">ESC 关闭</span>
+        </div>
+        <div class="palette-body">
+          <div class="palette-item highlight">
+            <span class="ico">🔍</span>
+            <div class="text"><div class="name">scan</div><div class="desc">扫描项目并生成依赖图谱</div></div>
+            <span class="key">codegraph scan</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">🚀</span>
+            <div class="text"><div class="name">serve</div><div class="desc">启动本地可视化服务器</div></div>
+            <span class="key">codegraph serve</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">📤</span>
+            <div class="text"><div class="name">export</div><div class="desc">导出图谱为 SVG / PNG / JSON</div></div>
+            <span class="key">codegraph export</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">🔗</span>
+            <div class="text"><div class="name">share</div><div class="desc">生成可分享的在线链接</div></div>
+            <span class="key">codegraph share</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">🧹</span>
+            <div class="text"><div class="name">clean</div><div class="desc">清除缓存与生成的图谱文件</div></div>
+            <span class="key">codegraph clean</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">⚙️</span>
+            <div class="text"><div class="name">config</div><div class="desc">查看与修改配置项</div></div>
+            <span class="key">codegraph config</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shortcuts -->
+    <section id="shortcuts">
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Shortcuts</span>
+        <h2>Web 界面快捷键</h2>
+        <p>键盘驱动的图谱浏览体验，双手不离开键盘即可掌控全局。</p>
+      </div>
+      <div class="kbd-grid">
+        <div class="kbd-item reveal"><span>聚焦搜索框</span><code>/</code></div>
+        <div class="kbd-item reveal"><span>放大 / 缩小</span><code>Ctrl + 滚轮</code></div>
+        <div class="kbd-item reveal"><span>平移画布</span><code>空格 + 拖拽</code></div>
+        <div class="kbd-item reveal"><span>聚焦选中节点</span><code>Enter</code></div>
+        <div class="kbd-item reveal"><span>返回上一级</span><code>Esc</code></div>
+        <div class="kbd-item reveal"><span>切换侧边栏</span><code>[</code></div>
+        <div class="kbd-item reveal"><span>导出当前视图</span><code>Ctrl + S</code></div>
+        <div class="kbd-item reveal"><span>切换主题</span><code>Ctrl + T</code></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="foot-brand"><div class="logo-mark">◈</div>CodeGraph</div>
+      <p>让每一行代码都有迹可循</p>
+      <p class="date">2026.6.1</p>
+    </footer>
+  </div>
+
+<script>
+  /* ---------- Canvas particle network ---------- */
+  const canvas = document.getElementById('graphCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [], mouseX = -1000, mouseY = -1000;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const PARTICLE_COUNT = Math.min(80, Math.floor(window.innerWidth / 18));
+  const CONNECT_DIST = 140;
+  const MOUSE_DIST = 200;
+
+  class Particle {
+    constructor() {
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4;
+      this.r = Math.random() * 2 + 1;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < 0 || this.x > w) this.vx *= -1;
+      if (this.y < 0 || this.y > h) this.vy *= -1;
+
+      // mouse repel
+      const dx = this.x - mouseX, dy = this.y - mouseY;
+      const d = Math.sqrt(dx*dx + dy*dy);
+      if (d < MOUSE_DIST && d > 0) {
+        const f = (MOUSE_DIST - d) / MOUSE_DIST * 0.02;
+        this.vx += (dx / d) * f;
+        this.vy += (dy / d) * f;
+      }
+      // friction
+      this.vx *= 0.99; this.vy *= 0.99;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+  function drawLines() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < CONNECT_DIST) {
+          const alpha = (1 - d / CONNECT_DIST) * 0.15;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(99, 102, 241, ${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    // only draw every 2nd frame for perf
+    if (frame % 2 === 0) {
+      particles.forEach(p => { p.update(); p.draw(); });
+      drawLines();
+    }
+    frame++;
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+  window.addEventListener('mouseout', () => { mouseX = -1000; mouseY = -1000; });
+
+  /* ---------- Spotlight cursor ---------- */
+  const spotlight = document.getElementById('spotlight');
+  if (window.matchMedia('(pointer:fine)').matches) {
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+    window.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; spotlight.style.opacity = 1; });
+    window.addEventListener('mouseout', () => spotlight.style.opacity = 0);
+    (function loop() {
+      cx += (tx - cx) * 0.1; cy += (ty - cy) * 0.1;
+      spotlight.style.left = cx + 'px'; spotlight.style.top = cy + 'px';
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  /* ---------- Scroll progress ---------- */
+  const progress = document.getElementById('progress');
+  const nav = document.getElementById('nav');
+  function onScroll() {
+    const h = document.documentElement;
+    const scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    progress.style.width = (scrolled * 100) + '%';
+    nav.classList.toggle('scrolled', h.scrollTop > 10);
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Typewriter effect ---------- */
+  const titleEl = document.getElementById('typewriter');
+  const fullText = '让代码结构一目了然';
+  let charIdx = 0;
+  function typeWriter() {
+    if (charIdx <= fullText.length) {
+      titleEl.childNodes[0].textContent = fullText.slice(0, charIdx);
+      charIdx++;
+      setTimeout(typeWriter, 80 + Math.random() * 60);
+    }
+  }
+  setTimeout(typeWriter, 600);
+
+  /* ---------- Reveal on intersect ---------- */
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = (i % 5 * 80) + 'ms';
+    io.observe(el);
+  });
+
+  /* ---------- Number counter animation ---------- */
+  const numObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const target = parseInt(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        let current = 0;
+        const step = target / 40;
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(timer); }
+          el.textContent = Math.floor(current);
+        }, 30);
+        numObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.num[data-target]').forEach(el => numObserver.observe(el));
+
+  /* ---------- Card pointer glow ---------- */
+  document.querySelectorAll('[data-tilt]').forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  /* ---------- Platform tabs ---------- */
+  const tabBtns = document.querySelectorAll('#platformTabs button');
+  const panels = document.querySelectorAll('.install-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.toggle('active', b === btn));
+      const key = btn.dataset.platform;
+      panels.forEach(p => p.classList.toggle('active', p.dataset.panel === key));
+    });
+  });
+
+  /* ---------- Copy code ---------- */
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrap').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = '已复制 ✓';
+      btn.style.color = 'var(--good)';
+      setTimeout(() => { btn.textContent = '复制'; btn.style.color = ''; }, 1600);
+    });
+  }
+</script>
+</body>
+</html>
