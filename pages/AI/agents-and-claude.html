@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CLAUDE.md & AGENTS.md · AI 协作指南</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --bg-soft: #eceef1;
+    --surface: #ffffff;
+    --surface-2: #fafbfc;
+    --line: #e3e6ea;
+    --line-strong: #d4d8dd;
+    --ink: #1f2328;
+    --ink-2: #4a5159;
+    --ink-3: #828a93;
+    --accent: #5b6b7b;
+    --accent-soft: #eef1f4;
+    --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.04), 0 2px 8px rgba(31, 35, 40, 0.05);
+    --shadow-md: 0 4px 14px rgba(31, 35, 40, 0.06), 0 14px 40px rgba(31, 35, 40, 0.08);
+    --shadow-lg: 0 10px 30px rgba(31, 35, 40, 0.08), 0 30px 70px rgba(31, 35, 40, 0.10);
+    --radius: 18px;
+    --radius-sm: 12px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      radial-gradient(900px 500px at -10% 10%, #ffffff 0%, rgba(255,255,255,0) 55%),
+      var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: #cfd6dd; color: var(--ink); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- Progress bar ---------- */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+    background: linear-gradient(90deg, #7c8a98, #b8c0c8);
+    z-index: 100; transition: width 0.1s linear;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(244, 245, 247, 0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 600; letter-spacing: .2px; }
+  .brand .dot {
+    width: 26px; height: 26px; border-radius: 8px;
+    background: linear-gradient(140deg, #6b7785, #aab2bb);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.4), var(--shadow-sm);
+  }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: var(--ink-2); text-decoration: none; font-size: 14px;
+    padding: 8px 14px; border-radius: 999px; transition: all .25s var(--ease);
+  }
+  .nav-links a:hover { color: var(--ink); background: var(--accent-soft); }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  /* ---------- Hero ---------- */
+  header.hero { padding: 96px 0 72px; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-3); letter-spacing: .5px;
+    text-transform: uppercase; padding: 6px 14px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  }
+  .eyebrow .pulse {
+    width: 7px; height: 7px; border-radius: 50%; background: #8a939c;
+    box-shadow: 0 0 0 0 rgba(138,147,156,.5); animation: pulse 2.4s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(138,147,156,.45); }
+    70% { box-shadow: 0 0 0 10px rgba(138,147,156,0); }
+    100% { box-shadow: 0 0 0 0 rgba(138,147,156,0); }
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 58px); line-height: 1.1; margin: 26px 0 18px;
+    letter-spacing: -1.2px; font-weight: 700;
+    background: linear-gradient(180deg, #2a2f35 0%, #565d65 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .lead { font-size: clamp(16px, 2.2vw, 19px); color: var(--ink-2); max-width: 660px; }
+  .hero-cta { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    text-decoration: none; font-size: 15px; font-weight: 500;
+    padding: 13px 24px; border-radius: 12px; transition: all .3s var(--ease);
+    display: inline-flex; align-items: center; gap: 9px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--ink); color: #fff; box-shadow: var(--shadow-md); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+  .btn-ghost:hover { transform: translateY(-2px); background: var(--surface-2); }
+
+  /* floating decorative cards */
+  .float-deco { position: absolute; right: 0; top: 70px; width: 380px; pointer-events: none; opacity: .9; }
+  @media (max-width: 920px) { .float-deco { display: none; } }
+  .glass-card {
+    position: absolute; border-radius: 16px; background: rgba(255,255,255,.7);
+    border: 1px solid var(--line); box-shadow: var(--shadow-md);
+    backdrop-filter: blur(10px); padding: 14px 16px; font-size: 12.5px; color: var(--ink-2);
+    font-family: "SF Mono", "JetBrains Mono", Consolas, monospace;
+  }
+  .gc1 { top: 0; right: 30px; animation: floaty 6s ease-in-out infinite; }
+  .gc2 { top: 110px; right: 130px; animation: floaty 7s ease-in-out infinite .8s; }
+  .gc3 { top: 200px; right: 0; animation: floaty 6.5s ease-in-out infinite 1.4s; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+  /* ---------- Section ---------- */
+  section { padding: 56px 0; }
+  .section-head { margin-bottom: 38px; }
+  .section-head h2 {
+    font-size: clamp(26px, 4vw, 36px); letter-spacing: -.6px; font-weight: 700;
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .section-head h2 .num {
+    font-size: 15px; color: var(--ink-3); font-weight: 600;
+    font-family: "SF Mono", Consolas, monospace; letter-spacing: 0;
+  }
+  .section-head p { color: var(--ink-2); margin-top: 12px; max-width: 700px; }
+
+  /* ---------- Comparison cards ---------- */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 30px; box-shadow: var(--shadow-sm);
+    transition: transform .4s var(--ease), box-shadow .4s var(--ease), border-color .4s var(--ease);
+    overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .4s var(--ease);
+    background: radial-gradient(420px 200px at var(--mx,50%) var(--my,0%), rgba(120,132,144,.10), transparent 70%);
+    pointer-events: none;
+  }
+  .card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--line-strong); }
+  .card:hover::before { opacity: 1; }
+  .card .tag {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .4px;
+    padding: 5px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px;
+  }
+  .card h3 { font-size: 22px; margin-bottom: 6px; letter-spacing: -.3px; }
+  .card .sub { color: var(--ink-3); font-size: 13.5px; margin-bottom: 18px; font-family: "SF Mono", Consolas, monospace; }
+  .card ul { list-style: none; }
+  .card ul li {
+    position: relative; padding-left: 26px; margin: 11px 0; color: var(--ink-2); font-size: 14.5px;
+  }
+  .card ul li::before {
+    content: ""; position: absolute; left: 4px; top: 9px; width: 8px; height: 8px;
+    border-radius: 50%; background: linear-gradient(140deg, #8a939c, #c3cad1);
+  }
+
+  /* ---------- Feature grid ---------- */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 820px) { .features { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+  .feature {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 24px; box-shadow: var(--shadow-sm); transition: all .35s var(--ease);
+  }
+  .feature:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .feature .ico {
+    width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center;
+    background: linear-gradient(140deg, var(--surface-2), var(--accent-soft));
+    border: 1px solid var(--line); margin-bottom: 16px; font-size: 20px;
+  }
+  .feature h4 { font-size: 16px; margin-bottom: 7px; }
+  .feature p { font-size: 13.8px; color: var(--ink-2); }
+
+  /* ---------- Code block ---------- */
+  .codeblock {
+    background: #20242a; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-md); border: 1px solid #2c3138;
+  }
+  .code-head {
+    display: flex; align-items: center; gap: 8px; padding: 13px 18px;
+    background: #1a1d22; border-bottom: 1px solid #2c3138;
+  }
+  .code-head .d { width: 11px; height: 11px; border-radius: 50%; }
+  .code-head .d:nth-child(1){ background:#5c636b; }
+  .code-head .d:nth-child(2){ background:#787f87; }
+  .code-head .d:nth-child(3){ background:#949ba3; }
+  .code-head .fname { margin-left: 10px; font-size: 12.5px; color: #9aa2ab; font-family: "SF Mono", Consolas, monospace; }
+  .code-head .copy {
+    margin-left: auto; font-size: 12px; color: #aab2bb; background: #2a2f36;
+    border: 1px solid #353b43; padding: 5px 12px; border-radius: 7px; cursor: pointer; transition: all .2s;
+  }
+  .code-head .copy:hover { background: #353b43; color: #fff; }
+  pre {
+    margin: 0; padding: 22px; overflow-x: auto; font-size: 13.2px; line-height: 1.75;
+    font-family: "SF Mono", "JetBrains Mono", Consolas, monospace; color: #d6dbe1;
+  }
+  pre .c { color: #6f7882; }
+  pre .h { color: #c5cdd6; font-weight: 600; }
+  pre .k { color: #a9b4c0; }
+  pre .s { color: #9fb0a6; }
+
+  /* ---------- Timeline ---------- */
+  .timeline { position: relative; padding-left: 34px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 2px;
+    background: linear-gradient(var(--line-strong), var(--line));
+  }
+  .tl-item { position: relative; padding: 0 0 30px; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -33px; top: 4px; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--surface); border: 2px solid var(--line-strong);
+    box-shadow: 0 0 0 4px var(--bg); transition: all .3s var(--ease);
+  }
+  .tl-item:hover::before { border-color: var(--accent); transform: scale(1.15); }
+  .tl-item h4 { font-size: 16px; margin-bottom: 4px; }
+  .tl-item p { font-size: 14px; color: var(--ink-2); }
+
+  /* ---------- Reveal animation ---------- */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- Footer ---------- */
+  footer { padding: 50px 0 70px; border-top: 1px solid var(--line); margin-top: 40px; color: var(--ink-3); font-size: 13.5px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+  .divider-quote {
+    border-left: 3px solid var(--line-strong); padding: 6px 0 6px 20px;
+    color: var(--ink-2); font-style: italic; margin: 24px 0; font-size: 15.5px;
+  }
+</style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+
+  <nav>
+    <div class="wrap">
+      <div class="brand"><span class="dot"></span><span>AI&nbsp;Context&nbsp;Guide</span></div>
+      <div class="nav-links">
+        <a href="#what">是什么</a>
+        <a href="#compare">对比</a>
+        <a href="#anatomy">结构</a>
+        <a href="#practice">最佳实践</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><span class="pulse"></span>AI 协作约定文件</span>
+      <h1>CLAUDE.md &amp; AGENTS.md<br/>让 AI 真正“懂”你的项目</h1>
+      <p class="lead">两个放在仓库根目录的 Markdown 文件，是你与 AI 编码助手之间的“契约”。它们把项目背景、技术栈、命令与规范持久化下来，让每一次对话都从同一份共识出发。</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#compare">了解差异 →</a>
+        <a class="btn btn-ghost" href="#anatomy">查看模板</a>
+      </div>
+    </div>
+    <div class="float-deco">
+      <div class="glass-card gc1"># Project Overview</div>
+      <div class="glass-card gc2">yarn start · yarn build</div>
+      <div class="glass-card gc3">React 16 · antd 3.x · dva</div>
+    </div>
+  </header>
+
+  <section id="what">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2><span class="num">01</span>它们到底是什么</h2>
+        <p>当 AI 助手开始工作时，它会自动读取仓库里的这些约定文件，作为最高优先级的“常驻上下文”。你不必在每条消息里重复说明项目用了什么框架、怎么跑测试——写一次，处处生效。</p>
+      </div>
+      <div class="features">
+        <div class="feature reveal">
+          <div class="ico">📌</div>
+          <h4>持久化记忆</h4>
+          <p>把项目背景、约定、踩坑经验沉淀到文件，避免每次重新解释。</p>
+        </div>
+        <div class="feature reveal">
+          <div class="ico">🎯</div>
+          <h4>统一行为</h4>
+          <p>团队成员与不同 AI 工具读取同一份规范，输出风格保持一致。</p>
+        </div>
+        <div class="feature reveal">
+          <div class="ico">⚙️</div>
+          <h4>降低出错</h4>
+          <p>明确技术栈、命令与边界，减少 AI “自由发挥”导致的破坏性改动。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="compare">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2><span class="num">02</span>CLAUDE.md vs AGENTS.md</h2>
+        <p>两者格式几乎相同，差别主要在“面向谁”。简单说：CLAUDE.md 是 Claude 专属，AGENTS.md 是面向所有 AI 工具的开放标准。</p>
+      </div>
+      <div class="cards">
+        <div class="card reveal" data-tilt>
+          <span class="tag">CLAUDE.md</span>
+          <h3>Claude 专属约定</h3>
+          <div class="sub">/CLAUDE.md · 由 Claude Code 读取</div>
+          <ul>
+            <li>专为 Claude / Claude Code 设计的指令文件</li>
+            <li>支持子目录级 CLAUDE.md，按模块就近生效</li>
+            <li>常写入项目概览、命令、架构、约定与注意事项</li>
+            <li>可通过 <code>/init</code> 自动生成初稿</li>
+            <li>Claude 在每次会话开始时优先加载</li>
+          </ul>
+        </div>
+        <div class="card reveal" data-tilt>
+          <span class="tag">AGENTS.md</span>
+          <h3>开放通用标准</h3>
+          <div class="sub">/AGENTS.md · 跨工具共识</div>
+          <ul>
+            <li>面向各类 AI 编码代理的开放、中立规范</li>
+            <li>被多家工具采用，避免被单一厂商绑定</li>
+            <li>内容结构与 CLAUDE.md 高度兼容</li>
+            <li>可让 CLAUDE.md 直接引用 AGENTS.md 复用内容</li>
+            <li>更适合多 AI 工具混用的团队</li>
+          </ul>
+        </div>
+      </div>
+      <p class="divider-quote">实务建议：以 AGENTS.md 作为唯一事实来源（single source of truth），再用一行 CLAUDE.md 引用它，即可同时兼顾通用性与 Claude 的专属优化。</p>
+    </div>
+  </section>
+
+  <section id="anatomy">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2><span class="num">03</span>一份好文件长什么样</h2>
+        <p>不需要长篇大论。聚焦“AI 真正需要、且难以自行推断”的信息：怎么跑、用什么、有哪些不能碰的红线。</p>
+      </div>
+      <div class="codeblock reveal">
+        <div class="code-head">
+          <span class="d"></span><span class="d"></span><span class="d"></span>
+          <span class="fname">AGENTS.md</span>
+          <button class="copy" id="copyBtn">复制</button>
+        </div>
+        <pre id="codeContent"><span class="h"># Project Overview</span>
+教学评价系统 — PC 端高校课程评价与统计分析平台。
+
+<span class="h">## Tech Stack</span>
+<span class="c">- React 16.14（类组件 + hooks，兼容 IE10+）</span>
+<span class="c">- Ant Design 3.26（antd 包，非 @ant-design）</span>
+<span class="c">- Dva 2.x（Redux + Saga）· Webpack 5 · TypeScript 5.7</span>
+
+<span class="h">## Commands</span>
+<span class="k">yarn start</span>      <span class="c"># 启动开发服务器</span>
+<span class="k">yarn build</span>      <span class="c"># 生产构建</span>
+<span class="k">yarn lint</span>       <span class="c"># 代码检查</span>
+<span class="k">yarn test</span>       <span class="c"># 运行测试</span>
+
+<span class="h">## Conventions</span>
+<span class="c">- 组件用 PascalCase，工具函数用 camelCase</span>
+<span class="c">- 严禁随意引入新依赖（控制包体积）</span>
+<span class="c">- 公共组件 Props 变更须向下兼容，不删除已有字段</span>
+
+<span class="h">## Do Not</span>
+<span class="s">- 不要提交个人 API 地址到 public/config.js</span>
+<span class="s">- 不要大面积格式化无关代码</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="practice">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2><span class="num">04</span>编写最佳实践</h2>
+        <p>把文件当作活文档维护——它越准确，AI 的产出越可靠。</p>
+      </div>
+      <div class="timeline">
+        <div class="tl-item reveal">
+          <h4>① 精炼而非冗长</h4>
+          <p>只写 AI 推断不出来的关键信息。过长的文件会稀释重点，也消耗上下文。</p>
+        </div>
+        <div class="tl-item reveal">
+          <h4>② 命令必须可复制即用</h4>
+          <p>列出真实可运行的脚本（启动、构建、测试、检查），避免 AI 猜测命令名。</p>
+        </div>
+        <div class="tl-item reveal">
+          <h4>③ 明确“红线”与边界</h4>
+          <p>用 Do / Do Not 清单写明禁止事项，如兼容性要求、不可提交的文件、破坏性操作。</p>
+        </div>
+        <div class="tl-item reveal">
+          <h4>④ 随项目演进持续更新</h4>
+          <p>技术栈或约定变化时同步修订；把反复纠正 AI 的点固化进文件。</p>
+        </div>
+        <div class="tl-item reveal">
+          <h4>⑤ 善用分层与引用</h4>
+          <p>根目录放全局约定，子目录放局部规则；用 AGENTS.md 作单一来源，CLAUDE.md 引用之。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>AI Context Guide · CLAUDE.md &amp; AGENTS.md</span>
+      <span>写一次约定，省下无数次重复说明。</span>
+    </div>
+  </footer>
+
+<script>
+  // progress bar
+  const progress = document.getElementById('progress');
+  const onScroll = () => {
+    const h = document.documentElement;
+    const scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    progress.style.width = (scrolled * 100) + '%';
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // reveal on intersect
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        e.target.style.transitionDelay = (Math.min(i, 5) * 60) + 'ms';
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  // card pointer glow
+  document.querySelectorAll('[data-tilt]').forEach((card) => {
+    card.addEventListener('pointermove', (ev) => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((ev.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((ev.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  // copy code
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', () => {
+    const text = document.getElementById('codeContent').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = '已复制 ✓';
+      setTimeout(() => (copyBtn.textContent = '复制'), 1600);
+    });
+  });
+</script>
+</body>
+</html>

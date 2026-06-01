@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桌面 AI Agent 时代 | 2026 五大产品盘点与对比</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-glass: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(148, 163, 184, 0.15);
+            --border-glow: rgba(59, 130, 246, 0.3);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+
+            --brand-trae: #ff4d00;
+            --brand-openai: #10a37f;
+            --brand-claude: #cc7b19;
+            --brand-marvis: #0052d9;
+            --brand-cursor: #6366f1;
+
+            --gradient-trae: linear-gradient(135deg, #ff8a00 0%, #ff4d00 100%);
+            --gradient-openai: linear-gradient(135deg, #10a37f 0%, #0d7f62 100%);
+            --gradient-claude: linear-gradient(135deg, #e08f24 0%, #cc7b19 100%);
+            --gradient-marvis: linear-gradient(135deg, #1e80ff 0%, #0052d9 100%);
+            --gradient-cursor: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+
+            --accent-cyan: #3b82f6;
+            --gradient-main: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+            --shadow-glow: 0 10px 40px rgba(99, 102, 241, 0.15);
+            --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -5px rgba(0, 0, 0, 0.02);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.75;
+            overflow-x: hidden;
+        }
+
+        /* Scroll Progress Bar */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            background: var(--gradient-main);
+            z-index: 200;
+            transition: width 0.1s linear;
+        }
+
+        /* Animated Ambient Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 40s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.45;
+            animation: orbFloat 25s ease-in-out infinite;
+        }
+
+        .bg-orb-1 {
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            top: -300px;
+            right: -200px;
+        }
+
+        .bg-orb-2 {
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+            bottom: -200px;
+            left: -200px;
+            animation-delay: -7s;
+        }
+
+        .bg-orb-3 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, transparent 70%);
+            top: 40%;
+            left: 30%;
+            animation-delay: -14s;
+        }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.08); }
+            66% { transform: translate(-40px, 40px) scale(0.92); }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.02;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 48px;
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        header.scrolled {
+            padding: 14px 48px;
+            background: rgba(248, 250, 252, 0.95);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            border-bottom-color: rgba(148, 163, 184, 0.2);
+        }
+
+        .header-inner {
+            max-width: 1344px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--gradient-main);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .logo {
+            font-size: 1.15rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.01em;
+        }
+
+        /* Header in-page nav */
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .header-nav a {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .header-nav a:hover,
+        .header-nav a.active {
+            color: var(--brand-cursor);
+        }
+
+        .header-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(148, 163, 184, 0.08);
+            padding: 4px 12px;
+            border-radius: 50px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            font-weight: 500;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 92vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 140px 48px 80px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 1000px;
+            animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--brand-cursor);
+            margin-bottom: 28px;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--brand-cursor);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+            100% { transform: scale(0.9); opacity: 0.8; box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.8rem, 7.5vw, 5.2rem);
+            font-weight: 900;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .hero h1 span {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 720px;
+            margin: 0 auto 48px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .hero-meta {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 64px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            padding: 24px 48px;
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-card);
+            max-width: fit-content;
+            margin: 0 auto;
+        }
+
+        .meta-item {
+            text-align: center;
+            position: relative;
+        }
+
+        .meta-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -32px;
+            top: 15%;
+            height: 70%;
+            width: 1px;
+            background: rgba(148, 163, 184, 0.2);
+        }
+
+        .meta-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .meta-value-gradient {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .scroll-indicator:hover {
+            color: var(--brand-cursor);
+        }
+
+        .scroll-indicator svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2.5;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(8px); }
+        }
+
+        /* Section Global */
+        section {
+            padding: 100px 0;
+            position: relative;
+            scroll-margin-top: 90px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-number {
+            font-size: 0.8rem;
+            color: var(--brand-cursor);
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.06);
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 680px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Interactive Filter Bar */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .filter-btn:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            color: var(--brand-cursor);
+        }
+
+        .filter-btn.active {
+            background: var(--gradient-main);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Products Grid */
+        .products-container-wrapper {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .products-scroll-container {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+            padding-bottom: 24px;
+            margin: 0 -48px;
+            padding-left: 48px;
+            padding-right: 48px;
+            scroll-snap-type: x proximity;
+        }
+
+        .products-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .products-scroll-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .products-scroll-container::-webkit-scrollbar-thumb {
+            background-color: rgba(148, 163, 184, 0.25);
+            border-radius: 10px;
+        }
+
+        .products-scroll-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .products-grid {
+            display: flex;
+            gap: 28px;
+            width: max-content;
+        }
+
+        /* Horizontal scroll arrow buttons */
+        .scroll-btn {
+            position: absolute;
+            top: 42%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            z-index: 5;
+            transition: all 0.25s ease;
+        }
+
+        .scroll-btn:hover {
+            color: var(--brand-cursor);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .scroll-btn[disabled] {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .scroll-btn svg { width: 20px; height: 20px; }
+        .scroll-btn.prev { left: 4px; }
+        .scroll-btn.next { right: 4px; }
+
+        @media (max-width: 768px) {
+            .scroll-btn { display: none; }
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 410px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            scroll-snap-align: start;
+        }
+
+        .product-card.is-hidden {
+            display: none;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            transition: all 0.3s;
+        }
+
+        .product-card.card-trae::before { background: var(--gradient-trae); }
+        .product-card.card-openai::before { background: var(--gradient-openai); }
+        .product-card.card-claude::before { background: var(--gradient-claude); }
+        .product-card.card-marvis::before { background: var(--gradient-marvis); }
+        .product-card.card-cursor::before { background: var(--gradient-cursor); }
+
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 0 30px rgba(99, 102, 241, 0.05);
+        }
+
+        .product-card.card-trae:hover { border-color: rgba(255, 77, 0, 0.25); }
+        .product-card.card-openai:hover { border-color: rgba(16, 163, 127, 0.25); }
+        .product-card.card-claude:hover { border-color: rgba(204, 123, 25, 0.25); }
+        .product-card.card-marvis:hover { border-color: rgba(0, 82, 217, 0.25); }
+        .product-card.card-cursor:hover { border-color: rgba(99, 102, 241, 0.25); }
+
+        .product-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .product-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .product-icon.icon-trae { background: var(--gradient-trae); }
+        .product-icon.icon-openai { background: var(--gradient-openai); }
+        .product-icon.icon-claude { background: var(--gradient-claude); }
+        .product-icon.icon-marvis { background: var(--gradient-marvis); }
+        .product-icon.icon-cursor { background: var(--gradient-cursor); }
+
+        .product-meta-title {
+            flex-grow: 1;
+        }
+
+        .product-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        .product-company {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .product-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .product-badge-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            white-space: nowrap;
+        }
+
+        .product-badge-tag.tag-trae { background: rgba(255, 77, 0, 0.06); color: var(--brand-trae); border-color: rgba(255, 77, 0, 0.1); }
+        .product-badge-tag.tag-openai { background: rgba(16, 163, 127, 0.06); color: var(--brand-openai); border-color: rgba(16, 163, 127, 0.1); }
+        .product-badge-tag.tag-claude { background: rgba(204, 123, 25, 0.06); color: var(--brand-claude); border-color: rgba(204, 123, 25, 0.1); }
+        .product-badge-tag.tag-marvis { background: rgba(0, 82, 217, 0.06); color: var(--brand-marvis); border-color: rgba(0, 82, 217, 0.1); }
+        .product-badge-tag.tag-cursor { background: rgba(99, 102, 241, 0.06); color: var(--brand-cursor); border-color: rgba(99, 102, 241, 0.1); }
+
+        .product-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            height: 72px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .product-features-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .product-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .product-features li {
+            padding: 8px 0;
+            border-top: 1px dashed rgba(148, 163, 184, 0.15);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            display: block;
+            position: relative;
+            padding-left: 20px;
+            line-height: 1.55;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .product-features li::before {
+            content: "✓";
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 0.85rem;
+        }
+
+        .product-features li strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .card-trae .product-features li::before { color: var(--brand-trae); }
+        .card-openai .product-features li::before { color: var(--brand-openai); }
+        .card-claude .product-features li::before { color: var(--brand-claude); }
+        .card-marvis .product-features li::before { color: var(--brand-marvis); }
+        .card-cursor .product-features li::before { color: var(--brand-cursor); }
+
+        /* Comparison Section */
+        .comparison-section {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-tabs-container {
+            margin-top: 30px;
+        }
+
+        .comparison-tab-nav {
+            display: flex;
+            justify-content: center;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            margin-bottom: 40px;
+            gap: 32px;
+        }
+
+        .comp-tab-btn {
+            background: none;
+            border: none;
+            padding: 16px 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .comp-tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .comp-tab-btn.active {
+            color: var(--brand-cursor);
+        }
+
+        .comp-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-main);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .comparison-table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: none;
+        }
+
+        .comparison-table-wrapper.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 20px 28px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .comparison-table th {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 700;
+            background: rgba(148, 163, 184, 0.05);
+        }
+
+        .comparison-table td {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(148, 163, 184, 0.02);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .feature-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .feature-tag.trae { background: rgba(255, 77, 0, 0.08); color: var(--brand-trae); }
+        .feature-tag.openai { background: rgba(16, 163, 127, 0.08); color: var(--brand-openai); }
+        .feature-tag.claude { background: rgba(204, 123, 25, 0.08); color: var(--brand-claude); }
+        .feature-tag.marvis { background: rgba(0, 82, 217, 0.08); color: var(--brand-marvis); }
+        .feature-tag.cursor { background: rgba(99, 102, 241, 0.08); color: var(--brand-cursor); }
+
+        /* IDE Comparison Section */
+        .ide-comparison {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 56px;
+            margin-top: 80px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .ide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .ide-box {
+            padding: 36px;
+            border-radius: var(--radius-md);
+            background: rgba(148, 163, 184, 0.03);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .ide-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .ide-box.Traditional {
+            border-top: 4px solid var(--text-muted);
+        }
+
+        .ide-box.CLI {
+            border-top: 4px solid var(--brand-openai);
+            background: rgba(16, 163, 127, 0.01);
+        }
+
+        .ide-box.Agent {
+            border-top: 4px solid var(--brand-cursor);
+            background: rgba(99, 102, 241, 0.01);
+        }
+
+        .ide-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+
+        .ide-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ide-list li {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            position: relative;
+            padding-left: 18px;
+            line-height: 1.6;
+            display: block;
+        }
+
+        .ide-list li::before {
+            content: "•";
+            color: var(--text-muted);
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .ide-box.CLI .ide-list li::before { color: var(--brand-openai); }
+        .ide-box.Agent .ide-list li::before { color: var(--brand-cursor); }
+
+        /* Quote Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 40px 48px;
+            margin-top: 56px;
+            text-align: center;
+            position: relative;
+        }
+
+        .highlight-box::before {
+            content: "“";
+            position: absolute;
+            top: -10px;
+            left: 48px;
+            font-size: 5rem;
+            color: rgba(99, 102, 241, 0.15);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .highlight-box p {
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.7;
+        }
+
+        /* Trends Grid */
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .trend-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 44px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .trend-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.25);
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .trend-number {
+            position: absolute;
+            top: 28px;
+            right: 36px;
+            font-size: 5.5rem;
+            font-weight: 900;
+            color: rgba(99, 102, 241, 0.04);
+            line-height: 1;
+            font-family: 'JetBrains Mono', monospace;
+            user-select: none;
+        }
+
+        .trend-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            background: rgba(99, 102, 241, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: 24px;
+            color: var(--brand-cursor);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .trend-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .trend-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 80px 48px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        footer p {
+            margin-bottom: 8px;
+        }
+
+        /* Back to top */
+        .back-to-top {
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--gradient-main);
+            color: #fff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 110;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .back-to-top svg { width: 20px; height: 20px; }
+
+        /* Scroll Reveal Utility */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .trends-grid { grid-template-columns: 1fr; gap: 24px; }
+            .ide-grid { grid-template-columns: 1fr; gap: 24px; }
+            .hero h1 { font-size: 3.2rem; }
+            .header-nav { display: none; }
+            .hero-meta {
+                flex-direction: column;
+                gap: 24px;
+                padding: 32px;
+                width: 100%;
+            }
+            .meta-item:not(:last-child)::after { display: none; }
+            .meta-item {
+                width: 100%;
+                padding-bottom: 16px;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            }
+            .meta-item:last-child { border-bottom: none; padding-bottom: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 24px; }
+            header { padding: 16px 24px; }
+            header.scrolled { padding: 12px 24px; }
+            .products-scroll-container {
+                margin: 0 -24px;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+            .product-card { width: 320px; padding: 24px; }
+            .product-desc { height: auto; -webkit-line-clamp: 4; line-clamp: 4; }
+            .ide-comparison { padding: 24px; }
+            .comparison-tab-nav {
+                gap: 16px;
+                overflow-x: auto;
+                padding-bottom: 8px;
+            }
+            .comp-tab-btn { font-size: 0.9rem; padding: 12px 4px; white-space: nowrap; }
+            .trend-card { padding: 28px; }
+            .trend-number { font-size: 4rem; top: 20px; right: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="bg-animation">
+        <div class="bg-grid"></div>
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+    <div class="noise-overlay"></div>
+
+    <header id="header">
+        <div class="header-inner">
+            <div class="logo-container">
+                <div class="logo-icon">A</div>
+                <div class="logo">AI AGENT INDEX</div>
+            </div>
+            <nav class="header-nav">
+                <a href="#products">产品速览</a>
+                <a href="#comparison">横向对比</a>
+                <a href="#trends">行业趋势</a>
+            </nav>
+            <div class="header-date">更新日期：2026年5月29日</div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span>2026 行业风向标</span>
+            </div>
+            <h1>桌面 <span>AI Agent</span></h1>
+            <p class="hero-subtitle">
+                从 API 调用，到接管屏幕、锁屏托管与跨端调度。盘点 2026 年五大桌面 Agent，看人机协同的新形态。
+            </p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <div class="meta-value"><span class="meta-value-gradient">5</span></div>
+                    <div class="meta-label">前沿工具</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-value">2026</div>
+                    <div class="meta-label">黄金时代</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-value">5.29</div>
+                    <div class="meta-label">数据更新</div>
+                </div>
+            </div>
+        </div>
+        <a href="#products" class="scroll-indicator">
+            <span>向下滚动探索</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+        </a>
+    </section>
+
+    <section id="products">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-number">Part 01</div>
+                <h2 class="section-title">五大桌面 Agent 速览</h2>
+                <p class="section-desc">从字节全产研覆盖的工作台，到 Cursor 以 Agent 为核心重构 IDE，下面是 2026 年最具代表性的五款产品。</p>
+            </div>
+
+            <div class="filter-bar reveal">
+                <button class="filter-btn active" data-filter="all">全部产品</button>
+                <button class="filter-btn" data-filter="dev">研发编程</button>
+                <button class="filter-btn" data-filter="general">系统级 & 通用</button>
+            </div>
+
+            <div class="products-container-wrapper">
+                <button class="scroll-btn prev" id="scrollPrev" aria-label="向左滚动">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button class="scroll-btn next" id="scrollNext" aria-label="向右滚动">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <div class="products-scroll-container">
+                    <div class="products-grid">
+
+                        <!-- Trae SOLO -->
+                        <div class="product-card card-trae reveal" data-category="general dev">
+                            <div class="product-header">
+                                <div class="product-icon icon-trae">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                </div>
+                                <div class="product-meta-title">
+                                    <h3 class="product-name">Trae SOLO 独立端</h3>
+                                    <p class="product-company">字节跳动 / ByteDance</p>
+                                </div>
+                            </div>
+                            <div class="product-badges">
+                                <span class="product-badge-tag tag-trae">三端打通</span>
+                                <span class="product-badge-tag tag-trae">限时免费</span>
+                            </div>
+                            <p class="product-desc">从 IDE 剥离的跨端 Agent 工作台，App / Web / 桌面三端同步，无需邀请码即可调度云端或本机 Agent 办事。</p>
+                            <div class="product-features-title">核心能力 (2026.05)</div>
+                            <ul class="product-features">
+                                <li><strong>手机语音跨端操控</strong>：5 月 7 日移动端全量上线，发任务后由云端或本机 Agent 执行，你操控的是 Agent 而非屏幕。</li>
+                                <li><strong>双模式智能体</strong>：Code 模式（编码，桌面/网页同步，休眠后云端任务不中断）与 MTC 模式（文档、数据、方案全产研场景）。</li>
+                                <li><strong>定时任务 + Skills 市场</strong>：可设定时自动执行，技能安装即用、零配置自动调用；新增 Windows 客户端。</li>
+                            </ul>
+                        </div>
+
+                        <!-- OpenAI Codex -->
+                        <div class="product-card card-openai reveal" data-category="general dev">
+                            <div class="product-header">
+                                <div class="product-icon icon-openai">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                        <path d="M2 12h20"></path>
+                                    </svg>
+                                </div>
+                                <div class="product-meta-title">
+                                    <h3 class="product-name">OpenAI Codex 桌面端</h3>
+                                    <p class="product-company">OpenAI</p>
+                                </div>
+                            </div>
+                            <div class="product-badges">
+                                <span class="product-badge-tag tag-openai">锁屏托管</span>
+                                <span class="product-badge-tag tag-openai">Computer Use</span>
+                            </div>
+                            <p class="product-desc">由 Computer Use 驱动的 macOS 桌面 Agent，可直接读取屏幕并点选、输入、操作本地 GUI 应用。</p>
+                            <div class="product-features-title">核心能力 (2026.05)</div>
+                            <ul class="product-features">
+                                <li><strong>锁屏后台运行</strong>：5 月 21 日上线，手机发任务后即便屏幕熄灭锁定也能临时解锁执行，全程覆屏防窥，检测到本地键鼠输入立即重锁（合盖休眠除外）。</li>
+                                <li><strong>手机遥控 + Codex for Chrome</strong>：手机端审批并查看执行画面；新增 Chrome 扩展，可在浏览器内测试 Web 应用、跨标签取上下文。</li>
+                                <li><strong>权限可控</strong>：需装 Computer Use 插件并授予录屏/辅助权限，逐 App 授权；暂不支持 EEA/英国/瑞士，且不操作终端与系统管理员弹窗。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Claude Cowork -->
+                        <div class="product-card card-claude reveal" data-category="general dev">
+                            <div class="product-header">
+                                <div class="product-icon icon-claude">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                                        <line x1="15" y1="3" x2="15" y2="21"></line>
+                                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                                        <line x1="3" y1="15" x2="21" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div class="product-meta-title">
+                                    <h3 class="product-name">Claude Cowork / Code</h3>
+                                    <p class="product-company">Anthropic</p>
+                                </div>
+                            </div>
+                            <div class="product-badges">
+                                <span class="product-badge-tag tag-claude">MCP 原生</span>
+                                <span class="product-badge-tag tag-claude">Win & Mac</span>
+                            </div>
+                            <p class="product-desc">把 Claude Code 的代理能力带到桌面的知识工作 Agent，5 月 24 日在 Windows / macOS 正式 GA。</p>
+                            <div class="product-features-title">核心能力 (2026.05)</div>
+                            <ul class="product-features">
+                                <li><strong>Computer Use 公测</strong>：Win 与 Mac 双端，无连接器时直接点选、输入、开应用操作本地 GUI（Pro/Max 限定，研究预览）。</li>
+                                <li><strong>跨端发起任务</strong>：可用手机 app 在外发起并查看，但桌面需保持唤醒、app 保持打开——电脑休眠任务即停止。</li>
+                                <li><strong>MCP 生态 + Claude Code</strong>：MCP 协议发起者，企业连接器无缝集成；CLI 支持 `--worktree` 隔离与多会话并行。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Tencent Marvis -->
+                        <div class="product-card card-marvis reveal" data-category="general">
+                            <div class="product-header">
+                                <div class="product-icon icon-marvis">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                </div>
+                                <div class="product-meta-title">
+                                    <h3 class="product-name">Marvis 马维斯</h3>
+                                    <p class="product-company">腾讯 / Tencent</p>
+                                </div>
+                            </div>
+                            <div class="product-badges">
+                                <span class="product-badge-tag tag-marvis">OS 级控制</span>
+                                <span class="product-badge-tag tag-marvis">每日 1000 万 Token</span>
+                            </div>
+                            <p class="product-desc">腾讯应用宝团队打造的操作系统层级 AI 助手，5 月 20 日 Win/Mac/安卓三端上线，一句话操控整台电脑。</p>
+                            <div class="product-features-title">核心能力 (2026.05)</div>
+                            <ul class="product-features">
+                                <li><strong>1 主 + 5 副 Agent 协同</strong>：主 Agent 拆解任务，分派 File / Computer / App / Browser / Search 副 Agent，7×24 全流程闭环。</li>
+                                <li><strong>系统级深度操控</strong>：查硬件/电池/网络，调系统设置、清理自启、一句话关 Windows 广告；按人像/主题建 AI 图库与文档库。</li>
+                                <li><strong>双模式</strong>：效率模式端云协同，隐私模式端侧模型 0 上云、断网可用；每日免费 1000 万 Token（未来支持自带 Key）。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Cursor Agent -->
+                        <div class="product-card card-cursor reveal" data-category="dev">
+                            <div class="product-header">
+                                <div class="product-icon icon-cursor">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                    </svg>
+                                </div>
+                                <div class="product-meta-title">
+                                    <h3 class="product-name">Cursor 3 / Composer 2</h3>
+                                    <p class="product-company">Anysphere</p>
+                                </div>
+                            </div>
+                            <div class="product-badges">
+                                <span class="product-badge-tag tag-cursor">Agents Window</span>
+                                <span class="product-badge-tag tag-cursor">极致性价比</span>
+                            </div>
+                            <p class="product-desc">4 月 2 日发布的 Cursor 3.0 把 IDE 重构为以 Agent 为核心的 Agents Window，多 Agent 并行成为默认。</p>
+                            <div class="product-features-title">核心能力 (2026.05)</div>
+                            <ul class="product-features">
+                                <li><strong>多 Agent 并行</strong>：本地、worktree、云端沙箱、远程 SSH 各开独立 tab 并行；云端沙箱关机也能持续运行。</li>
+                                <li><strong>/best-of-n 多模型赛马</strong>：编辑器内 `/best-of-n sonnet,gpt,composer` 同任务多模型各跑独立 worktree，父 Agent 点评后择优。</li>
+                                <li><strong>自研 Composer 2</strong>：基于 Kimi K2.5，Terminal-Bench 2.0 得 61.7；价格 $0.50/M 输入、$2.50/M 输出。</li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="comparison" class="comparison-section">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-number">Part 02</div>
+                <h2 class="section-title">核心维度横向对比</h2>
+                <p class="section-desc">2026 年的 Agent 不再只拼 Prompt，而是拼任务持久度、端侧控制力与多智能体编排生态。</p>
+            </div>
+
+            <div class="comparison-tabs-container reveal">
+                <div class="comparison-tab-nav">
+                    <button class="comp-tab-btn active" data-table="0">自动化与控制力</button>
+                    <button class="comp-tab-btn" data-table="1">开放程度与生态</button>
+                    <button class="comp-tab-btn" data-table="2">研发场景与成本</button>
+                </div>
+
+                <!-- Table 1 -->
+                <div id="table-0" class="comparison-table-wrapper active">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>产品</th>
+                                <th>自动化核心</th>
+                                <th>代表性控制功能</th>
+                                <th>跨端与远程调度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="feature-tag trae">Trae SOLO</span></td>
+                                <td>云端多任务 + 双模式</td>
+                                <td>任务自动拆解、调用 Skills，休眠后云端不中断</td>
+                                <td><strong>手机语音直接操控 PC Agent</strong></td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag openai">OpenAI Codex</span></td>
+                                <td>Computer Use + 异步任务流</td>
+                                <td><strong>Mac 锁屏熄屏临时解锁运行，覆屏防窥</strong>（合盖除外）</td>
+                                <td>手机发任务并查看画面，新增 Codex for Chrome</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag claude">Claude Cowork</span></td>
+                                <td>Win & Mac Computer Use 公测</td>
+                                <td>直接点选、输入操作本地 GUI（研究预览）</td>
+                                <td>手机可在外发起，但<strong>桌面须保持唤醒</strong></td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag marvis">Tencent Marvis</span></td>
+                                <td>1 主 5 副 Agent 协同</td>
+                                <td>改系统配置、硬件诊断、<strong>一句话关 Windows 广告</strong></td>
+                                <td>手机远程看屏，授权后锁屏可解锁操作</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag cursor">Cursor Agent</span></td>
+                                <td>多环境并行 + 云端持久沙箱</td>
+                                <td>沙箱自主构建、测试、编译并生成 PR</td>
+                                <td>跨设备网页同步，worktree 隔离</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Table 2 -->
+                <div id="table-1" class="comparison-table-wrapper">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>产品</th>
+                                <th>连接生态 / 协议</th>
+                                <th>开放程度</th>
+                                <th>多智能体协同</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="feature-tag trae">Trae SOLO</span></td>
+                                <td><strong>Skills Marketplace</strong> 技能市场</td>
+                                <td>开箱即用，字节生态倾斜，限时免费</td>
+                                <td>自主编排多角色产研协同团队</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag openai">OpenAI Codex</span></td>
+                                <td>插件 + 专属 MCP 服务器</td>
+                                <td>第三方可发布插件，新增 Chrome 扩展</td>
+                                <td>跨应用、跨 API 的多智能体并行</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag claude">Claude Cowork</span></td>
+                                <td><strong>MCP 协议</strong>发起者</td>
+                                <td>高度开源标准，与企业连接器无缝集成</td>
+                                <td>多会话隔离，支持组织级策略</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag marvis">Tencent Marvis</span></td>
+                                <td>OS + 应用宝跨端引擎</td>
+                                <td>腾讯系工具链、办公娱乐内置</td>
+                                <td>主 Agent 统筹，5 副 Agent 7×24 协同</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag cursor">Cursor Agent</span></td>
+                                <td><strong>Cursor Marketplace</strong> MCP 插件</td>
+                                <td>完全开放，支持企业私有市场与本地模型</td>
+                                <td>父 Agent 审查，多路子 Agent worktree 赛马</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Table 3 -->
+                <div id="table-2" class="comparison-table-wrapper">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>产品</th>
+                                <th>研发 / 产研定位</th>
+                                <th>主打模型</th>
+                                <th>价格与门槛</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="feature-tag trae">Trae SOLO</span></td>
+                                <td>Code/MTC 双模式，支持设计图生成</td>
+                                <td>豆包 1.6 Pro / GLM 推理动态路由</td>
+                                <td>限时免费</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag openai">OpenAI Codex</span></td>
+                                <td>通用开发，覆盖软件工程全流程</td>
+                                <td>GPT-5.5 系列 / GPT Image</td>
+                                <td>ChatGPT 订阅，手机 App 可免费遥控</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag claude">Claude Cowork</span></td>
+                                <td>重度重构与大型代码库理解</td>
+                                <td>Claude Opus 4.7 / Sonnet 4.6</td>
+                                <td>Pro & Max 订阅，消耗较快</td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag marvis">Tencent Marvis</span></td>
+                                <td>办公/系统运维/日常，非编程核心</td>
+                                <td>云端混元 & DeepSeek；本地端侧模型</td>
+                                <td><strong>每日免费 1000 万 Token</strong></td>
+                            </tr>
+                            <tr>
+                                <td><span class="feature-tag cursor">Cursor Agent</span></td>
+                                <td>AI 代码代工核心，多 PR 自动提交</td>
+                                <td><strong>Composer 2</strong>（基于 Kimi K2.5）</td>
+                                <td><strong>$0.50/M 输入，$2.50/M 输出</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- IDE vs Agent Box -->
+            <div class="ide-comparison reveal">
+                <h3 style="font-size: 1.5rem; margin-bottom: 40px; text-align: center; font-weight: 800; letter-spacing: -0.01em;">三维演进：传统 IDE、AI CLI 终端与桌面 Agent</h3>
+                <div class="ide-grid">
+
+                    <div class="ide-box Traditional">
+                        <div class="ide-title">
+                            <span style="color: var(--text-muted);">传统 IDE（以编辑器为中心）</span>
+                        </div>
+                        <ul class="ide-list">
+                            <li><strong>粒度</strong>：以行/函数为单位，被动补全与静态建议。</li>
+                            <li><strong>交互</strong>：用户主导，代码需人工逐行编写。</li>
+                            <li><strong>运行</strong>：本地单点编辑，关机休眠即暂停。</li>
+                            <li><strong>权限</strong>：受沙箱约束，难以跨软件或接管系统。</li>
+                        </ul>
+                    </div>
+
+                    <div class="ide-box CLI">
+                        <div class="ide-title">
+                            <span style="color: var(--brand-openai);">AI CLI 终端（以命令行为中心）</span>
+                        </div>
+                        <ul class="ide-list">
+                            <li><strong>粒度</strong>：以指令/命令为单位，做编译、测试、重构。</li>
+                            <li><strong>交互</strong>：终端高频即时反馈，下达专项任务。</li>
+                            <li><strong>运行</strong>：可用 `--worktree` 隔离分支，多在本地终端。</li>
+                            <li><strong>权限</strong>：限于 Shell 与代码库，不操作复杂 GUI。</li>
+                        </ul>
+                    </div>
+
+                    <div class="ide-box Agent">
+                        <div class="ide-title">
+                            <span style="color: var(--brand-cursor);">桌面 AI Agent（以任务委派为中心）</span>
+                        </div>
+                        <ul class="ide-list">
+                            <li><strong>粒度</strong>：以任务/需求为单位，自主规划与纠错。</li>
+                            <li><strong>交互</strong>：开发者化身管理者，自然语言描述交付。</li>
+                            <li><strong>运行</strong>：云端沙箱可关机续跑；本地 Computer Use 多需保持唤醒。</li>
+                            <li><strong>权限</strong>：经 Computer Use 接管 GUI、控制锁屏与手机遥控。</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="highlight-box reveal">
+                <p>2026 年，桌面 AI Agent 已走出“代码助手”阶段，迈入主动操控、锁屏托管与多端协同的时代。你管理的，不再是代码字符，而是数十个并行、随时可接管的 Agent 工作流。</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="trends">
+        <div class="container">
+            <div class="section-header reveal">
+                <div class="section-number">Part 03</div>
+                <h2 class="section-title">2026 桌面 Agent 四大趋势</h2>
+                <p class="section-desc">随着 5 月腾讯、字节与 OpenAI 的密集发布，桌面 Agent 的技术路径已愈发清晰。</p>
+            </div>
+
+            <div class="trends-grid">
+                <div class="trend-card reveal">
+                    <div class="trend-number">01</div>
+                    <div class="trend-icon">📱</div>
+                    <h3 class="trend-title">无屏操控与跨端分离</h3>
+                    <p class="trend-desc">Trae SOLO 手机语音发任务、Codex 手机发任务、Marvis 跨端接管——2026 年，人们开始把手机当作 Agent 遥控器，不必再紧盯电脑屏幕。</p>
+                </div>
+
+                <div class="trend-card reveal">
+                    <div class="trend-number">02</div>
+                    <div class="trend-icon">🔒</div>
+                    <h3 class="trend-title">锁屏与云端托管</h3>
+                    <p class="trend-desc">Codex 锁屏时临时解锁并覆屏、检测本地输入即重锁；Cursor 与 Trae 的云端沙箱可关机续跑，Agent 获得“夜间生产力”。而本地 Computer Use（如 Claude Cowork）仍需保持唤醒——续航与安全成为分水岭。</p>
+                </div>
+
+                <div class="trend-card reveal">
+                    <div class="trend-number">03</div>
+                    <div class="trend-icon">💻</div>
+                    <h3 class="trend-title">下沉至 OS 与芯片级</h3>
+                    <p class="trend-desc">腾讯马维斯把 Agent 从插件层推向操作系统与芯片层（与英特尔、微软 WinML 合作），可直接改系统设置、诊断硬件；端侧模型本地运行、0 上云的隐私模式与端云效率模式双轮驱动。</p>
+                </div>
+
+                <div class="trend-card reveal">
+                    <div class="trend-number">04</div>
+                    <div class="trend-icon">🪙</div>
+                    <h3 class="trend-title">Token 经济学催生并发</h3>
+                    <p class="trend-desc">Cursor 把 Composer 2 价格打到 $0.50/$2.50 每百万 Token，Marvis 每日送 1000 万免费 Token，多 Agent 的成本障碍被扫清。以微小成本调度多路并行沙箱，让“Agents 并发”成为 2026 核心指标。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 桌面 AI Agent 行业盘点 · 公开资料整理</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">更新时间：2026年5月29日 · 数据源：OpenAI, Anthropic, ByteDance, Tencent, Anysphere 官方发布</p>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop" aria-label="回到顶部">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+    </button>
+
+    <script>
+        const header = document.getElementById('header');
+        const scrollProgress = document.getElementById('scrollProgress');
+        const backToTop = document.getElementById('backToTop');
+
+        // Combined scroll handler: header state, progress bar, back-to-top
+        const onScroll = () => {
+            const scrollTop = window.scrollY;
+            header.classList.toggle('scrolled', scrollTop > 50);
+
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            scrollProgress.style.width = progress + '%';
+
+            backToTop.classList.toggle('visible', scrollTop > 600);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Reveal on scroll via IntersectionObserver (staggered)
+        const revealObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    setTimeout(() => el.classList.add('visible'), (el.dataset.delay || 0));
+                    obs.unobserve(el);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+        document.querySelectorAll('.reveal').forEach((el, i) => {
+            // light stagger within the same group
+            el.dataset.delay = (i % 4) * 80;
+            revealObserver.observe(el);
+        });
+
+        // Active nav link highlighting
+        const navLinks = document.querySelectorAll('.header-nav a');
+        const sections = ['products', 'comparison', 'trends'].map(id => document.getElementById(id));
+        const navObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + entry.target.id));
+                }
+            });
+        }, { threshold: 0.4 });
+        sections.forEach(s => s && navObserver.observe(s));
+
+        // Smooth scroll for in-page anchors
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Product filtering (class-based, no layout jank)
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const productCards = document.querySelectorAll('.product-card');
+        const scrollContainer = document.querySelector('.products-scroll-container');
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const filterValue = btn.getAttribute('data-filter');
+
+                productCards.forEach(card => {
+                    const categories = card.getAttribute('data-category').split(' ');
+                    const show = filterValue === 'all' || categories.includes(filterValue);
+                    card.classList.toggle('is-hidden', !show);
+                });
+
+                if (scrollContainer) scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                updateScrollButtons();
+            });
+        });
+
+        // Comparison table switching (data-attribute driven)
+        const tabButtons = document.querySelectorAll('.comp-tab-btn');
+        const tables = document.querySelectorAll('.comparison-table-wrapper');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const index = parseInt(btn.getAttribute('data-table'), 10);
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tables.forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                tables[index].classList.add('active');
+            });
+        });
+
+        // Horizontal scroll: wheel + arrow buttons + button state
+        const scrollPrev = document.getElementById('scrollPrev');
+        const scrollNext = document.getElementById('scrollNext');
+
+        const updateScrollButtons = () => {
+            if (!scrollContainer) return;
+            const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+            const overflowing = maxScroll > 8;
+            scrollPrev.disabled = !overflowing || scrollContainer.scrollLeft <= 4;
+            scrollNext.disabled = !overflowing || scrollContainer.scrollLeft >= maxScroll - 4;
+        };
+
+        if (scrollContainer) {
+            const step = () => Math.min(scrollContainer.clientWidth * 0.8, 460);
+            scrollPrev.addEventListener('click', () => scrollContainer.scrollBy({ left: -step(), behavior: 'smooth' }));
+            scrollNext.addEventListener('click', () => scrollContainer.scrollBy({ left: step(), behavior: 'smooth' }));
+
+            scrollContainer.addEventListener('scroll', updateScrollButtons, { passive: true });
+            window.addEventListener('resize', updateScrollButtons);
+
+            scrollContainer.addEventListener('wheel', (e) => {
+                const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                if (maxScroll <= 0) return;
+                const canLeft = scrollContainer.scrollLeft > 0;
+                const canRight = scrollContainer.scrollLeft < maxScroll;
+                if ((e.deltaY > 0 && canRight) || (e.deltaY < 0 && canLeft)) {
+                    e.preventDefault();
+                    scrollContainer.scrollLeft += e.deltaY * 1.2;
+                }
+            }, { passive: false });
+
+            updateScrollButtons();
+        }
+    </script>
+</body>
+</html>

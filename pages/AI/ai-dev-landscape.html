@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 开发范式全景 · 2026</title>
+<style>
+  :root {
+    --bg: #f4f4f2;
+    --bg-soft: #ececea;
+    --surface: #fbfbfa;
+    --surface-2: #f0f0ee;
+    --line: #e0e0dc;
+    --line-strong: #d2d2cc;
+    --ink: #1c1c1a;
+    --ink-2: #4a4a46;
+    --ink-3: #8a8a84;
+    --ink-4: #aeaea8;
+    --accent: #3a3a38;
+    --accent-soft: #6b6b66;
+    --good: #5a7a64;
+    --bad: #9a6a64;
+    --radius: 18px;
+    --radius-lg: 28px;
+    --shadow-sm: 0 1px 2px rgba(20,20,18,.04), 0 2px 8px rgba(20,20,18,.04);
+    --shadow-md: 0 4px 12px rgba(20,20,18,.05), 0 12px 32px rgba(20,20,18,.06);
+    --shadow-lg: 0 8px 24px rgba(20,20,18,.07), 0 24px 64px rgba(20,20,18,.10);
+    --ease: cubic-bezier(.22,.61,.36,1);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    letter-spacing: .01em;
+  }
+
+  /* Ambient gradient backdrop */
+  .ambient {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 15% 10%, rgba(255,255,255,.85), transparent 60%),
+      radial-gradient(50% 50% at 85% 0%, rgba(220,222,225,.55), transparent 55%),
+      radial-gradient(70% 60% at 50% 110%, rgba(208,210,206,.5), transparent 60%);
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  /* Scroll progress */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--ink-3), var(--ink));
+    z-index: 100; transition: width .1s linear;
+  }
+
+  /* Cursor halo */
+  .halo {
+    position: fixed; width: 380px; height: 380px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.6), transparent 65%);
+    transform: translate(-50%, -50%); pointer-events: none; z-index: 2;
+    transition: opacity .4s; mix-blend-mode: overlay; opacity: 0;
+  }
+
+  .wrap { position: relative; z-index: 5; max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(160%) blur(14px);
+    background: rgba(244,244,242,.7);
+    border-bottom: 1px solid transparent;
+    transition: border-color .4s, background .4s;
+  }
+  nav.scrolled { border-bottom-color: var(--line); background: rgba(244,244,242,.85); }
+  .nav-inner { max-width: 1120px; margin: 0 auto; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { font-weight: 650; font-size: 15px; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; }
+  .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px rgba(28,28,26,.08); animation: pulse 3s var(--ease) infinite; }
+  @keyframes pulse { 0%,100%{ box-shadow:0 0 0 4px rgba(28,28,26,.08);} 50%{ box-shadow:0 0 0 8px rgba(28,28,26,0);} }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    color: var(--ink-2); text-decoration: none; font-size: 13.5px; padding: 7px 14px; border-radius: 999px;
+    transition: background .25s, color .25s;
+  }
+  .nav-links a:hover { background: var(--surface-2); color: var(--ink); }
+  @media (max-width: 720px){ .nav-links { display:none; } }
+
+  /* Hero */
+  .hero { padding: 120px 0 90px; text-align: center; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3); padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+    box-shadow: var(--shadow-sm); margin-bottom: 30px;
+  }
+  .eyebrow .live { width:6px; height:6px; border-radius:50%; background: var(--good); box-shadow:0 0 0 0 rgba(90,122,100,.6); animation: live 2s infinite; }
+  @keyframes live { 0%{box-shadow:0 0 0 0 rgba(90,122,100,.5);} 70%{box-shadow:0 0 0 7px rgba(90,122,100,0);} 100%{box-shadow:0 0 0 0 rgba(90,122,100,0);} }
+  h1 {
+    font-size: clamp(38px, 6vw, 74px); line-height: 1.04; font-weight: 680; letter-spacing: -.02em;
+    background: linear-gradient(160deg, var(--ink) 30%, var(--ink-3));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p.lede { max-width: 620px; margin: 26px auto 0; font-size: clamp(16px,2vw,19px); color: var(--ink-2); }
+  .hero-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 56px; }
+  @media (max-width: 720px){ .hero-cards { grid-template-columns: 1fr; } }
+  .mini {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px;
+    text-align: left; box-shadow: var(--shadow-sm); transition: transform .4s var(--ease), box-shadow .4s var(--ease);
+  }
+  .mini:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .mini .ic { font-size: 22px; margin-bottom: 12px; }
+  .mini h4 { font-size: 15px; margin-bottom: 5px; }
+  .mini p { font-size: 13px; color: var(--ink-3); }
+
+  /* Sections */
+  section { padding: 70px 0; position: relative; }
+  .sec-head { margin-bottom: 44px; }
+  .sec-tag { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+  .sec-head h2 { font-size: clamp(26px,3.5vw,40px); font-weight: 650; letter-spacing: -.015em; margin-top: 10px; }
+  .sec-head p { color: var(--ink-2); margin-top: 12px; max-width: 640px; }
+
+  /* Segmented control */
+  .segmented {
+    display: inline-flex; padding: 5px; gap: 4px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 999px; margin-bottom: 34px; position: relative; flex-wrap: wrap;
+  }
+  .segmented button {
+    border: 0; background: transparent; font-family: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer;
+    padding: 9px 20px; border-radius: 999px; position: relative; z-index: 2; transition: color .3s; font-weight: 500;
+  }
+  .segmented button.active { color: var(--surface); }
+  .seg-pill {
+    position: absolute; z-index: 1; top: 5px; height: calc(100% - 10px); border-radius: 999px;
+    background: var(--ink); transition: transform .45s var(--ease), width .45s var(--ease); box-shadow: var(--shadow-sm);
+  }
+
+  /* Panel */
+  .panel { display: none; animation: fade .55s var(--ease); }
+  .panel.active { display: block; }
+  @keyframes fade { from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform:none;} }
+
+  .panel-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 22px; align-items: start; }
+  @media (max-width: 880px){ .panel-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 30px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card .kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+  .card h3 { font-size: 24px; margin: 8px 0 14px; letter-spacing: -.01em; }
+  .card .desc { color: var(--ink-2); font-size: 14.5px; }
+
+  .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; }
+  @media (max-width: 520px){ .pc-grid { grid-template-columns: 1fr; } }
+  .pc {
+    border-radius: var(--radius); padding: 18px; border: 1px solid var(--line); background: var(--surface-2);
+  }
+  .pc h5 { font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .pc.good h5 { color: var(--good); }
+  .pc.bad h5 { color: var(--bad); }
+  .pc ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .pc li { font-size: 13.5px; color: var(--ink-2); padding-left: 20px; position: relative; }
+  .pc.good li::before { content: "+"; position: absolute; left: 0; color: var(--good); font-weight: 700; }
+  .pc.bad li::before { content: "−"; position: absolute; left: 0; color: var(--bad); font-weight: 700; }
+
+  /* Tools list */
+  .tools-card { display: flex; flex-direction: column; gap: 2px; }
+  .tool-row {
+    display: flex; align-items: center; gap: 16px; padding: 15px 4px; border-bottom: 1px solid var(--line);
+    transition: padding-left .3s var(--ease);
+  }
+  .tool-row:last-child { border-bottom: 0; }
+  .tool-row:hover { padding-left: 12px; }
+  .tool-logo {
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center;
+    font-weight: 700; font-size: 15px; color: var(--surface); background: var(--ink); letter-spacing: -.02em;
+  }
+  .tool-meta { flex: 1; min-width: 0; }
+  .tool-meta .nm { font-size: 14.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .tool-meta .ds { font-size: 12.5px; color: var(--ink-3); }
+  .badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-3); font-weight: 600; letter-spacing: .03em; }
+  .badge.hot { background: #efe7e4; border-color: #e3d4cf; color: #9a6a64; }
+
+  /* Trends timeline */
+  .timeline { position: relative; margin-top: 10px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 2px;
+    background: linear-gradient(var(--line-strong), transparent);
+  }
+  .tl-item { position: relative; padding: 0 0 30px 44px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item .node {
+    position: absolute; left: 4px; top: 4px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--ink); box-shadow: 0 0 0 4px var(--bg);
+  }
+  .tl-item h4 { font-size: 16.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tl-item .yr { font-size: 11px; letter-spacing: .08em; color: var(--ink-4); border: 1px solid var(--line); padding: 2px 9px; border-radius: 999px; }
+  .tl-item p { font-size: 14px; color: var(--ink-2); max-width: 660px; }
+
+  .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px){ .trend-grid { grid-template-columns: 1fr; } }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* Footer */
+  footer { padding: 60px 0 50px; border-top: 1px solid var(--line); margin-top: 40px; }
+  .foot-inner { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+  footer p { font-size: 13px; color: var(--ink-3); }
+  .sources { display: flex; gap: 18px; flex-wrap: wrap; }
+  .sources a { font-size: 12.5px; color: var(--ink-3); text-decoration: none; border-bottom: 1px solid var(--line-strong); padding-bottom: 1px; transition: color .25s; }
+  .sources a:hover { color: var(--ink); }
+
+  ::selection { background: var(--ink); color: var(--bg); }
+</style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="grain"></div>
+  <div class="halo" id="halo"></div>
+  <div class="progress" id="progress"></div>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <div class="brand"><span class="dot"></span>AI 开发范式 · 2026</div>
+      <div class="nav-links">
+        <a href="#paradigms">三种范式</a>
+        <a href="#tools">工具产品</a>
+        <a href="#trends">未来趋势</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <header class="hero">
+      <span class="eyebrow"><span class="live"></span>更新于 2026 年 5 月 29 日</span>
+      <h1>AI 编程的<br>三种主流形态</h1>
+      <p class="lede">从命令行里的自主智能体，到深度内嵌编辑器的副驾驶，再到独立运行的桌面 AGENT —— 开发方式正在被重新定义。</p>
+
+      <div class="hero-cards">
+        <div class="mini reveal">
+          <div class="ic">⌥</div>
+          <h4>CLI 命令行智能体</h4>
+          <p>终端原生、可脚本化、可并行编排的自主代理</p>
+        </div>
+        <div class="mini reveal">
+          <div class="ic">◧</div>
+          <h4>IDE 内嵌 AI</h4>
+          <p>编辑器深度集成的补全、对话与多文件编辑</p>
+        </div>
+        <div class="mini reveal">
+          <div class="ic">◎</div>
+          <h4>桌面 / 云端 AGENT</h4>
+          <p>拥有独立环境，端到端交付完整任务</p>
+        </div>
+      </div>
+    </header>
+
+    <section id="paradigms">
+      <div class="sec-head reveal">
+        <span class="sec-tag">The Paradigms</span>
+        <h2>三种范式 · 优缺点对照</h2>
+        <p>切换查看每种开发方式的定位、优势与局限。它们并非互斥，而是覆盖了不同的工作流粒度。</p>
+      </div>
+
+      <div class="segmented reveal" id="seg">
+        <span class="seg-pill" id="pill"></span>
+        <button class="active" data-p="cli">⌥ CLI 命令行</button>
+        <button data-p="ide">◧ IDE 内嵌</button>
+        <button data-p="agent">◎ 桌面 AGENT</button>
+      </div>
+
+      <!-- CLI -->
+      <div class="panel active" data-panel="cli">
+        <div class="panel-grid">
+          <div class="card reveal">
+            <span class="kicker">Terminal-native</span>
+            <h3>命令行智能体</h3>
+            <p class="desc">运行于终端的自主代理，能读写文件、执行命令、调用 MCP 工具，并以「计划—执行—自检」的循环长时间运行。无界面束缚，天然适合脚本化、CI/CD 与多代理并行编排。</p>
+            <div class="pc-grid">
+              <div class="pc good">
+                <h5>优势</h5>
+                <ul>
+                  <li>无头可脚本化，易接入 CI/CD 与自动化流水线</li>
+                  <li>擅长长任务、跨多文件的深度重构</li>
+                  <li>可并行起多个代理（agent fleet）批量处理</li>
+                  <li>编辑器无关，任意环境随取随用</li>
+                </ul>
+              </div>
+              <div class="pc bad">
+                <h5>局限</h5>
+                <ul>
+                  <li>无可视化界面，学习曲线偏陡</li>
+                  <li>缺少行内补全等即时编辑反馈</li>
+                  <li>长链路自主运行时成本可能较高</li>
+                  <li>对操作过程的可视监督较弱</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="card tools-card reveal">
+            <span class="kicker" style="margin-bottom:8px;display:block;">代表工具</span>
+            <div class="tool-row"><div class="tool-logo">CC</div><div class="tool-meta"><div class="nm">Claude Code <span class="badge">Opus 4.7</span></div><div class="ds">深度多文件推理基准标杆，~82% SWE-bench</div></div></div>
+            <div class="tool-row"><div class="tool-logo">CX</div><div class="tool-meta"><div class="nm">OpenAI Codex CLI <span class="badge">GPT-5.5</span></div><div class="ds">Rust 重写，OS 级沙箱，执行速度领先</div></div></div>
+            <div class="tool-row"><div class="tool-logo">AG</div><div class="tool-meta"><div class="nm">Antigravity CLI <span class="badge hot">替代 Gemini CLI</span></div><div class="ds">Gemini 3，多代理编排，6.18 起接棒</div></div></div>
+            <div class="tool-row"><div class="tool-logo">OC</div><div class="tool-meta"><div class="nm">OpenCode <span class="badge">开源</span></div><div class="ds">75+ 模型，MIT 许可，开源首选</div></div></div>
+            <div class="tool-row"><div class="tool-logo">AI</div><div class="tool-meta"><div class="nm">Aider</div><div class="ds">Git 原生工作流，逐次编辑自动提交</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IDE -->
+      <div class="panel" data-panel="ide">
+        <div class="panel-grid">
+          <div class="card reveal">
+            <span class="kicker">Editor-integrated</span>
+            <h3>IDE 内嵌 AI</h3>
+            <p class="desc">将 AI 深度织入编辑器：极速 Tab 补全、对话改写、整库索引下的多文件 Agent 编辑。既保留人类对代码的精确掌控，又把上下文管理交给工具自动完成。</p>
+            <div class="pc-grid">
+              <div class="pc good">
+                <h5>优势</h5>
+                <ul>
+                  <li>行内补全最快，编码心流体验最佳</li>
+                  <li>可视化 diff，改动审阅与回退直观</li>
+                  <li>整库上下文 + Composer/Cascade 多文件编辑</li>
+                  <li>学习成本低，沿用熟悉的编辑器习惯</li>
+                </ul>
+              </div>
+              <div class="pc bad">
+                <h5>局限</h5>
+                <ul>
+                  <li>自主深度不及纯 CLI 代理</li>
+                  <li>多需切换到 VS Code 分叉版（插件除外）</li>
+                  <li>无头自动化、批处理能力较弱</li>
+                  <li>厂商绑定与归属变动带来不确定性</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="card tools-card reveal">
+            <span class="kicker" style="margin-bottom:8px;display:block;">代表工具</span>
+            <div class="tool-row"><div class="tool-logo">CU</div><div class="tool-meta"><div class="nm">Cursor <span class="badge">200 万+ 用户</span></div><div class="ds">VS Code 分叉，Composer 2 多文件代理</div></div></div>
+            <div class="tool-row"><div class="tool-logo">WS</div><div class="tool-meta"><div class="nm">Windsurf <span class="badge">SWE-1.5</span></div><div class="ds">Cascade 流式代理，自有模型 13x 速度</div></div></div>
+            <div class="tool-row"><div class="tool-logo">GH</div><div class="tool-meta"><div class="nm">GitHub Copilot <span class="badge">2600 万用户</span></div><div class="ds">跨 IDE 插件，企业合规与 GitHub 原生</div></div></div>
+            <div class="tool-row"><div class="tool-logo">AG</div><div class="tool-meta"><div class="nm">Google Antigravity <span class="badge hot">新</span></div><div class="ds">16 个专用代理，内置浏览器视觉校验</div></div></div>
+            <div class="tool-row"><div class="tool-logo">ZE</div><div class="tool-meta"><div class="nm">Zed / JetBrains AI</div><div class="ds">高性能编辑器与原生 IDE 的 AI 集成</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT -->
+      <div class="panel" data-panel="agent">
+        <div class="panel-grid">
+          <div class="card reveal">
+            <span class="kicker">Autonomous</span>
+            <h3>桌面 / 云端 AGENT</h3>
+            <p class="desc">拥有独立的虚拟环境（终端 + 编辑器 + 浏览器），像「远程初级工程师」一样接收任务，自主规划、编码、调试、部署，遇阻动态重规划，并能操作 GUI 桌面应用完成端到端交付。</p>
+            <div class="pc-grid">
+              <div class="pc good">
+                <h5>优势</h5>
+                <ul>
+                  <li>端到端交付，可整建制接管 backlog 任务</li>
+                  <li>独立沙箱 VM，无需本地环境配置</li>
+                  <li>并行云代理，规模化迁移/重构效率惊人</li>
+                  <li>可操作浏览器与桌面 GUI 做验证</li>
+                </ul>
+              </div>
+              <div class="pc bad">
+                <h5>局限</h5>
+                <ul>
+                  <li>结果质量高度依赖需求规格的清晰度</li>
+                  <li>需要人力审阅大规模代理产出</li>
+                  <li>ACU 等用量计费，成本预估有门槛</li>
+                  <li>对个人开发者偏重，更适合团队</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="card tools-card reveal">
+            <span class="kicker" style="margin-bottom:8px;display:block;">代表工具</span>
+            <div class="tool-row"><div class="tool-logo">DV</div><div class="tool-meta"><div class="nm">Devin <span class="badge hot">Cognition</span></div><div class="ds">最自主 SWE 代理，全 VM，$20/月起 + ACU</div></div></div>
+            <div class="tool-row"><div class="tool-logo">CC</div><div class="tool-meta"><div class="nm">Codex Cloud <span class="badge">异步</span></div><div class="ds">派发任务到云端并行执行，稍后审阅</div></div></div>
+            <div class="tool-row"><div class="tool-logo">CA</div><div class="tool-meta"><div class="nm">Cursor Cloud Agent</div><div class="ds">本地会话一键交接云端，移动端续跑</div></div></div>
+            <div class="tool-row"><div class="tool-logo">DC</div><div class="tool-meta"><div class="nm">Devin in Windsurf <span class="badge">嵌入</span></div><div class="ds">IDE 内派发云代理，本地编码两不误</div></div></div>
+            <div class="tool-row"><div class="tool-logo">CU</div><div class="tool-meta"><div class="nm">Computer-Use 代理</div><div class="ds">移动鼠标、点击、操作 Figma 等桌面应用</div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tools">
+      <div class="sec-head reveal">
+        <span class="sec-tag">Snapshot 2026 Q2</span>
+        <h2>当下格局速览</h2>
+        <p>市场已过「选一个用到底」的阶段。主流团队普遍组合使用，下面是几条被反复验证的搭配共识。</p>
+      </div>
+      <div class="trend-grid">
+        <div class="card reveal">
+          <h3 style="font-size:19px;">专业开发者的默认组合</h3>
+          <p class="desc"><strong>Cursor（日常）+ Claude Code（复杂任务）</strong> 是 2026 Q2 被最多专业开发者认可的事实标准：一个 IDE 负责心流编码，一个 CLI 代理负责深度重构。</p>
+        </div>
+        <div class="card reveal">
+          <h3 style="font-size:19px;">独立开发者 / 学习者</h3>
+          <p class="desc">从 <strong>免费层</strong> 起步学习终端代理工作流，再按需升级到付费高质量输出；开源的 OpenCode / Aider 支持本地与多模型，灵活无锁定。</p>
+        </div>
+        <div class="card reveal">
+          <h3 style="font-size:19px;">企业团队</h3>
+          <p class="desc"><strong>GitHub Copilot</strong> 仍是最稳的合规默认项（最广 IDE 覆盖、IP 赔付、issue→PR 原生流）；需要规模化自主交付时引入 <strong>Devin</strong>。</p>
+        </div>
+        <div class="card reveal">
+          <h3 style="font-size:19px;">基准已高度接近</h3>
+          <p class="desc">头部三家在 SWE-bench 上仅毫厘之差（约 80.8% / 80.6% / 80.0%），<strong>选型更多取决于工作流与控制粒度</strong>，而非分数。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="trends">
+      <div class="sec-head reveal">
+        <span class="sec-tag">What's Next</span>
+        <h2>未来趋势</h2>
+        <p>三种形态正在融合，自主性与可监督性同时被推高。以下是接下来最确定的几个方向。</p>
+      </div>
+      <div class="card reveal">
+        <div class="timeline">
+          <div class="tl-item">
+            <span class="node"></span>
+            <h4>统一 Harness：CLI / IDE / 桌面同源 <span class="yr">进行中</span></h4>
+            <p>同一套代理引擎驱动多形态入口（如 Antigravity CLI 与 2.0 桌面共享 harness，Cursor 本地与云端无缝交接），开发者在任意界面间无损切换。</p>
+          </div>
+          <div class="tl-item">
+            <span class="node"></span>
+            <h4>Agent Fleet：从单代理到代理编队 <span class="yr">2026</span></h4>
+            <p>并行起数十个代理批量处理任务（migration、测试、修复）成为常态。Nubank 用 Devin 把原计划 18 个月、10 万+ 改动的迁移压缩到数周即是早期范本。</p>
+          </div>
+          <div class="tl-item">
+            <span class="node"></span>
+            <h4>Computer-Use：从写代码到操作软件 <span class="yr">兴起</span></h4>
+            <p>代理不再局限于文本，开始移动鼠标、点击、操作 Figma/Photoshop 等 GUI 应用，做设计转码与端到端 QA，模糊「编程」与「使用软件」的边界。</p>
+          </div>
+          <div class="tl-item">
+            <span class="node"></span>
+            <h4>Skills / Memory / MCP 标准化 <span class="yr">巩固</span></h4>
+            <p>可复用技能、长期记忆（CLAUDE.md / AGENTS.md）与 MCP 工具协议成为通用底座，代理能记住纠正、对接整个工具栈，纠错一次永不重犯。</p>
+          </div>
+          <div class="tl-item">
+            <span class="node"></span>
+            <h4>可监督的自主性：信任与治理 <span class="yr">下一步</span></h4>
+            <p>随自主度提升，OS 级沙箱、VPC 内私有部署、自动化代码评审（Devin Review 等）与权限治理成为放心放手的前提，人类角色转向「审阅与编排」。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="foot-inner">
+        <p>内容综合自 2026 年 4–5 月公开评测，仅作概览参考，工具版本与价格持续变动。</p>
+        <div class="sources">
+          <a href="https://pinggy.io/blog/top_cli_based_ai_coding_agents/" target="_blank" rel="noopener">CLI 评测</a>
+          <a href="https://www.codeant.ai/blogs/best-ai-code-editor-cursor-vs-windsurf-vs-copilot" target="_blank" rel="noopener">IDE 对比</a>
+          <a href="https://www.vellum.ai/blog/best-ai-coding-agents" target="_blank" rel="noopener">Agent 榜单</a>
+          <a href="https://docs.devin.ai/get-started/devin-intro" target="_blank" rel="noopener">Devin 文档</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+<script>
+  // Scroll progress + nav state
+  const progress = document.getElementById('progress');
+  const nav = document.getElementById('nav');
+  function onScroll(){
+    const h = document.documentElement;
+    const scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight);
+    progress.style.width = (scrolled * 100) + '%';
+    nav.classList.toggle('scrolled', h.scrollTop > 8);
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Cursor halo (desktop only)
+  const halo = document.getElementById('halo');
+  if (window.matchMedia('(pointer:fine)').matches){
+    let tx=0,ty=0,cx=0,cy=0;
+    window.addEventListener('mousemove', e => { tx=e.clientX; ty=e.clientY; halo.style.opacity=1; });
+    window.addEventListener('mouseout', ()=> halo.style.opacity=0);
+    (function loop(){ cx+=(tx-cx)*.12; cy+=(ty-cy)*.12; halo.style.left=cx+'px'; halo.style.top=cy+'px'; requestAnimationFrame(loop); })();
+  }
+
+  // Segmented control + panels
+  const seg = document.getElementById('seg');
+  const pill = document.getElementById('pill');
+  const btns = [...seg.querySelectorAll('button')];
+  const panels = [...document.querySelectorAll('.panel')];
+  function movePill(btn){
+    pill.style.width = btn.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + (btn.offsetLeft - 5) + 'px)';
+  }
+  function activate(btn){
+    btns.forEach(b => b.classList.toggle('active', b === btn));
+    const key = btn.dataset.p;
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === key));
+    movePill(btn);
+    // re-trigger reveal inside the newly shown panel
+    requestAnimationFrame(() => {
+      document.querySelector('.panel.active').querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    });
+  }
+  btns.forEach(b => b.addEventListener('click', () => activate(b)));
+  window.addEventListener('load', () => movePill(seg.querySelector('.active')));
+  window.addEventListener('resize', () => movePill(seg.querySelector('.active')));
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: .14 });
+  document.querySelectorAll('.reveal').forEach((el,i) => {
+    el.style.transitionDelay = (i % 4 * 60) + 'ms';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>
