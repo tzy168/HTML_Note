@@ -1,16 +1,11 @@
 {
-  "generatedAt": "2026-06-01T09:33:35.258Z",
+  "generatedAt": "2026-06-01T05:18:08.879Z",
   "tree": [
     {
       "name": "AI",
       "type": "folder",
       "path": "AI",
       "children": [
-        {
-          "name": "桌面AI_Agent",
-          "type": "file",
-          "path": "AI/桌面AI_Agent.html"
-        },
         {
           "name": "agents-and-claude",
           "type": "file",
@@ -25,6 +20,11 @@
           "name": "hermes-agent",
           "type": "file",
           "path": "AI/hermes-agent.html"
+        },
+        {
+          "name": "桌面AI_Agent",
+          "type": "file",
+          "path": "AI/桌面AI_Agent.html"
         }
       ]
     },
