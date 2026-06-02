@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CodeGraph · 让代码结构一目了然</title>
+<title>CodeGraph · 本地代码知识图谱</title>
 <style>
   :root {
     --bg: #0a0a0f;
@@ -155,7 +155,7 @@
   }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   .hero .sub {
-    max-width: 580px; margin: 24px auto 0;
+    max-width: 620px; margin: 24px auto 0;
     font-size: clamp(15px, 2vw, 18px); color: var(--ink-2);
   }
   .hero-cta { margin-top: 40px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
@@ -375,7 +375,7 @@
   .usage-step .code-snippet .cmd { color: var(--good); }
   .usage-step .code-snippet .output { color: var(--ink-3); }
 
-  /* ---------- Command palette preview ---------- */
+  /* ---------- MCP Tools preview ---------- */
   .palette-wrap {
     background: var(--bg-card); border: 1px solid var(--line);
     border-radius: var(--radius); overflow: hidden;
@@ -454,6 +454,49 @@
   .glow-blob.a { background: var(--accent); top: 10%; right: -10%; }
   .glow-blob.b { background: var(--accent-3); bottom: 20%; left: -10%; }
   .glow-blob.c { background: var(--accent-2); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  /* ---------- Language tags ---------- */
+  .lang-tags {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;
+  }
+  .lang-tag {
+    font-size: 11.5px; font-family: var(--font-mono);
+    padding: 4px 12px; border-radius: 6px;
+    background: var(--bg-elevated); border: 1px solid var(--line);
+    color: var(--ink-2); transition: all 0.25s;
+  }
+  .lang-tag:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+
+  /* ---------- Benchmark section ---------- */
+  .bench-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  @media (max-width: 720px) { .bench-grid { grid-template-columns: repeat(2, 1fr); } }
+  .bench-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 24px; text-align: center;
+    transition: all 0.4s var(--ease);
+  }
+  .bench-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+  .bench-card .bench-val {
+    font-size: 36px; font-weight: 700;
+    background: linear-gradient(180deg, var(--good) 0%, #059669);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .bench-card .bench-label {
+    font-size: 12.5px; color: var(--ink-3); margin-top: 6px;
+    letter-spacing: 0.03em;
+  }
+  .bench-card .bench-desc {
+    font-size: 11.5px; color: var(--ink-3); margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -473,25 +516,25 @@
         <a href="#why">优势</a>
         <a href="#install">安装</a>
         <a href="#usage">使用</a>
-        <a href="#shortcuts">快捷键</a>
+        <a href="#mcp-tools">MCP工具</a>
       </div>
     </div>
   </nav>
 
   <div class="wrap">
     <header class="hero">
-      <span class="eyebrow"><span class="live"></span>2026.6.1 正式发布</span>
-      <h1 id="typewriter">让代码结构一目了然<span class="cursor"></span></h1>
-      <p class="sub">CodeGraph 是专为开发者打造的代码可视化工具。自动解析项目依赖、函数调用链与模块关系，将复杂的代码库转化为交互式图谱，助你秒懂任何代码架构。</p>
+      <span class="eyebrow"><span class="live"></span>面向 AI 代理的本地代码知识图谱</span>
+      <h1 id="typewriter">让 AI 秒懂你的代码库<span class="cursor"></span></h1>
+      <p class="sub">CodeGraph 为 Claude Code、Cursor、Codex 等 AI 编程代理预构建本地代码知识图谱。通过 tree-sitter 解析代码结构，将函数调用、模块依赖、类继承等关系存入本地 SQLite，让 AI 一次查询即可精准定位相关代码。</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#install">立即安装 ↓</a>
-        <a class="btn btn-ghost" href="#features">了解特性</a>
+        <a class="btn btn-ghost" href="https://github.com/colbymchenry/codegraph" target="_blank">GitHub →</a>
       </div>
       <div class="hero-stats">
-        <div class="stat reveal"><div class="num" data-suffix="ms" data-target="50">0</div><div class="label">图谱生成耗时</div></div>
-        <div class="stat reveal"><div class="num" data-suffix="+" data-target="15">0</div><div class="label">支持语言</div></div>
-        <div class="stat reveal"><div class="num" data-suffix="K" data-target="50">0</div><div class="label">代码文件解析</div></div>
-        <div class="stat reveal"><div class="num" data-suffix="x" data-target="10">0</div><div class="label">理解速度提升</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="%" data-target="35">0</div><div class="label">API 成本降低</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="%" data-target="57">0</div><div class="label">Token 消耗减少</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="%" data-target="71">0</div><div class="label">工具调用减少</div></div>
+        <div class="stat reveal"><div class="num" data-suffix="+" data-target="20">0</div><div class="label">支持语言</div></div>
       </div>
     </header>
 
@@ -501,39 +544,66 @@
       <div class="sec-head reveal">
         <span class="sec-tag">// Features</span>
         <h2>六大核心特性</h2>
-        <p>从依赖分析到交互探索，CodeGraph 覆盖代码理解的全链路需求。</p>
+        <p>从智能上下文构建到影响分析，CodeGraph 为 AI 代理提供完整的代码理解基础设施。</p>
       </div>
       <div class="feature-grid">
         <div class="feature-card reveal" data-tilt>
-          <div class="icon-wrap">🕸️</div>
-          <h4>自动依赖图谱</h4>
-          <p>扫描项目后自动生成模块依赖关系图，文件引用、导入导出一目了然，无需手动维护。</p>
+          <div class="icon-wrap">🧠</div>
+          <h4>智能上下文构建</h4>
+          <p>一次工具调用即返回入口点、相关符号和代码片段，无需昂贵的探索代理反复扫描文件。</p>
         </div>
         <div class="feature-card reveal" data-tilt>
           <div class="icon-wrap">🔍</div>
-          <h4>函数调用链追踪</h4>
-          <p>点击任意函数即可查看完整的调用链路，向上追溯调用者，向下探索被调函数，深度不限。</p>
+          <h4>全文符号搜索</h4>
+          <p>基于 SQLite FTS5 的即时跨代码库符号搜索，按名称快速定位函数、类、方法等。</p>
         </div>
         <div class="feature-card reveal" data-tilt>
-          <div class="icon-wrap">⚡</div>
-          <h4>增量实时更新</h4>
-          <p>监听文件变更，图谱随代码修改实时同步，保持可视化始终与源码一致。</p>
+          <div class="icon-wrap">📊</div>
+          <h4>影响分析</h4>
+          <p>追踪任意符号的调用方、被调用方及完整影响半径，改动前看清波及范围。</p>
         </div>
         <div class="feature-card reveal" data-tilt>
-          <div class="icon-wrap">🎨</div>
-          <h4>交互式探索</h4>
-          <p>拖拽、缩放、聚焦、过滤——图谱支持完整的交互操作，按需查看任意粒度的结构。</p>
+          <div class="icon-wrap">🔄</div>
+          <h4>自动增量同步</h4>
+          <p>使用原生 OS 文件事件监听（FSEvents / inotify / ReadDirectoryChangesW），文件变更时自动同步，零配置。</p>
         </div>
         <div class="feature-card reveal" data-tilt>
-          <div class="icon-wrap">🔌</div>
-          <h4>IDE 深度集成</h4>
-          <p>VS Code / JetBrains / Vim 插件一键安装，侧边栏直接展示图谱，编码与浏览无缝切换。</p>
+          <div class="icon-wrap">🌐</div>
+          <h4>20+ 语言支持</h4>
+          <p>TypeScript、JavaScript、Python、Go、Rust、Java、C#、PHP、Ruby、C/C++、Swift、Kotlin、Dart、Svelte 等。</p>
         </div>
         <div class="feature-card reveal" data-tilt>
-          <div class="icon-wrap">📤</div>
-          <h4>一键导出分享</h4>
-          <p>支持导出 SVG、PNG、JSON 多种格式，生成可分享的交互式网页链接，团队协作零摩擦。</p>
+          <div class="icon-wrap">🔒</div>
+          <h4>100% 本地运行</h4>
+          <p>数据仅存储在本地 SQLite 数据库，无需外部 API 密钥或服务，代码隐私零泄露风险。</p>
         </div>
+      </div>
+
+      <!-- Language tags -->
+      <div class="sec-head reveal" style="margin-top:48px;margin-bottom:20px;">
+        <p style="margin-top:0;">CodeGraph 基于 tree-sitter 解析代码，支持以下语言及框架：</p>
+      </div>
+      <div class="lang-tags reveal">
+        <span class="lang-tag">TypeScript</span>
+        <span class="lang-tag">JavaScript</span>
+        <span class="lang-tag">Python</span>
+        <span class="lang-tag">Go</span>
+        <span class="lang-tag">Rust</span>
+        <span class="lang-tag">Java</span>
+        <span class="lang-tag">C#</span>
+        <span class="lang-tag">PHP</span>
+        <span class="lang-tag">Ruby</span>
+        <span class="lang-tag">C / C++</span>
+        <span class="lang-tag">Objective-C</span>
+        <span class="lang-tag">Swift</span>
+        <span class="lang-tag">Kotlin</span>
+        <span class="lang-tag">Dart</span>
+        <span class="lang-tag">Lua</span>
+        <span class="lang-tag">Svelte</span>
+        <span class="lang-tag">Liquid</span>
+        <span class="lang-tag">Pascal</span>
+        <span class="lang-tag">React Native</span>
+        <span class="lang-tag">Expo</span>
       </div>
     </section>
 
@@ -542,35 +612,57 @@
       <div class="sec-head reveal">
         <span class="sec-tag">// Why CodeGraph</span>
         <h2>为什么选择 CodeGraph</h2>
-        <p>面对大型代码库，传统阅读方式的效率瓶颈愈发明显。</p>
+        <p>基于 7 个真实开源项目的基准测试，数据证明效率提升。</p>
       </div>
-      <div class="why-grid">
+      <div class="bench-grid reveal">
+        <div class="bench-card">
+          <div class="bench-val">35%</div>
+          <div class="bench-label">API 成本降低</div>
+          <div class="bench-desc">减少重复文件扫描</div>
+        </div>
+        <div class="bench-card">
+          <div class="bench-val">57%</div>
+          <div class="bench-label">Token 消耗减少</div>
+          <div class="bench-desc">精准上下文构建</div>
+        </div>
+        <div class="bench-card">
+          <div class="bench-val">71%</div>
+          <div class="bench-label">工具调用减少</div>
+          <div class="bench-desc">预索引替代探索</div>
+        </div>
+        <div class="bench-card">
+          <div class="bench-val">46%</div>
+          <div class="bench-label">响应时间加快</div>
+          <div class="bench-desc">本地查询毫秒级</div>
+        </div>
+      </div>
+      <div class="why-grid" style="margin-top:32px;">
         <div class="why-card reveal">
           <span class="num">01</span>
           <div>
-            <h4>入职即上手</h4>
-            <p>新成员无需逐行阅读数万行代码，通过图谱 10 分钟把握项目骨架，大幅缩短 onboarding 周期。</p>
+            <h4>AI 代理提效</h4>
+            <p>AI 无需反复读取文件猜测结构，通过图谱一次查询即可获取精准的代码上下文，显著降低 Token 消耗和 API 成本。</p>
           </div>
         </div>
         <div class="why-card reveal">
           <span class="num">02</span>
           <div>
-            <h4>重构有底气</h4>
-            <p>改动前先看清影响范围——CodeGraph 高亮显示所有关联模块，避免牵一发而动全身的意外。</p>
+            <h4>影响范围可控</h4>
+            <p>修改核心函数前，通过 impact 分析查看完整的调用链波及范围，避免牵一发而动全身的意外。</p>
           </div>
         </div>
         <div class="why-card reveal">
           <span class="num">03</span>
           <div>
-            <h4>Code Review 提效</h4>
-            <p>Reviewer 通过调用链快速理解 PR 改动的影响面，不再迷失在 diff 文件的海洋中。</p>
+            <h4>新人快速上手</h4>
+            <p>新团队成员通过自然语言提问即可理解项目结构，无需逐行阅读数万行代码，大幅缩短 onboarding 周期。</p>
           </div>
         </div>
         <div class="why-card reveal">
           <span class="num">04</span>
           <div>
-            <h4>技术债可视化</h4>
-            <p>循环依赖、过度耦合、孤儿模块……架构问题在图谱中无处遁形，成为重构优先级决策的依据。</p>
+            <h4>架构问题秒答</h4>
+            <p>"扩展宿主进程如何与主进程通信？"——AI 代理通过图谱直接定位相关源码，告别盲人摸象。</p>
           </div>
         </div>
       </div>
@@ -581,14 +673,14 @@
       <div class="sec-head reveal">
         <span class="sec-tag">// Installation</span>
         <h2>三步完成安装</h2>
-        <p>支持 macOS、Linux 与 Windows，也提供 Docker 镜像与 IDE 插件。</p>
+        <p>支持 macOS、Linux 与 Windows，一键安装脚本自带 Node 运行时，无需手动安装 Node.js。</p>
       </div>
       <div class="install-wrap reveal">
         <div class="platform-tabs" id="platformTabs">
           <button class="active" data-platform="macos">macOS</button>
           <button data-platform="linux">Linux</button>
           <button data-platform="win">Windows</button>
-          <button data-platform="docker">Docker</button>
+          <button data-platform="npm">npm / npx</button>
         </div>
         <div class="install-body">
           <!-- macOS -->
@@ -598,19 +690,18 @@
                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
                 <span class="copy" onclick="copyCode(this)">复制</span>
               </div>
-              <pre><span class="c"># 使用 Homebrew 安装（推荐）</span>
-<span class="n">brew</span> <span class="k">install</span> codegraph
+              <pre><span class="c"># 一键安装（推荐，自带 Node 运行时）</span>
+<span class="n">curl</span> <span class="k">-fsSL</span> https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | <span class="n">sh</span>
 
-<span class="c"># 或使用 curl 脚本</span>
-<span class="n">curl</span> <span class="k">-fsSL</span> https://codegraph.dev/install.sh | <span class="n">sh</span>
+<span class="c"># 或使用 npx（需 Node.js ≥ 18）</span>
+<span class="n">npx</span> <span class="k">@colbymchenry/codegraph</span>
 
 <span class="c"># 验证安装</span>
-<span class="n">codegraph</span> <span class="k">--version</span>
-<span class="output">CodeGraph v2.1.0 — build 2026.06.01</span></pre>
+<span class="n">codegraph</span> <span class="k">--version</span></pre>
             </div>
             <div class="install-note">
               <span class="info-icon">i</span>
-              <p>macOS 10.15+ 支持原生 Apple Silicon 与 Intel 芯片。首次运行如遇安全提示，请前往「系统偏好设置 → 安全性与隐私」允许。</p>
+              <p>安装脚本会自动检测系统中已安装的 AI 代理（Claude Code、Cursor、Codex CLI、OpenCode 等），交互式提示选择要配置的代理并自动写入 MCP 配置。</p>
             </div>
           </div>
           <!-- Linux -->
@@ -620,20 +711,18 @@
                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
                 <span class="copy" onclick="copyCode(this)">复制</span>
               </div>
-              <pre><span class="c"># Debian / Ubuntu</span>
-<span class="n">wget</span> <span class="k">-qO-</span> https://codegraph.dev/deb/codegraph.asc | <span class="n">sudo</span> <span class="n">apt-key</span> <span class="k">add</span> -
-<span class="n">echo</span> <span class="s">"deb https://codegraph.dev/deb stable main"</span> | <span class="n">sudo</span> <span class="n">tee</span> /etc/apt/sources.list.d/codegraph.list
-<span class="n">sudo</span> <span class="n">apt</span> <span class="k">update</span> && <span class="n">sudo</span> <span class="n">apt</span> <span class="k">install</span> codegraph
+              <pre><span class="c"># 一键安装（推荐，自带 Node 运行时）</span>
+<span class="n">curl</span> <span class="k">-fsSL</span> https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | <span class="n">sh</span>
 
-<span class="c"># Arch Linux</span>
-<span class="n">yay</span> <span class="k">-S</span> codegraph
+<span class="c"># 或使用 npx（需 Node.js ≥ 18）</span>
+<span class="n">npx</span> <span class="k">@colbymchenry/codegraph</span>
 
-<span class="c"># 验证</span>
+<span class="c"># 验证安装</span>
 <span class="n">codegraph</span> <span class="k">--version</span></pre>
             </div>
             <div class="install-note">
               <span class="info-icon">i</span>
-              <p>支持 x86_64 与 ARM64 架构。若使用其他发行版，可从 <a href="#">GitHub Releases</a> 下载预编译二进制文件。</p>
+              <p>支持 x86_64 与 ARM64 架构。安装脚本会自动配置 AI 代理的 MCP 服务器设置。</p>
             </div>
           </div>
           <!-- Windows -->
@@ -643,38 +732,39 @@
                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
                 <span class="copy" onclick="copyCode(this)">复制</span>
               </div>
-              <pre><span class="c"># PowerShell (推荐)</span>
-<span class="n">winget</span> <span class="k">install</span> CodeGraph.CodeGraph
+              <pre><span class="c"># PowerShell 一键安装（推荐）</span>
+<span class="n">irm</span> https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | <span class="n">iex</span>
 
-<span class="c"># 或使用 Scoop</span>
-<span class="n">scoop</span> <span class="k">install</span> codegraph
+<span class="c"># 或使用 npx（需 Node.js ≥ 18）</span>
+<span class="n">npx</span> <span class="k">@colbymchenry/codegraph</span>
 
-<span class="c"># 验证</span>
+<span class="c"># 验证安装</span>
 <span class="n">codegraph</span> <span class="k">--version</span></pre>
             </div>
             <div class="install-note">
               <span class="info-icon">i</span>
-              <p>Windows 10 19041+ / Windows 11 支持。安装后会自动加入 PATH，重启终端即可使用 codegraph 命令。</p>
+              <p>Windows 10 19041+ / Windows 11 支持。安装后会自动加入 PATH，并自动配置 AI 代理的 MCP 服务器。</p>
             </div>
           </div>
-          <!-- Docker -->
-          <div class="install-panel" data-panel="docker">
+          <!-- npm -->
+          <div class="install-panel" data-panel="npm">
             <div class="code-wrap">
               <div class="code-head">
                 <span class="dot"></span><span class="dot"></span><span class="dot"></span>
                 <span class="copy" onclick="copyCode(this)">复制</span>
               </div>
-              <pre><span class="c"># 拉取镜像</span>
-<span class="n">docker</span> <span class="k">pull</span> codegraph/codegraph:latest
+              <pre><span class="c"># 零安装直接运行</span>
+<span class="n">npx</span> <span class="k">@colbymchenry/codegraph</span>
 
-<span class="c"># 扫描当前目录并启动 Web 服务</span>
-<span class="n">docker</span> <span class="k">run</span> <span class="k">--rm</span> <span class="k">-p</span> 8080:8080 <span class="k">-v</span> <span class="s">"$(pwd):/project"</span> codegraph/codegraph <span class="k">serve</span> /project
+<span class="c"># 全局安装</span>
+<span class="n">npm</span> <span class="k">install</span> <span class="k">-g</span> <span class="k">@colbymchenry/codegraph</span>
 
-<span class="c"># 访问 http://localhost:8080 查看图谱</span></pre>
+<span class="c"># 编程式使用</span>
+<span class="n">npm</span> <span class="k">install</span> <span class="k">@colbymchenry/codegraph</span></pre>
             </div>
             <div class="install-note">
               <span class="info-icon">i</span>
-              <p>Docker 镜像内置完整运行环境，适合 CI/CD 流水线中自动生成并部署图谱报告。</p>
+              <p>需要 Node.js ≥ 18。安装后使用 <code style="color:var(--accent);">codegraph</code> 命令即可。包名：<code style="color:var(--accent);">@colbymchenry/codegraph</code></p>
             </div>
           </div>
         </div>
@@ -687,121 +777,170 @@
       <div class="sec-head reveal">
         <span class="sec-tag">// Quick Start</span>
         <h2>快速上手</h2>
-        <p>从初始化到深入探索，五分钟掌握 CodeGraph 的核心工作流。</p>
+        <p>从安装到 AI 代理调用，五分钟完成 CodeGraph 配置。</p>
       </div>
       <div class="usage-timeline">
         <div class="usage-step reveal">
           <span class="node">1</span>
-          <h4>初始化项目扫描 <span class="tag">必须</span></h4>
-          <p>进入项目根目录，运行 scan 命令。CodeGraph 会自动识别项目类型（Node.js、Python、Go、Rust 等）并解析源码结构。</p>
+          <h4>安装 CodeGraph <span class="tag">必须</span></h4>
+          <p>运行一键安装脚本，自动下载并配置 CodeGraph。安装器会检测系统中已安装的 AI 代理，自动写入 MCP 服务器配置。</p>
           <div class="code-snippet">
-            <span class="prompt">$</span> <span class="cmd">codegraph scan</span> <span class="output">--depth 3</span><br>
-            <span class="output">✓ Detected Node.js project (package.json)<br>
-            ✓ Parsing 1,247 files... done (0.8s)<br>
-            ✓ Building dependency graph... done<br>
-            ✓ Graph saved to .codegraph/graph.json</span>
+            <span class="prompt">$</span> <span class="cmd">curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh</span><br>
+            <span class="output">✓ Downloading CodeGraph...<br>
+            ✓ Installing to /usr/local/bin/codegraph<br>
+            ✓ Detected: Claude Code, Cursor<br>
+            ✓ Configure MCP for Claude Code? (Y/n): Y<br>
+            ✓ MCP server configured successfully</span>
           </div>
         </div>
         <div class="usage-step reveal">
           <span class="node">2</span>
-          <h4>启动可视化界面 <span class="tag">推荐</span></h4>
-          <p>serve 命令会在本地启动一个交互式 Web 界面，自动打开浏览器，支持实时热更新。</p>
+          <h4>初始化项目索引 <span class="tag">必须</span></h4>
+          <p>进入项目根目录，运行 init 命令构建知识图谱索引。CodeGraph 会自动识别项目类型并解析源码结构。</p>
           <div class="code-snippet">
-            <span class="prompt">$</span> <span class="cmd">codegraph serve</span><br>
-            <span class="output">🚀 CodeGraph server running at http://localhost:8080<br>
-            📝 Watching for file changes...<br>
-            ⌨️  Press q to quit, h for help</span>
+            <span class="prompt">$</span> <span class="cmd">cd /path/to/project</span><br>
+            <span class="prompt">$</span> <span class="cmd">codegraph init -i</span><br>
+            <span class="output">✓ Detected Node.js project (package.json)<br>
+            ✓ Parsing 1,247 files... done (0.8s)<br>
+            ✓ Building dependency graph... done<br>
+            ✓ Index saved to .codegraph/codegraph.db<br>
+            ✓ Cursor rules written to .cursor/rules/codegraph.mdc</span>
           </div>
         </div>
         <div class="usage-step reveal">
           <span class="node">3</span>
-          <h4>交互式探索图谱</h4>
-          <p>在浏览器中，你可以缩放拖拽整个图谱，点击节点查看详情，使用搜索框定位模块，或者通过筛选器按文件类型/依赖层级缩小范围。</p>
+          <h4>重启 AI 代理 <span class="tag">推荐</span></h4>
+          <p>重启你的 AI 代理（Claude Code、Cursor 等），使 MCP 服务器配置生效。当项目目录中存在 <code style="color:var(--accent);">.codegraph/</code> 文件夹时，AI 代理会自动调用 CodeGraph 工具。</p>
         </div>
         <div class="usage-step reveal">
           <span class="node">4</span>
-          <h4>导出与分享 <span class="tag">可选</span></h4>
-          <p>将图谱导出为静态文件或生成在线分享链接，方便在文档、PR 或会议中引用。</p>
+          <h4>开始使用</h4>
+          <p>现在你可以直接向 AI 代理提问代码相关问题，它会自动调用 CodeGraph 的 MCP 工具获取精准上下文。你也可以使用 CLI 手动查询。</p>
           <div class="code-snippet">
-            <span class="prompt">$</span> <span class="cmd">codegraph export</span> <span class="output">--format svg --output architecture.svg</span><br>
-            <span class="prompt">$</span> <span class="cmd">codegraph share</span> <span class="output">--expires 7d</span><br>
-            <span class="output">🔗 Share link: https://codegraph.dev/s/x8k2m9p (expires in 7 days)</span>
+            <span class="prompt">$</span> <span class="cmd">codegraph query</span> <span class="output">UserService</span><br>
+            <span class="output">Found 3 symbols matching "UserService":<br>
+            → src/services/UserService.ts (class UserService)<br>
+            → src/services/UserService.test.ts<br>
+            → src/types/user.ts (interface UserServiceConfig)</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Command Palette -->
-    <section>
+    <!-- MCP Tools -->
+    <section id="mcp-tools">
       <div class="sec-head reveal">
-        <span class="sec-tag">// Commands</span>
-        <h2>核心命令一览</h2>
-        <p>简洁一致的 CLI 设计，所有命令遵循 <code style="color:var(--accent);font-family:var(--font-mono);font-size:14px;">codegraph &lt;verb&gt; [options]</code> 范式。</p>
+        <span class="sec-tag">// MCP Tools</span>
+        <h2>MCP 工具一览</h2>
+        <p>CodeGraph 作为 MCP 服务器运行时，向 AI 代理暴露以下工具。所有查询均在本地 SQLite 中完成，毫秒级响应。</p>
       </div>
       <div class="palette-wrap reveal">
         <div class="palette-header">
           <span style="color:var(--ink-3);font-size:13px;">❖</span>
-          <div class="search-sim">输入命令或按 ↑↓ 导航</div>
-          <span style="color:var(--ink-3);font-size:12px;font-family:var(--font-mono);">ESC 关闭</span>
+          <div class="search-sim">AI 代理自动调用以下工具</div>
+          <span style="color:var(--ink-3);font-size:12px;font-family:var(--font-mono);">MCP Server</span>
         </div>
         <div class="palette-body">
           <div class="palette-item highlight">
             <span class="ico">🔍</span>
-            <div class="text"><div class="name">scan</div><div class="desc">扫描项目并生成依赖图谱</div></div>
-            <span class="key">codegraph scan</span>
+            <div class="text"><div class="name">codegraph_search</div><div class="desc">按名称在整个代码库中查找符号</div></div>
+            <span class="key">搜索</span>
           </div>
           <div class="palette-item">
-            <span class="ico">🚀</span>
-            <div class="text"><div class="name">serve</div><div class="desc">启动本地可视化服务器</div></div>
-            <span class="key">codegraph serve</span>
+            <span class="ico">🧩</span>
+            <div class="text"><div class="name">codegraph_context</div><div class="desc">为特定任务构建相关代码上下文</div></div>
+            <span class="key">上下文</span>
           </div>
           <div class="palette-item">
             <span class="ico">📤</span>
-            <div class="text"><div class="name">export</div><div class="desc">导出图谱为 SVG / PNG / JSON</div></div>
-            <span class="key">codegraph export</span>
+            <div class="text"><div class="name">codegraph_callers</div><div class="desc">查找调用某个函数的代码</div></div>
+            <span class="key">调用方</span>
           </div>
           <div class="palette-item">
-            <span class="ico">🔗</span>
-            <div class="text"><div class="name">share</div><div class="desc">生成可分享的在线链接</div></div>
-            <span class="key">codegraph share</span>
+            <span class="ico">📥</span>
+            <div class="text"><div class="name">codegraph_callees</div><div class="desc">查找某个函数调用的代码</div></div>
+            <span class="key">被调用方</span>
           </div>
           <div class="palette-item">
-            <span class="ico">🧹</span>
-            <div class="text"><div class="name">clean</div><div class="desc">清除缓存与生成的图谱文件</div></div>
-            <span class="key">codegraph clean</span>
+            <span class="ico">💥</span>
+            <div class="text"><div class="name">codegraph_impact</div><div class="desc">分析修改某个符号会影响哪些代码</div></div>
+            <span class="key">影响</span>
           </div>
           <div class="palette-item">
-            <span class="ico">⚙️</span>
-            <div class="text"><div class="name">config</div><div class="desc">查看与修改配置项</div></div>
-            <span class="key">codegraph config</span>
+            <span class="ico">📋</span>
+            <div class="text"><div class="name">codegraph_node</div><div class="desc">获取特定符号的详细信息（可选带源代码）</div></div>
+            <span class="key">节点</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">📁</span>
+            <div class="text"><div class="name">codegraph_files</div><div class="desc">获取已索引的文件结构（比文件系统扫描更快）</div></div>
+            <span class="key">文件</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">📡</span>
+            <div class="text"><div class="name">codegraph_status</div><div class="desc">检查索引健康状况和统计信息</div></div>
+            <span class="key">状态</span>
+          </div>
+          <div class="palette-item">
+            <span class="ico">🔭</span>
+            <div class="text"><div class="name">codegraph_explore</div><div class="desc">探索符号的动态分发关系和调用流程</div></div>
+            <span class="key">探索</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Shortcuts -->
-    <section id="shortcuts">
+    <!-- CLI Commands -->
+    <section>
       <div class="sec-head reveal">
-        <span class="sec-tag">// Shortcuts</span>
-        <h2>Web 界面快捷键</h2>
-        <p>键盘驱动的图谱浏览体验，双手不离开键盘即可掌控全局。</p>
+        <span class="sec-tag">// CLI</span>
+        <h2>CLI 命令参考</h2>
+        <p>简洁一致的命令设计，除了 AI 代理自动调用外，你也可以手动查询代码库。</p>
       </div>
       <div class="kbd-grid">
-        <div class="kbd-item reveal"><span>聚焦搜索框</span><code>/</code></div>
-        <div class="kbd-item reveal"><span>放大 / 缩小</span><code>Ctrl + 滚轮</code></div>
-        <div class="kbd-item reveal"><span>平移画布</span><code>空格 + 拖拽</code></div>
-        <div class="kbd-item reveal"><span>聚焦选中节点</span><code>Enter</code></div>
-        <div class="kbd-item reveal"><span>返回上一级</span><code>Esc</code></div>
-        <div class="kbd-item reveal"><span>切换侧边栏</span><code>[</code></div>
-        <div class="kbd-item reveal"><span>导出当前视图</span><code>Ctrl + S</code></div>
-        <div class="kbd-item reveal"><span>切换主题</span><code>Ctrl + T</code></div>
+        <div class="kbd-item reveal"><span>初始化项目索引</span><code>codegraph init -i</code></div>
+        <div class="kbd-item reveal"><span>全文搜索符号</span><code>codegraph query &lt;keyword&gt;</code></div>
+        <div class="kbd-item reveal"><span>查找调用方</span><code>codegraph callers &lt;symbol&gt;</code></div>
+        <div class="kbd-item reveal"><span>启动 MCP 服务器</span><code>codegraph serve --mcp</code></div>
+        <div class="kbd-item reveal"><span>手动同步索引</span><code>codegraph sync</code></div>
+        <div class="kbd-item reveal"><span>查看版本</span><code>codegraph --version</code></div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section>
+      <div class="sec-head reveal">
+        <span class="sec-tag">// Architecture</span>
+        <h2>工作原理</h2>
+        <p>CodeGraph 通过 tree-sitter 将源代码解析为知识图谱，存储在本地 SQLite 中。</p>
+      </div>
+      <div class="install-wrap reveal">
+        <div class="code-wrap">
+          <div class="code-head">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <pre><span class="c"># 数据流</span>
+源代码
+  <span class="k">↓</span> tree-sitter AST 解析
+提取节点（函数 / 类 / 方法）和边（调用 / 导入 / 继承 / 实现）
+  <span class="k">↓</span> 引用解析
+函数调用 → 定义，导入 → 源文件，类继承，框架路由
+  <span class="k">↓</span> 存入本地 SQLite（.codegraph/codegraph.db）
+启用 FTS5 全文搜索
+  <span class="k">↓</span> MCP Server
+原生 OS 文件事件监听，2秒防抖增量同步</pre>
+        </div>
+        <div class="install-note">
+          <span class="info-icon">i</span>
+          <p><strong>零配置设计：</strong>自动识别语言（基于文件扩展名）、自动排除依赖目录（node_modules、vendor、dist 等）、自动尊重 .gitignore、自动排除大于 1MB 的文件。如需调整排除规则，只需修改 .gitignore。</p>
+        </div>
       </div>
     </section>
 
     <footer>
       <div class="foot-brand"><div class="logo-mark">◈</div>CodeGraph</div>
-      <p>让每一行代码都有迹可循</p>
-      <p class="date">2026.6.1</p>
+      <p>让 AI 秒懂你的代码库 · 100% 本地运行</p>
+      <p class="date">GitHub: colbymchenry/codegraph · MIT License</p>
     </footer>
   </div>
 
@@ -919,7 +1058,7 @@
 
   /* ---------- Typewriter effect ---------- */
   const titleEl = document.getElementById('typewriter');
-  const fullText = '让代码结构一目了然';
+  const fullText = '让 AI 秒懂你的代码库';
   let charIdx = 0;
   function typeWriter() {
     if (charIdx <= fullText.length) {
