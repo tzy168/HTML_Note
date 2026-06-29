@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestJS 快速入门 — This is for Barbie Developers</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+
+        :root {
+            --pink: #e0218a;
+            --pink-light: #ff6eb4;
+            --pink-pale: #fce4ec;
+            --pink-soft: #f8d0e4;
+            --magenta: #c2185b;
+            --hot-pink: #ff1493;
+            --rose: #f43f7a;
+            --gold: #d4af37;
+            --gold-light: #ffeaa7;
+            --cream: #fff9f0;
+            --white: #ffffff;
+            --bg: #fef7fb;
+            --surface: #ffffff;
+            --surface2: #fdf0f5;
+            --text: #4a1942;
+            --text-dim: #9b59a0;
+            --border: #f0c0d8;
+            --code-bg: #1e1e2e;
+            --code-surface: #2a2a3c;
+            --shadow: 0 4px 20px rgba(224, 33, 138, 0.08);
+            --shadow-hover: 0 8px 30px rgba(224, 33, 138, 0.15);
+            --glow: 0 0 30px rgba(255, 20, 147, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,20,147,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -200px;
+            left: -200px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .sparkle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: var(--hot-pink);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 9999;
+            animation: sparklePop 0.6s ease-out forwards;
+        }
+        @keyframes sparklePop {
+            0% { transform: scale(0); opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--pink), var(--hot-pink), var(--gold));
+            z-index: 10000;
+            transition: width 0.15s ease-out;
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 10px var(--hot-pink);
+        }
+
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 48px 24px 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 40px;
+            margin-bottom: 48px;
+            background: linear-gradient(135deg, var(--pink-pale), var(--surface2), var(--gold-light));
+            border-radius: 24px;
+            border: 2px solid var(--border);
+            box-shadow: var(--glow);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '✦ ✧ ✦';
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            font-size: 0.85rem;
+            color: var(--pink-light);
+            letter-spacing: 4px;
+        }
+        .hero::after {
+            content: '✦ ✧ ✦';
+            position: absolute;
+            bottom: 12px;
+            left: 20px;
+            font-size: 0.85rem;
+            color: var(--gold);
+            letter-spacing: 4px;
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--pink), var(--magenta), var(--rose));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+        .hero .subtitle {
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            font-weight: 500;
+        }
+        .hero .kiss {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 1.6rem;
+            animation: kiss 2s ease-in-out infinite;
+        }
+        @keyframes kiss {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(-8deg); }
+        }
+
+        /* TOC */
+        .toc {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 32px;
+            margin-bottom: 52px;
+            box-shadow: var(--shadow);
+        }
+        .toc h3 {
+            color: var(--pink);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        .toc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 28px;
+        }
+        .toc a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.25s;
+            display: block;
+        }
+        .toc a:hover {
+            color: var(--pink);
+            background: var(--pink-pale);
+            transform: translateX(4px);
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 24px;
+        }
+        h2 {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--magenta);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--pink-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h2 .emoji { font-size: 1.4rem; }
+        h2 .tag {
+            font-size: 0.68rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .tag-core { background: var(--pink-pale); color: var(--pink); }
+        .tag-adv  { background: #ede0f5; color: #9c27b0; }
+        .tag-tip  { background: #e8f5e9; color: #2e7d32; }
+        .tag-fav  { background: var(--gold-light); color: #8d6e00; }
+
+        p { margin-bottom: 14px; color: var(--text); font-weight: 500; }
+        ul, ol { margin-bottom: 14px; padding-left: 24px; }
+        li { margin-bottom: 8px; color: var(--text); font-weight: 500; }
+        li strong { color: var(--pink); }
+
+        /* Notes */
+        .note {
+            background: var(--pink-pale);
+            border-left: 4px solid var(--pink);
+            padding: 14px 18px;
+            border-radius: 0 14px 14px 0;
+            margin: 18px 0;
+            font-size: 0.93rem;
+        }
+        .note-warn {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+        .note-fav {
+            background: var(--gold-light);
+            border-left-color: var(--gold);
+        }
+        .note strong { color: var(--pink); }
+
+        /* Code blocks */
+        pre {
+            background: var(--code-bg);
+            border: 2px solid #3a3a50;
+            border-radius: 16px;
+            padding: 26px 22px;
+            margin: 18px 0;
+            overflow-x: auto;
+            font-size: 1rem;
+            line-height: 1.8;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            -webkit-font-smoothing: antialiased;
+        }
+        pre .lang-tag {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 0.68rem;
+            color: #aaa;
+            background: var(--code-surface);
+            padding: 3px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        pre .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 80px;
+            font-size: 0.72rem;
+            color: #aaa;
+            background: var(--code-surface);
+            border: 1px solid #4a4a60;
+            padding: 3px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        pre .copy-btn:hover { color: var(--hot-pink); border-color: var(--hot-pink); }
+        pre .copy-btn.copied { color: #4caf50; border-color: #4caf50; }
+
+        code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+        pre code,
+        pre { color: #cdd6f4; }
+        :not(pre) > code {
+            background: var(--pink-pale);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            color: var(--magenta);
+            border: 1px solid var(--border);
+        }
+        .cmt  { color: #a6adc8; font-style: italic; }
+        .kw   { color: #e0b0ff; font-weight: bold; }
+        .dec  { color: #f9e2af; font-weight: bold; }
+        .str  { color: #a6e3a1; font-weight: bold; }
+        .fn   { color: #89dceb; font-weight: bold; }
+        .type { color: #fbc78d; font-weight: bold; }
+        .num  { color: #fab387; }
+        .dir  { color: #f5a0c0; }
+        .op   { color: #89dceb; }
+        .ann  { color: #f5c2e7; font-style: italic; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 18px 0;
+            font-size: 0.92rem;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+        th {
+            background: linear-gradient(135deg, var(--pink-pale), var(--surface2));
+            color: var(--pink);
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            background: var(--surface);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--surface2); }
+
+        /* Grid & Cards */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 18px 0; }
+        .card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 22px;
+            transition: all 0.3s;
+            cursor: default;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--pink-light);
+        }
+        .card h4 { color: var(--pink); margin-bottom: 8px; font-size: 1.05rem; }
+        .card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0; }
+
+        /* Flow */
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 22px 0;
+            padding: 18px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .flow .step {
+            background: linear-gradient(135deg, var(--pink), var(--magenta));
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            box-shadow: 0 3px 12px rgba(224, 33, 138, 0.25);
+        }
+        .flow .arrow { color: var(--pink-light); font-size: 1.3rem; }
+
+        /* Collapsible */
+        .collapse-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 8px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--pink);
+            margin: 10px 0;
+            transition: all 0.25s;
+            font-family: 'Quicksand', sans-serif;
+            user-select: none;
+        }
+        .collapse-trigger:hover { background: var(--pink-pale); border-color: var(--pink-light); }
+        .collapse-trigger .arrow-icon { transition: transform 0.3s; display: inline-block; }
+        .collapse-trigger.open .arrow-icon { transform: rotate(90deg); }
+        .collapse-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+        }
+        .collapse-body.open { max-height: 2000px; }
+
+        /* Checklist */
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .checklist li.done { opacity: 0.5; text-decoration: line-through; }
+        .checklist .ck-box {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s;
+            margin-top: 2px;
+        }
+        .checklist li.done .ck-box {
+            background: var(--pink);
+            border-color: var(--pink);
+        }
+        .checklist .ck-box::after {
+            content: '';
+            width: 6px;
+            height: 10px;
+            border: 2px solid #fff;
+            border-top: 0;
+            border-left: 0;
+            transform: rotate(45deg) translateY(-1px);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .checklist li.done .ck-box::after { opacity: 1; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: linear-gradient(135deg, var(--pink), var(--magenta));
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 6px 24px rgba(224,33,138,0.3);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.35s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* Divider */
+        .divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--pink-soft), var(--gold-light), var(--pink-soft), transparent);
+            margin: 48px 0;
+        }
+
+        /* Footer badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--pink), var(--hot-pink));
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 3px 12px rgba(224,33,138,0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .toc-grid { grid-template-columns: 1fr; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2rem; }
+            pre { font-size: 0.88rem; padding: 18px 14px; }
+            .container { padding: 24px 16px 60px; }
+        }
+    </style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+    <h1>NestJS 快速入门</h1>
+    <p class="subtitle">从零搭建一个优雅的后端服务 — 用最 Barbie 的方式学最硬核的框架</p>
+    <span class="kiss">💋</span>
+</div>
+
+<!-- TOC -->
+<nav class="toc">
+    <h3>目录导航</h3>
+    <div class="toc-grid">
+        <a href="#install">1. 安装与启动</a>
+        <a href="#arch">2. 架构核心概念</a>
+        <a href="#controllers">3. Controllers 控制器</a>
+        <a href="#providers">4. Providers 提供者</a>
+        <a href="#modules">5. Modules 模块</a>
+        <a href="#di">6. 依赖注入</a>
+        <a href="#dto">7. DTO 与验证</a>
+        <a href="#pipes">8. Pipes 管道</a>
+        <a href="#interceptors">9. Interceptors 拦截器</a>
+        <a href="#guards">10. Guards 守卫</a>
+        <a href="#middleware-n">11. Middleware 中间件</a>
+        <a href="#config">12. Config 配置管理</a>
+        <a href="#db">13. 数据库集成</a>
+        <a href="#errors">14. 异常过滤器</a>
+        <a href="#summary">15. 速查表</a>
+    </div>
+</nav>
+
+<!-- 1. 安装 -->
+<section id="install">
+<h2><span class="emoji">🎀</span> 1. 安装与启动 <span class="tag tag-core">核心</span></h2>
+
+<p>三行命令，从零到跑起来。</p>
+
+<pre><span class="fn">#</span> <span class="cmt">方式一：Nest CLI（推荐，能生成模板代码）</span>
+npm i -g @nestjs/cli
+nest new my-barbie-app
+
+<span class="cmt"># 或一步到位</span>
+npx @nestjs/cli new my-barbie-app
+
+<span class="cmt"># 方式二：手动创建</span>
+mkdir my-barbie-app && cd my-barbie-app
+npm init -y
+npm install @nestjs/core @nestjs/common rxjs reflect-metadata<span class="lang-tag">bash</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>推荐用 Nest CLI，</strong>因为它会自动生成模块、控制器、服务的脚手架代码，后续开发效率翻倍。
+</div>
+
+<pre><span class="cmt"># 启动开发服务器</span>
+cd my-barbie-app
+npm run start
+
+<span class="cmt"># 开启热重载</span>
+npm run start:dev
+
+<span class="cmt"># 控制台输出：</span>
+<span class="str">[Nest] 12345  - INFO [NestFactory] Starting Nest application...</span>
+<span class="str">[Nest] 12345  - INFO [InstanceLoader] AppModule dependencies initialized</span>
+<span class="str">[Nest] 12345  - INFO Application is running on: http://localhost:3000</span><span class="lang-tag">bash</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note-fav note">
+    <strong>第一个请求：</strong>打开 <code>http://localhost:3000</code>，你会看到 <code>Hello World!</code>。恭喜，你已经是一个 NestJS 开发者了 ✨
+</div>
+</section>
+
+<!-- 2. 架构 -->
+<section id="arch">
+<h2><span class="emoji">💎</span> 2. 架构核心概念 <span class="tag tag-core">核心</span></h2>
+
+<p>NestJS 的灵魂在于它的分层架构和依赖注入。理解这四个核心，你就掌握了 80% 的 NestJS。</p>
+
+<div class="flow">
+    <span class="step">Client 请求</span>
+    <span class="arrow">→</span>
+    <span class="step">Middleware</span>
+    <span class="arrow">→</span>
+    <span class="step">Guard</span>
+    <span class="arrow">→</span>
+    <span class="step">Interceptor</span>
+    <span class="arrow">→</span>
+    <span class="step">Pipe</span>
+    <span class="arrow">→</span>
+    <span class="step">Controller</span>
+    <span class="arrow">→</span>
+    <span class="step">Service</span>
+    <span class="arrow">→</span>
+    <span class="step">响应</span>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h4>Controller</h4>
+        <p>处理请求路由、参数解析，调用 Service 获取数据并返回</p>
+    </div>
+    <div class="card">
+        <h4>Service / Provider</h4>
+        <p>业务逻辑层，可被注入到 Controller 或其他 Service 中</p>
+    </div>
+    <div class="card">
+        <h4>Module</h4>
+        <p>组织单元，将 Controller、Service 等打包到一起</p>
+    </div>
+    <div class="card">
+        <h4>Module 是一切的容器</h4>
+        <p>整个应用就是一个根模块 (AppModule)，内部可嵌套子模块</p>
+    </div>
+</div>
+
+<pre><span class="cmt">// 典型项目结构</span>
+src/
+├── app.module.ts        <span class="cmt"># 根模块</span>
+├── app.controller.ts   <span class="cmt"># 根控制器</span>
+├── app.service.ts      <span class="cmt"># 根服务</span>
+├── app.controller.spec.ts
+├── main.ts             <span class="cmt"># 入口文件</span>
+├── cats/
+│   ├── cats.module.ts
+│   ├── cats.controller.ts
+│   ├── cats.service.ts
+│   ├── dto/
+│   │   └── create-cat.dto.ts
+│   └── entities/
+│       └── cat.entity.ts
+└── common/
+    ├── filters/
+    ├── guards/
+    ├── interceptors/
+    └── pipes/<span class="lang-tag">结构</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</section>
+
+<!-- 3. Controllers -->
+<section id="controllers">
+<h2><span class="emoji">👠</span> 3. Controllers 控制器 <span class="tag tag-core">核心</span></h2>
+
+<p>Controller 负责处理 HTTP 请求。通过装饰器定义路由、方法和参数绑定。</p>
+
+<pre><span class="cmt">// cats.controller.ts</span>
+<span class="kw">import</span> { Controller, Get, Post, Body, Param, Delete, Put } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { CatsService } <span class="kw">from</span> <span class="str">'./cats.service'</span>;
+<span class="kw">import</span> { CreateCatDto } <span class="kw">from</span> <span class="str">'./dto/create-cat.dto'</span>;
+
+<span class="ann">@Controller</span>(<span class="str">'cats'</span>)
+<span class="kw">export class</span> <span class="type">CatsController</span> {
+
+  <span class="ann">@Get</span>()
+  <span class="fn">findAll</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">findAll</span>();
+    <span class="cmt">// 自动序列化为 JSON，状态码 200</span>
+  }
+
+  <span class="ann">@Get</span>(<span class="str">':id'</span>)
+  <span class="fn">findOne</span>(<span class="ann">@Param</span>(<span class="str">'id'</span>) id: <span class="type">string</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">findOne</span>(id);
+  }
+
+  <span class="ann">@Post</span>()
+  <span class="fn">create</span>(<span class="ann">@Body</span>() createCatDto: <span class="type">CreateCatDto</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">create</span>(createCatDto);
+  }
+
+  <span class="ann">@Put</span>(<span class="str">':id'</span>)
+  <span class="fn">update</span>(<span class="ann">@Param</span>(<span class="str">'id'</span>) id: <span class="type">string</span>, <span class="ann">@Body</span>() dto: <span class="type">CreateCatDto</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">update</span>(id, dto);
+  }
+
+  <span class="ann">@Delete</span>(<span class="str">':id'</span>)
+  <span class="fn">remove</span>(<span class="ann">@Param</span>(<span class="str">'id'</span>) id: <span class="type">string</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">remove</span>(id);
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<h3 style="margin-top:28px; color:var(--magenta)">常用装饰器速览</h3>
+<table>
+    <tr><th>装饰器</th><th>绑定位置</th><th>示例</th></tr>
+    <tr><td><code>@Get()</code> / <code>@Post()</code> 等</td><td>方法</td><td>定义 HTTP 方法和路径</td></tr>
+    <tr><td><code>@Body()</code></td><td>参数</td><td>获取请求体</td></tr>
+    <tr><td><code>@Param('id')</code></td><td>参数</td><td>获取路径参数</td></tr>
+    <tr><td><code>@Query('page')</code></td><td>参数</td><td>获取查询参数</td></tr>
+    <tr><td><code>@Headers('authorization')</code></td><td>参数</td><td>获取请求头</td></tr>
+    <tr><td><code>@HttpCode(201)</code></td><td>方法</td><td>自定义响应状态码</td></tr>
+    <tr><td><code>@Header('X-Custom', 'val')</code></td><td>方法</td><td>设置响应头</td></tr>
+</table>
+
+<div class="note">
+    <strong>记住：</strong>Controller 只做「接收请求 → 调用 Service → 返回结果」。业务逻辑放 Service，保持 Controller 瘦身。
+</div>
+</section>
+
+<!-- 4. Providers -->
+<section id="providers">
+<h2><span class="emoji">🌸</span> 4. Providers 提供者 <span class="tag tag-core">核心</span></h2>
+
+<p>Service 是最常见的 Provider。通过 <code>@Injectable()</code> 装饰器标记，可被依赖注入到其他组件中。</p>
+
+<pre><span class="cmt">// cats.service.ts</span>
+<span class="kw">import</span> { Injectable } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">CatsService</span> {
+  <span class="kw">private readonly</span> cats: <span class="type">any</span>[] = [];
+
+  <span class="fn">create</span>(cat: <span class="type">any</span>) {
+    <span class="kw">this</span>.cats.<span class="fn">push</span>(cat);
+    <span class="kw">return</span> cat;
+  }
+
+  <span class="fn">findAll</span>(): <span class="type">any</span>[] {
+    <span class="kw">return</span> <span class="kw">this</span>.cats;
+  }
+
+  <span class="fn">findOne</span>(id: <span class="type">string</span>): <span class="type">any</span> {
+    <span class="kw">return</span> <span class="kw">this</span>.cats.<span class="fn">find</span>(<span class="type">c</span> => c.id === id);
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>Provider 不只是 Service，</strong>还包括 Repository、Factory、Helper 等任何用 <code>@Injectable()</code> 标记的类。NestJS 用「Provider」作为统一称呼。
+</div>
+</section>
+
+<!-- 5. Modules -->
+<section id="modules">
+<h2><span class="emoji">🎀</span> 5. Modules 模块 <span class="tag tag-core">核心</span></h2>
+
+<p>Module 是 NestJS 的组织单元，用 <code>@Module()</code> 装饰器声明自己的 Controller 和 Provider。</p>
+
+<pre><span class="cmt">// cats.module.ts</span>
+<span class="kw">import</span> { Module } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { CatsController } <span class="kw">from</span> <span class="str">'./cats.controller'</span>;
+<span class="kw">import</span> { CatsService } <span class="kw">from</span> <span class="str">'./cats.service'</span>;
+
+<span class="ann">@Module</span>({
+  controllers: [CatsController],   <span class="cmt"># 这个模块有哪些控制器</span>
+  providers: [CatsService],        <span class="cmt"># 这个模块提供哪些服务</span>
+  exports: [CatsService],          <span class="cmt"># 导出给其他模块用</span>
+})
+<span class="kw">export class</span> <span class="type">CatsModule</span> {}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// app.module.ts — 根模块导入子模块</span>
+<span class="kw">import</span> { Module } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { CatsModule } <span class="kw">from</span> <span class="str">'./cats/cats.module'</span>;
+
+<span class="ann">@Module</span>({
+  imports: [CatsModule],   <span class="cmt"># 导入子模块</span>
+})
+<span class="kw">export class</span> <span class="type">AppModule</span> {}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note-fav note">
+    <strong>CLI 生成命令（超级好用）：</strong><code>nest g module cats</code>、<code>nest g controller cats</code>、<code>nest g service cats</code>。一行命令自动创建文件并更新模块注册。
+</div>
+</section>
+
+<!-- 6. 依赖注入 -->
+<section id="di">
+<h2><span class="emoji">🪄</span> 6. 依赖注入 <span class="tag tag-fav">精髓</span></h2>
+
+<p>这是 NestJS 最核心的设计模式。你不需要手动 <code>new</code> 一个 Service，而是通过构造函数让 Nest 自动注入。</p>
+
+<pre><span class="cmt">// cats.controller.ts — 通过构造函数注入 Service</span>
+<span class="ann">@Controller</span>(<span class="str">'cats'</span>)
+<span class="kw">export class</span> <span class="type">CatsController</span> {
+
+  <span class="kw">constructor</span>(<span class="kw">private readonly</span> catsService: <span class="type">CatsService</span>) {}
+
+  <span class="ann">@Get</span>()
+  <span class="fn">findAll</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.catsService.<span class="fn">findAll</span>();
+  }
+}
+
+<span class="cmt">// TypeScript 的简写等价于：</span>
+<span class="cmt">// private catsService: CatsService;</span>
+<span class="cmt">// constructor(catsService: CatsService) {</span>
+<span class="cmt">//   this.catsService = catsService;</span>
+<span class="cmt">// }</span><span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>为什么用依赖注入？</strong>方便测试（可以注入 Mock 对象）、解耦（换实现只需改 Provider）、生命周期由容器管理（单例/请求级作用域）。
+</div>
+
+<button class="collapse-trigger" onclick="toggleCollapse(this)">
+    <span class="arrow-icon">▶</span> 自定义 Provider（按需展开）
+</button>
+<div class="collapse-body">
+<pre><span class="cmt">// 用 useClass — 替换实现（如测试时用 MockService）</span>
+<span class="ann">@Module</span>({
+  providers: [
+    {
+      <span class="fn">provide</span>: <span class="str">'CACHE_SERVICE'</span>,
+      <span class="fn">useClass</span>: CacheService,
+    }
+  ]
+})
+
+<span class="cmt">// 用 useFactory — 需要条件逻辑创建实例</span>
+<span class="ann">@Module</span>({
+  providers: [
+    {
+      <span class="fn">provide</span>: <span class="str">'CONFIG_SERVICE'</span>,
+      <span class="fn">useFactory</span>: () => {
+        <span class="kw">return</span> process.env.NODE_ENV === <span class="str">'prod'</span>
+          ? <span class="kw">new</span> <span class="type">ProdConfigService</span>()
+          : <span class="kw">new</span> <span class="type">DevConfigService</span>();
+      },
+    }
+  ]
+})
+
+<span class="cmt">// 用 useValue — 注入常量/配置对象</span>
+<span class="ann">@Module</span>({
+  providers: [
+    {
+      <span class="fn">provide</span>: <span class="str">'APP_CONFIG'</span>,
+      <span class="fn">useValue</span>: { apiKey: <span class="str">'xxx'</span>, baseUrl: <span class="str">'https://api.example.com'</span> },
+    }
+  ]
+})<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</div>
+</section>
+
+<!-- 7. DTO -->
+<section id="dto">
+<h2><span class="emoji">🌸</span> 7. DTO 与验证 <span class="tag tag-core">核心</span></h2>
+
+<p>DTO (Data Transfer Object) 定义接口的输入/输出格式，配合 <code>class-validator</code> 实现自动验证。</p>
+
+<pre><span class="cmt"># 安装验证依赖</span>
+npm install class-validator class-transformer<span class="lang-tag">bash</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// dto/create-cat.dto.ts</span>
+<span class="kw">import</span> { IsString, IsInt, Min, Max } <span class="kw">from</span> <span class="str">'class-validator'</span>;
+
+<span class="kw">export class</span> <span class="type">CreateCatDto</span> {
+  <span class="ann">@IsString</span>()
+  <span class="ann">@MinLength</span>(<span class="num">1</span>)
+  name: <span class="type">string</span>;
+
+  <span class="ann">@IsInt</span>()
+  <span class="ann">@Min</span>(<span class="num">0</span>)
+  <span class="ann">@Max</span>(<span class="num">30</span>)
+  age: <span class="type">number</span>;
+
+  <span class="ann">@IsString</span>()
+  breed: <span class="type">string</span>;
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>别忘了开启全局验证管道：</strong>在 <code>main.ts</code> 中设置 <code>app.useGlobalPipes(new ValidationPipe())</code>，否则装饰器不会自动生效。
+</div>
+</section>
+
+<!-- 8. Pipes -->
+<section id="pipes">
+<h2><span class="emoji">🧚</span> 8. Pipes 管道 <span class="tag tag-adv">进阶</span></h2>
+
+<p>Pipe 在数据到达 Controller 之前进行转换/验证。最常用的是 <code>ValidationPipe</code>。</p>
+
+<pre><span class="cmt">// main.ts — 开启全局验证</span>
+<span class="kw">import</span> { ValidationPipe } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+
+<span class="kw">async function</span> <span class="fn">bootstrap</span>() {
+  <span class="kw">const</span> app = <span class="kw">await</span> <span class="fn">NestFactory.create</span>(AppModule);
+
+  app.<span class="fn">useGlobalPipes</span>(
+    <span class="kw">new</span> <span class="type">ValidationPipe</span>({
+      <span class="fn">transform</span>: <span class="kw">true</span>,             <span class="cmt"># 自动将 plain object 转为 DTO 实例</span>
+      <span class="fn">whitelist</span>: <span class="kw">true</span>,             <span class="cmt"># 自动剥离未定义的属性（防注入）</span>
+      <span class="fn">forbidNonWhitelisted</span>: <span class="kw">true</span>, <span class="cmt"># 非白名单属性直接报错</span>
+    })
+  );
+
+  <span class="kw">await</span> app.<span class="fn">listen</span>(<span class="num">3000</span>);
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<table>
+    <tr><th>内置 Pipe</th><th>用途</th></tr>
+    <tr><td><code>ValidationPipe</code></td><td>基于 class-validator 验证 DTO</td></tr>
+    <tr><td><code>ParseIntPipe</code></td><td>将字符串参数转为数字</td></tr>
+    <tr><td><code>ParseUUIDPipe</code></td><td>验证 UUID 格式</td></tr>
+    <tr><td><code>ParseFloatPipe</code></td><td>将字符串参数转为浮点数</td></tr>
+</table>
+
+<pre><span class="cmt">// 参数级别使用</span>
+<span class="ann">@Get</span>(<span class="str">':id'</span>)
+<span class="fn">findOne</span>(<span class="ann">@Param</span>(<span class="str">'id'</span>, <span class="kw">new</span> <span class="type">ParseIntPipe</span>()) id: <span class="type">number</span>) {
+  <span class="cmt">// id 已经是 number 类型，非法输入会抛出 400 错误</span>
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</section>
+
+<!-- 9. Interceptors -->
+<section id="interceptors">
+<h2><span class="emoji">✨</span> 9. Interceptors 拦截器 <span class="tag tag-adv">进阶</span></h2>
+
+<p>拦截器可以绑定在请求前/后执行逻辑，适合做日志、响应包装、缓存、超时控制等。</p>
+
+<pre><span class="cmt">// interceptors/logging.interceptor.ts</span>
+<span class="kw">import</span> {
+  Injectable, NestInterceptor, ExecutionContext,
+  CallHandler, Logger
+} <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { Observable } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { tap } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">LoggingInterceptor</span> <span class="kw">implements</span> <span class="type">NestInterceptor</span> {
+  <span class="kw">private readonly</span> logger = <span class="kw">new</span> <span class="type">Logger</span>(<span class="str">'HTTP'</span>);
+
+  <span class="fn">intercept</span>(context: <span class="type">ExecutionContext</span>, next: <span class="type">CallHandler</span>): <span class="type">Observable</span>&lt;<span class="type">any</span>&gt; {
+    <span class="kw">const</span> request = context.<span class="fn">switchToHttp</span>().<span class="fn">getRequest</span>();
+    <span class="kw">const</span> method = request.method;
+    <span class="kw">const</span> url = request.url;
+    <span class="kw">const</span> now = Date.<span class="fn">now</span>();
+
+    <span class="kw">return</span> next.<span class="fn">handle</span>().<span class="fn">pipe</span>(
+      <span class="fn">tap</span>(() => <span class="kw">this</span>.logger.<span class="fn">log</span>(<span class="str">`${method} ${url} ${Date.now() - now}ms`</span>))
+    );
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// 响应包装拦截器</span>
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">TransformInterceptor</span> <span class="kw">implements</span> <span class="type">NestInterceptor</span> {
+  <span class="fn">intercept</span>(context: <span class="type">ExecutionContext</span>, next: <span class="type">CallHandler</span>): <span class="type">Observable</span>&lt;<span class="type">any</span>&gt; {
+    <span class="kw">return</span> next.<span class="fn">handle</span>().<span class="fn">pipe</span>(
+      <span class="fn">map</span>(<span class="type">data</span> => ({ success: <span class="kw">true</span>, data, timestamp: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>() }))
+    );
+  }
+}
+
+<span class="cmt">// 使用：app.useGlobalInterceptors(new TransformInterceptor())</span>
+<span class="cmt">// 每个响应自动变成: { "success": true, "data": {...}, "timestamp": "..." }</span><span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</section>
+
+<!-- 10. Guards -->
+<section id="guards">
+<h2><span class="emoji">👑</span> 10. Guards 守卫 <span class="tag tag-adv">进阶</span></h2>
+
+<p>Guard 决定一个请求是否被允许处理。最常见的用途是认证和鉴权。</p>
+
+<pre><span class="cmt">// guards/auth.guard.ts</span>
+<span class="kw">import</span> { Injectable, CanActivate, ExecutionContext } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { Reflector } <span class="kw">from</span> <span class="str">'@nestjs/core'</span>;
+
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">AuthGuard</span> <span class="kw">implements</span> <span class="type">CanActivate</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> reflector: <span class="type">Reflector</span>) {}
+
+  <span class="fn">canActivate</span>(context: <span class="type">ExecutionContext</span>): <span class="type">boolean</span> {
+    <span class="kw">const</span> roles = <span class="kw">this</span>.reflector.<span class="fn">get</span>&lt;<span class="type">string</span>[]&gt;(<span class="str">'roles'</span>, context.<span class="fn">getHandler</span>());
+    <span class="kw">if</span> (!roles) <span class="kw">return true</span>;  <span class="cmt"># 没设置 roles 则放行</span>
+
+    <span class="kw">const</span> request = context.<span class="fn">switchToHttp</span>().<span class="fn">getRequest</span>();
+    <span class="kw">const</span> user = request.user;
+
+    <span class="kw">return</span> roles.<span class="fn">some</span>(<span class="type">role</span> => user.roles?.<span class="fn">includes</span>(role));
+  }
+}
+
+<span class="cmt">// 使用：@UseGuards(AuthGuard) + @SetMetadata('roles', ['admin'])</span>
+<span class="cmt">// 或自定义装饰器：@Roles('admin') 配合 Reflector</span><span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</section>
+
+<!-- 11. Middleware -->
+<section id="middleware-n">
+<h2><span class="emoji">🦋</span> 11. Middleware 中间件 <span class="tag tag-adv">进阶</span></h2>
+
+<p>NestJS 中间件和 Express 中间件基本一致，在路由处理前执行。</p>
+
+<pre><span class="cmt">// middleware/logger.middleware.ts</span>
+<span class="kw">import</span> { Injectable, NestMiddleware } <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { Request, Response, NextFunction } <span class="kw">from</span> <span class="str">'express'</span>;
+
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">LoggerMiddleware</span> <span class="kw">implements</span> <span class="type">NestMiddleware</span> {
+  <span class="fn">use</span>(req: <span class="type">Request</span>, res: <span class="type">Response</span>, next: <span class="type">NextFunction</span>) {
+    console.<span class="fn">log</span>(<span class="str">`${req.method} ${req.url} — ${<span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>()}`</span>);
+    <span class="fn">next</span>();
+  }
+}
+
+<span class="cmt">// 在模块中应用</span>
+<span class="cmt">// cats.module.ts</span>
+<span class="ann">@Module</span>({
+  <span class="cmt"># ...</span>
+})
+<span class="kw">export class</span> <span class="type">CatsModule</span> <span class="kw">implements</span> <span class="type">NestModule</span> {
+  <span class="fn">configure</span>(consumer: <span class="type">MiddlewareConsumer</span>) {
+    consumer
+      .<span class="fn">apply</span>(LoggerMiddleware)
+      .<span class="fn">forRoutes</span>(<span class="str">'cats'</span>);  <span class="cmt"># 只对 /cats 路由生效</span>
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>执行顺序：</strong>Middleware → Guards → Interceptors(before) → Pipes → Controller → Interceptors(after) → Exception Filters
+</div>
+</section>
+
+<!-- 12. Config -->
+<section id="config">
+<h2><span class="emoji">💖</span> 12. Config 配置管理 <span class="tag tag-tip">实用</span></h2>
+
+<pre><span class="cmt"># 安装</span>
+npm install @nestjs/config<span class="lang-tag">bash</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// app.module.ts</span>
+<span class="kw">import</span> { ConfigModule } <span class="kw">from</span> <span class="str">'@nestjs/config'</span>;
+
+<span class="ann">@Module</span>({
+  imports: [
+    <span class="fn">ConfigModule.forRoot</span>({
+      <span class="fn">isGlobal</span>: <span class="kw">true</span>,        <span class="cmt"># 全局可用，不需要每个模块单独导入</span>
+      <span class="fn">envFilePath</span>: <span class="str">'.env'</span>,
+    }),
+  ],
+})
+<span class="kw">export class</span> <span class="type">AppModule</span> {}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// 任意 Service 中使用</span>
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">CatsService</span> {
+  <span class="kw">constructor</span>(<span class="kw">private</span> configService: <span class="type">ConfigService</span>) {}
+
+  <span class="fn">someMethod</span>() {
+    <span class="kw">const</span> dbUrl = <span class="kw">this</span>.configService.<span class="fn">get</span>&lt;<span class="type">string</span>&gt;(<span class="str">'DATABASE_URL'</span>);
+    <span class="kw">const</span> port = <span class="kw">this</span>.configService.<span class="fn">get</span>&lt;<span class="type">number</span>&gt;(<span class="str">'PORT'</span>, <span class="num">3000</span>);  <span class="cmt"># 带默认值</span>
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+</section>
+
+<!-- 13. 数据库 -->
+<section id="db">
+<h2><span class="emoji">🎀</span> 13. 数据库集成 <span class="tag tag-adv">进阶</span></h2>
+
+<p>NestJS + TypeORM 是官方最主流的组合。以下是快速配置。</p>
+
+<pre><span class="cmt"># 安装 TypeORM + 数据库驱动（以 PostgreSQL 为例）</span>
+npm install @nestjs/typeorm typeorm pg<span class="lang-tag">bash</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// app.module.ts</span>
+<span class="kw">import</span> { TypeOrmModule } <span class="kw">from</span> <span class="str">'@nestjs/typeorm'</span>;
+
+<span class="ann">@Module</span>({
+  imports: [
+    <span class="fn">TypeOrmModule.forRoot</span>({
+      <span class="fn">type</span>: <span class="str">'postgres'</span>,
+      <span class="fn">host</span>: <span class="str">'localhost'</span>,
+      <span class="fn">port</span>: <span class="num">5432</span>,
+      <span class="fn">username</span>: <span class="str">'postgres'</span>,
+      <span class="fn">password</span>: <span class="str">'pass'</span>,
+      <span class="fn">database</span>: <span class="str">'mydb'</span>,
+      <span class="fn">entities</span>: [Cat],
+      <span class="fn">synchronize</span>: <span class="kw">true</span>,   <span class="cmt"># 开发环境自动同步表结构（生产环境关掉！）</span>
+    }),
+    TypeOrmModule.<span class="fn">forFeature</span>([Cat]),  <span class="cmt"># 在此模块中注册 Cat 实体</span>
+  ],
+})
+<span class="kw">export class</span> <span class="type">AppModule</span> {}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// entities/cat.entity.ts</span>
+<span class="kw">import</span> { Entity, Column, PrimaryGeneratedColumn } <span class="kw">from</span> <span class="str">'typeorm'</span>;
+
+<span class="ann">@Entity</span>()
+<span class="kw">export class</span> <span class="type">Cat</span> {
+  <span class="ann">@PrimaryGeneratedColumn</span>()
+  id: <span class="type">number</span>;
+
+  <span class="ann">@Column</span>()
+  name: <span class="type">string</span>;
+
+  <span class="ann">@Column</span>()
+  age: <span class="type">number</span>;
+
+  <span class="ann">@Column</span>({ nullable: <span class="kw">true</span> })
+  breed: <span class="type">string</span>;
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<pre><span class="cmt">// cats.service.ts — 注入 Repository</span>
+<span class="ann">@Injectable</span>()
+<span class="kw">export class</span> <span class="type">CatsService</span> {
+  <span class="kw">constructor</span>(
+    <span class="ann">@InjectRepository</span>(Cat)
+    <span class="kw">private</span> catRepo: <span class="type">Repository</span>&lt;<span class="type">Cat</span>&gt;,
+  ) {}
+
+  <span class="fn">create</span>(dto: <span class="type">CreateCatDto</span>) {
+    <span class="kw">const</span> cat = <span class="kw">this</span>.catRepo.<span class="fn">create</span>(dto);
+    <span class="kw">return</span> <span class="kw">this</span>.catRepo.<span class="fn">save</span>(cat);
+  }
+
+  <span class="fn">findAll</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.catRepo.<span class="fn">find</span>();
+  }
+
+  <span class="fn">findOne</span>(id: <span class="type">number</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.catRepo.<span class="fn">findOneBy</span>({ id });
+  }
+}<span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note note-warn">
+    <strong>生产环境务必关闭 <code>synchronize</code>！</strong>应使用 Migration 管理数据库结构变更。TypeORM CLI 提供 <code>npm run typeorm migration:generate</code> 和 <code>migration:run</code>。
+</div>
+</section>
+
+<!-- 14. Errors -->
+<section id="errors">
+<h2><span class="emoji">🧸</span> 14. 异常过滤器 <span class="tag tag-tip">实用</span></h2>
+
+<p>全局异常过滤器统一处理错误响应格式，避免每个 Controller 手写 try-catch。</p>
+
+<pre><span class="cmt">// common/filters/all-exceptions.filter.ts</span>
+<span class="kw">import</span> {
+  ExceptionFilter, Catch, ArgumentsHost,
+  HttpException, HttpStatus
+} <span class="kw">from</span> <span class="str">'@nestjs/common'</span>;
+<span class="kw">import</span> { Request, Response } <span class="kw">from</span> <span class="str">'express'</span>;
+
+<span class="ann">@Catch</span>()
+<span class="kw">export class</span> <span class="type">AllExceptionsFilter</span> <span class="kw">implements</span> <span class="type">ExceptionFilter</span> {
+  <span class="fn">catch</span>(exception: <span class="type">unknown</span>, host: <span class="type">ArgumentsHost</span>) {
+    <span class="kw">const</span> ctx = host.<span class="fn">switchToHttp</span>();
+    <span class="kw">const</span> response = ctx.<span class="fn">getResponse</span>&lt;<span class="type">Response</span>&gt;();
+    <span class="kw">const</span> request = ctx.<span class="fn">getRequest</span>&lt;<span class="type">Request</span>&gt;();
+
+    <span class="kw">const</span> status =
+      exception <span class="kw">instanceof</span> <span class="type">HttpException</span>
+        ? exception.<span class="fn">getStatus</span>()
+        : HttpStatus.<span class="fn">INTERNAL_SERVER_ERROR</span>;
+
+    response.<span class="fn">status</span>(status).<span class="fn">json</span>({
+      <span class="fn">success</span>: <span class="kw">false</span>,
+      <span class="fn">statusCode</span>: status,
+      <span class="fn">message</span>: exception <span class="kw">instanceof</span> <span class="type">HttpException</span> ? exception.message : <span class="str">'Internal error'</span>,
+      <span class="fn">path</span>: request.url,
+      <span class="fn">timestamp</span>: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>(),
+    });
+  }
+}
+
+<span class="cmt">// main.ts</span>
+<span class="cmt">// app.useGlobalFilters(new AllExceptionsFilter());</span><span class="lang-tag">typescript</span>
+<span class="class='copy-btn'" onclick="copyCode(this)">Copy</span></pre>
+
+<div class="note">
+    <strong>内置异常：</strong><code>BadRequestException</code>、<code>NotFoundException</code>、<code>UnauthorizedException</code>、<code>ForbiddenException</code>。直接 <code>throw new NotFoundException('Cat not found')</code> 即可。
+</div>
+</section>
+
+<!-- 15. Summary -->
+<section id="summary">
+<h2><span class="emoji">🌟</span> 15. 速查表 <span class="tag tag-fav">收藏</span></h2>
+
+<table>
+    <tr><th>需要做</th><th>怎么做</th></tr>
+    <tr><td>创建新模块</td><td><code>nest g module cats</code></td></tr>
+    <tr><td>创建控制器</td><td><code>nest g controller cats</code></td></tr>
+    <tr><td>创建服务</td><td><code>nest g service cats</code></td></tr>
+    <tr><td>定义路由</td><td><code>@Get('path')</code> / <code>@Post()</code> 等装饰器</td></tr>
+    <tr><td>获取请求参数</td><td><code>@Body()</code> / <code>@Param('id')</code> / <code>@Query('key')</code></td></tr>
+    <tr><td>数据验证</td><td>DTO + <code>class-validator</code> + <code>ValidationPipe</code></td></tr>
+    <tr><td>依赖注入</td><td>构造函数 + <code>@Injectable()</code></td></tr>
+    <tr><td>全局管道/守卫/拦截器</td><td><code>app.useGlobalPipes/Guards/Interceptors()</code></td></tr>
+    <tr><td>读取配置</td><td><code>ConfigService.get('KEY')</code></td></tr>
+    <tr><td>数据库操作</td><td>TypeORM + <code>@InjectRepository(Entity)</code></td></tr>
+    <tr><td>统一错误格式</td><td>全局 Exception Filter</td></tr>
+    <tr><td>自定义装饰器</td><td><code>createParamDecorator()</code></td></tr>
+</table>
+
+<hr class="divider">
+
+<h3 style="color:var(--magenta); margin-bottom:16px">学前 Checklist</h3>
+<ul class="checklist" id="checklist">
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>安装 Node.js 18+ 和 npm</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>全局安装 <code>@nestjs/cli</code></li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>用 <code>nest new</code> 创建项目</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>理解 Module / Controller / Service 三件套</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>学会依赖注入（构造函数注入）</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>写一个完整的 CRUD Controller</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>配置 DTO + ValidationPipe</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>接入数据库（TypeORM 或 Prisma）</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>添加全局异常过滤器</li>
+    <li onclick="toggleCheck(this)"><div class="ck-box"></div>部署到服务器（Docker 或 PM2）</li>
+</ul>
+
+<div class="note-fav note" style="margin-top:24px">
+    <strong>下一步建议：</strong>搭建一个「Todo REST API」——包含 CRUD + TypeORM + JWT 认证 + 全局异常处理，足以应对绝大多数后端场景。Barbie 敬你是一个有品位的开发者 💋
+</div>
+</section>
+
+</div>
+
+<script>
+// --- Progress bar ---
+function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = Math.min((scrollTop / docHeight) * 100, 100);
+    document.getElementById('progressBar').style.width = progress + '%';
+}
+window.addEventListener('scroll', updateProgress);
+
+// --- Copy code ---
+function copyCode(btn) {
+    const pre = btn.closest('pre');
+    const code = pre.querySelector('code') || pre;
+    const text = code.innerText
+        .replace(/^Copy\n/, '')
+        .replace(/\nCopy$/, '')
+        .replace(/Copy/g, '');
+
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        showToast('Code copied! Barbie approves ✨');
+        setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+
+// --- Toast ---
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// --- Collapse ---
+function toggleCollapse(trigger) {
+    trigger.classList.toggle('open');
+    const body = trigger.nextElementSibling;
+    body.classList.toggle('open');
+}
+
+// --- Checklist ---
+function toggleCheck(li) {
+    li.classList.toggle('done');
+    const allItems = document.querySelectorAll('#checklist li');
+    const doneItems = document.querySelectorAll('#checklist li.done');
+    if (doneItems.length === allItems.length && allItems.length > 0) {
+        showToast('All done! You are a NestJS Queen! 👑💋');
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => createSparkle(
+                Math.random() * window.innerWidth,
+                Math.random() * window.innerHeight
+            ), i * 80);
+        }
+    }
+}
+
+// --- Sparkles ---
+document.addEventListener('click', (e) => {
+    createSparkle(e.clientX, e.clientY);
+});
+
+function createSparkle(x, y) {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    sparkle.style.left = (x - 3) + 'px';
+    sparkle.style.top = (y - 3) + 'px';
+    const colors = ['#ff1493', '#e0218a', '#d4af37', '#f43f7a', '#ff69b4'];
+    sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+    document.body.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 600);
+}
+</script>
+</body>
+</html>
