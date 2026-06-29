@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangChain.js 快速入门</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fff;--bg-secondary:#f5f5f7;--bg-code:#1d1d1f;
+  --text:#1d1d1f;--text-secondary:#86868b;--text-code:#f5f5f7;
+  --accent:linear-gradient(135deg,#0071e3,#6e5ce6);
+  --accent-solid:#0071e3;--accent-secondary:#6e5ce6;
+  --border:rgba(0,0,0,.06);--shadow:0 2px 12px rgba(0,0,0,.08);
+  --card-bg:#fff;--nav-bg:rgba(255,255,255,.72);
+  --code-bg:#f5f5f7;--code-text:#1d1d1f;
+  --success:#30d158;--warning:#ff9f0a;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#000;--bg-secondary:#1c1c1e;--bg-code:#2c2c2e;
+  --text:#f5f5f7;--text-secondary:#98989d;--text-code:#f5f5f7;
+  --border:rgba(255,255,255,.08);--shadow:0 2px 12px rgba(0,0,0,.3);
+  --card-bg:#1c1c1e;--nav-bg:rgba(0,0,0,.72);
+  --code-bg:#2c2c2e;--code-text:#f5f5f7;
+}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--text-secondary) transparent}
+body{font-family:var(--font);color:var(--text);background:var(--bg);transition:background .4s,color .4s;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--accent-solid);color:#fff}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border);transition:background .4s}
+.nav-inner{max-width:980px;margin:0 auto;padding:0 22px;display:flex;align-items:center;justify-content:space-between;height:48px}
+.nav-brand{font-size:15px;font-weight:600;background:var(--accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px}
+.nav-brand svg{width:20px;height:20px;-webkit-text-fill-color:var(--accent-solid)}
+.nav-links{display:flex;gap:24px;list-style:none}
+.nav-links a{text-decoration:none;font-size:13px;color:var(--text-secondary);transition:color .2s;position:relative}
+.nav-links a:hover,.nav-links a.active{color:var(--text)}
+.nav-links a.active::after{content:'';position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:16px;height:2px;border-radius:1px;background:var(--accent-solid)}
+.theme-toggle{background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.theme-toggle:hover{background:var(--border)}
+.theme-toggle svg{width:18px;height:18px;fill:var(--text)}
+
+/* HERO */
+.hero{padding:140px 22px 80px;text-align:center;max-width:980px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;background:var(--bg-secondary);font-size:12px;color:var(--text-secondary);margin-bottom:20px;border:1px solid var(--border);transition:all .3s}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:56px;font-weight:700;letter-spacing:-.03em;line-height:1.08;margin-bottom:16px}
+.hero h1 .gradient{background:var(--accent);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:21px;color:var(--text-secondary);max-width:600px;margin:0 auto 40px;font-weight:400;line-height:1.5}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;border-radius:980px;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none;border:none;font-family:var(--font)}
+.btn-primary{background:var(--accent-solid);color:#fff}
+.btn-primary:hover{background:#0077ed;transform:scale(1.02);box-shadow:0 4px 16px rgba(0,113,227,.3)}
+.btn-secondary{background:var(--bg-secondary);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn svg{width:16px;height:16px}
+
+/* PROGRESS */
+.progress-bar{position:fixed;top:48px;left:0;height:2px;background:var(--accent-solid);z-index:99;transition:width .1s linear;width:0}
+
+/* LAYOUT */
+.content{max-width:720px;margin:0 auto;padding:0 22px 100px}
+.section{margin-bottom:64px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-label{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-solid);margin-bottom:8px}
+.section h2{font-size:36px;font-weight:700;letter-spacing:-.02em;margin-bottom:12px;line-height:1.1}
+.section h3{font-size:22px;font-weight:600;margin:24px 0 10px;line-height:1.2}
+.section p{font-size:17px;color:var(--text-secondary);margin-bottom:16px;line-height:1.65}
+
+/* CODE BLOCKS */
+.code-block{position:relative;border-radius:12px;overflow:hidden;margin:16px 0 24px;background:var(--bg-code)}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15)}
+.code-dots span:nth-child(1){background:#ff5f57}
+.code-dots span:nth-child(2){background:#febc2e}
+.code-dots span:nth-child(3){background:#28c840}
+.code-filename{font-size:12px;color:rgba(255,255,255,.4);font-family:"SF Mono",Monaco,monospace}
+.copy-btn{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:12px;font-family:var(--font);display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;transition:all .2s}
+.copy-btn:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.08)}
+.copy-btn.copied{color:var(--success)}
+.copy-btn svg{width:14px;height:14px}
+.code-block pre{padding:16px 20px;overflow-x:auto;font-family:"SF Mono",Monaco,"Cascadia Code",monospace;font-size:14px;line-height:1.7;color:var(--text-code)}
+.code-block code{font-family:inherit}
+
+/* INLINE CODE */
+p code,.li code{font-family:"SF Mono",Monaco,monospace;font-size:13.5px;background:var(--code-bg);color:var(--code-text);padding:2px 7px;border-radius:6px;border:1px solid var(--border)}
+
+/* LIST */
+.ul{list-style:none;margin:12px 0 20px}
+.ul li{position:relative;padding:4px 0 4px 24px;font-size:17px;color:var(--text-secondary);line-height:1.65}
+.ul li::before{content:'';position:absolute;left:4px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent-solid)}
+.ul li strong{color:var(--text);font-weight:600}
+
+/* TIP */
+.tip{border-radius:12px;padding:16px 20px;margin:16px 0 24px;background:var(--bg-secondary);border-left:3px solid var(--accent-solid);transition:background .4s}
+.tip .tip-label{font-size:13px;font-weight:600;color:var(--accent-solid);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tip p{font-size:15px;color:var(--text-secondary);margin:0}
+
+/* CARDS GRID */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .3s;cursor:default}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.card-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;background:var(--bg-secondary)}
+.card h4{font-size:17px;font-weight:600;margin-bottom:6px}
+.card p{font-size:14px;color:var(--text-secondary);margin:0;line-height:1.5}
+
+/* STEPS */
+.step{display:flex;gap:16px;margin:20px 0}
+.step-num{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+.step-content{flex:1}
+.step-content h3{margin:0 0 6px}
+.step-content p{margin-bottom:8px}
+
+/* COLLAPSIBLE */
+.collapsible{border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden;transition:border-color .2s}
+.collapsible:hover{border-color:rgba(0,113,227,.2)}
+.collapsible-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;background:var(--card-bg);transition:background .2s;user-select:none}
+.collapsible-header:hover{background:var(--bg-secondary)}
+.collapsible-header h4{font-size:15px;font-weight:600}
+.collapsible-header .arrow{transition:transform .3s;display:flex}
+.collapsible-header .arrow.open{transform:rotate(180deg)}
+.collapsible-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+.collapsible-body-inner{padding:0 20px 16px}
+.collapsible-body-inner p{font-size:15px}
+
+/* TOC SIDEBAR */
+.toc{position:fixed;right:32px;top:100px;display:flex;flex-direction:column;gap:4px;z-index:50}
+.toc a{text-decoration:none;font-size:12px;color:var(--text-secondary);padding:4px 10px;border-radius:6px;transition:all .2s;white-space:nowrap}
+.toc a:hover{color:var(--text);background:var(--bg-secondary)}
+.toc a.active{color:var(--accent-solid);background:rgba(0,113,227,.08);font-weight:500}
+
+/* FOOTER */
+footer{text-align:center;padding:40px 22px 60px;border-top:1px solid var(--border)}
+footer p{font-size:13px;color:var(--text-secondary)}
+footer a{color:var(--accent-solid);text-decoration:none}
+
+/* SCROLL TOP */
+.scroll-top{position:fixed;bottom:32px;right:32px;width:44px;height:44px;border-radius:50%;background:var(--card-bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(10px);transition:all .3s;z-index:50;box-shadow:var(--shadow)}
+.scroll-top.show{opacity:1;transform:translateY(0)}
+.scroll-top:hover{background:var(--bg-secondary)}
+.scroll-top svg{width:18px;height:18px;fill:var(--text)}
+
+/* RESPONSIVE */
+@media(max-width:1080px){.toc{display:none}}
+@media(max-width:768px){
+  .hero h1{font-size:36px}
+  .hero p{font-size:17px}
+  .section h2{font-size:28px}
+  .nav-links{display:none}
+  .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      LangChain.js 入门
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#install" class="active">安装</a></li>
+      <li><a href="#concepts">核心概念</a></li>
+      <li><a href="#first-chain">首个 Chain</a></li>
+      <li><a href="#rag">RAG</a></li>
+      <li><a href="#agents">Agents</a></li>
+      <li><a href="#cheatsheet">速查</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" title="切换主题">
+      <svg id="sunIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+      <svg id="moonIcon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</nav>
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span>v0.3 · 最新版</div>
+  <h1>用 <span class="gradient">LangChain.js</span><br>构建 AI 应用</h1>
+  <p>从零开始，用 JavaScript / TypeScript 构建基于大语言模型的智能应用。安装、配置、上手，一页搞定。</p>
+  <div class="hero-actions">
+    <a href="#install" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      开始安装
+    </a>
+    <a href="https://js.langchain.com/docs/" target="_blank" class="btn btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      官方文档
+    </a>
+  </div>
+</section>
+
+<!-- TOC -->
+<aside class="toc" id="toc">
+  <a href="#install" class="active">安装</a>
+  <a href="#concepts">核心概念</a>
+  <a href="#first-chain">首个 Chain</a>
+  <a href="#rag">RAG</a>
+  <a href="#agents">Agents</a>
+  <a href="#cheatsheet">速查表</a>
+</aside>
+
+<div class="content">
+
+  <!-- INSTALL -->
+  <section class="section" id="install">
+    <div class="section-label">Step 1</div>
+    <h2>安装与配置</h2>
+    <p>LangChain.js 支持 Node.js 18+ 和现代浏览器环境。推荐使用 TypeScript 获得最佳体验。</p>
+
+    <h3>创建项目</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="code-filename">terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+      <pre><code>mkdir my-langchain-app && cd my-langchain-app
+npm init -y
+npm install -g typescript tsx
+npx tsc --init</code></pre>
+    </div>
+
+    <h3>安装核心包</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="code-filename">terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+      <pre><code># 核心库
+npm install langchain
+
+# OpenAI 集成（最常用）
+npm install @langchain/openai
+
+# 可选：其他模型提供者
+npm install @langchain/anthropic    # Claude
+npm install @langchain/google-genai  # Gemini</code></pre>
+    </div>
+
+    <div class="tip">
+      <div class="tip-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        提示
+      </div>
+      <p>运行环境变量请使用 <code>dotenv</code>：在项目根目录创建 <code>.env</code> 文件存放 API Key，不要提交到 Git。</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="code-filename">.env</span>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+      <pre><code>OPENAI_API_KEY=sk-your-key-here</code></pre>
+    </div>
+  </section>
+
+  <!-- CONCEPTS -->
+  <section class="section" id="concepts">
+    <div class="section-label">Step 2</div>
+    <h2>核心概念</h2>
+    <p>LangChain.js 的设计围绕六大核心模块。理解它们，你就理解了整个框架。</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🔗</div>
+        <h4>Chains</h4>
+        <p>将多个调用串联成完整的工作流，从前处理到后处理一气呵成。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <h4>Models</h4>
+        <p>统一的 LLM 和 ChatModel 接口，支持 OpenAI、Anthropic、Google 等数十家。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h4>Prompt</h4>
+        <p>提示词模板系统，支持变量注入、消息历史、部分填充。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">💾</div>
+        <h4>Memory</h4>
+        <p>对话记忆管理，让模型"记住"上下文，实现多轮对话。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <h4>Retrievers</h4>
+        <p>向量检索，从外部知识库中找到最相关的信息片段。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h4>Agents</h4>
+        <p>让模型自主决策工具调用，完成复杂的多步骤任务。</p>
+      </div>
+    </div>
+
+    <!-- Architecture Diagram -->
+    <div class="collapsible" id="arch-diagram">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <h4>架构关系一览</h4>
+        <div class="arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
+          <div style="font-family:monospace;font-size:14px;line-height:2;color:var(--text-secondary);white-space:pre;text-align:center">┌─────────────────────────────────────────┐
+│              🤖 Agent                   │
+│   (决策层 — 决定调用什么工具)           │
+└────────┬──────────────┬────────────────┘
+         │              │
+    ┌────▼────┐   ┌─────▼──────┐
+    │ 🔗 Chain │   │ 📄 Retriever│
+    │(编排层)  │   │  (检索层)   │
+    └────┬────┘   └─────┬──────┘
+         │              │
+    ┌────▼────────────────▼─────┐
+    │      🧠 Model (模型层)      │
+    │  ChatModel / LLM / Embed  │
+    └──────────────┬────────────┘
+                   │
+    ┌──────────────▼────────────┐
+    │    💾 Memory (记忆层)       │
+    │  Buffer / Summary / Window │
+    └───────────────────────────┘</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIRST CHAIN -->
+  <section class="section" id="first-chain">
+    <div class="section-label">Step 3</div>
+    <h2>构建你的首个 Chain</h2>
+    <p>用最少的代码体验 LangChain.js 的核心流程：Prompt → Model → Output。</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>引入模块</h3>
+        <p>从对应包中导入所需的 Chat Model 和 Prompt 模板。</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="code-filename">index.ts</span>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+          </div>
+          <pre><code>import { ChatOpenAI } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { RunnableSequence } from "@langchain/core/runnables";</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>定义 Prompt 模板</h3>
+        <p>使用 <code>PromptTemplate</code> 创建可复用的提示词，支持动态变量。</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="code-filename">index.ts</span>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+          </div>
+          <pre><code>const prompt = PromptTemplate.fromTemplate(
+  "你是一位资深技术博主。请用通俗易懂的方式，向初学者解释以下概念：\n\n{topic}\n\n要求：使用类比，不超过 200 字。"
+);</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>用 LCEL 编排 Chain</h3>
+        <p>LangChain Expression Language (LCEL) 使用 <code>pipe()</code> 优雅地串联组件。</p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="code-filename">index.ts</span>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+          </div>
+          <pre><code>// 初始化模型
+const model = new ChatOpenAI({
+  modelName: "gpt-4o-mini",
+  temperature: 0.7,
+});
+
+// 用 pipe 串联：模板 → 模型 → 解析器
+const chain = prompt.pipe(model).pipe(new StringOutputParser());
+
+// 调用！
+const result = await chain.invoke({
+  topic: "什么是 LangChain？"
+});
+
+console.log(result);</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>运行</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="code-dots"><span></span><span></span><span></span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="code-filename">terminal</span>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+          </div>
+          <pre><code>npx tsx index.ts</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RAG -->
+  <section class="section" id="rag">
+    <div class="section-label">Step 4</div>
+    <h2>RAG：检索增强生成</h2>
+    <p>RAG 让 LLM 基于你自己的数据进行回答，是生产环境最常用的模式。</p>
+
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card" style="text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">📑</div>
+        <h4>Load</h4>
+        <p>加载文档（PDF、网页、数据库）</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">✂️</div>
+        <h4>Split</h4>
+        <p>文档切分为合适大小的 Chunk</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🔎</div>
+        <h4>Retrieve</h4>
+        <p>向量化后检索相关片段</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="code-filename">rag.ts</span>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+      <pre><code>import { OpenAIEmbeddings } from "@langchain/openai";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+
+// 1. 加载 & 切分文档
+const text = "你的长文档内容...";
+const splitter = new RecursiveCharacterTextSplitter({
+  chunkSize: 1000,
+  chunkOverlap: 200,
+});
+const docs = await splitter.createDocuments([{ pageContent: text }]);
+
+// 2. 创建向量存储
+const vectorStore = await MemoryVectorStore.fromDocuments(
+  docs,
+  new OpenAIEmbeddings()
+);
+
+// 3. 创建检索器
+const retriever = vectorStore.asRetriever(3); // 取 top-3
+
+// 4. 组合成 RAG Chain
+import { createRetrievalChain } from "langchain/chains/retrieval";
+import { ChatOpenAI } from "@langchain/openai";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { PromptTemplate } from "@langchain/core/prompts";
+
+const answerPrompt = PromptTemplate.fromTemplate(
+  "根据以下上下文回答问题。如果上下文中没有答案，请如实说明。\n\n上下文：{context}\n\n问题：{input}"
+);
+
+const model = new ChatOpenAI({ modelName: "gpt-4o-mini" });
+const questionAnswerChain = await createStuffDocumentsChain({
+  llm: model,
+  prompt: answerPrompt,
+});
+const ragChain = await createRetrievalChain({
+  retriever,
+  combineDocsChain: questionAnswerChain,
+});
+
+// 5. 查询！
+const response = await ragChain.invoke({
+  input: "文档里讲了什么？"
+});
+console.log(response.answer);</code></pre>
+    </div>
+
+    <div class="tip">
+      <div class="tip-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        生产建议
+      </div>
+      <p>生产环境请使用持久化向量数据库（<code>Pinecone</code>、<code>Weaviate</code>、<code>Chroma</code>）替代 <code>MemoryVectorStore</code>。LangChain.js 支持数十种向量库集成。</p>
+    </div>
+  </section>
+
+  <!-- AGENTS -->
+  <section class="section" id="agents">
+    <div class="section-label">Step 5</div>
+    <h2>Agents：让模型自主行动</h2>
+    <p>Agent 根据用户问题自主选择并调用工具，动态决定下一步操作。</p>
+
+    <div class="collapsible">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <h4>Agent 与 Chain 的区别？</h4>
+        <div class="arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
+          <p>Chain 的执行路径是<strong>预先定义</strong>的，你明确知道每一步做什么。Agent 的执行路径是<strong>动态决定</strong>的 — 模型根据上下文自主选择调用哪些工具、以什么顺序。简单说：Chain 是固定流程，Agent 是 AI 驱动的决策引擎。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="code-filename">agent.ts</span>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            复制
+          </button>
+        </div>
+      </div>
+      <pre><code>import { ChatOpenAI } from "@langchain/openai";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+
+// 定义工具
+const weatherTool = tool(
+  async ({ city }) => {
+    // 在真实场景中，这里调用天气 API
+    return `${city} 今天晴天，25°C`;
+  },
+  {
+    name: "get_weather",
+    description: "获取指定城市的天气信息",
+    schema: z.object({
+      city: z.string().describe("城市名称"),
+    }),
+  }
+);
+
+const searchTool = tool(
+  async ({ query }) => {
+    // 在真实场景中，这里调用搜索 API
+    return `搜索 "${query}" 的结果：...`;
+  },
+  {
+    name: "search",
+    description: "搜索互联网上的信息",
+    schema: z.object({
+      query: z.string().describe("搜索关键词"),
+    }),
+  }
+);
+
+// 创建 Agent
+const model = new ChatOpenAI({ modelName: "gpt-4o-mini" });
+const agent = createReactAgent({
+  llm: model,
+  tools: [weatherTool, searchTool],
+});
+
+// 运行
+const result = await agent.invoke({
+  messages: [
+    { role: "user", content: "北京今天天气怎么样？需要带伞吗？" }
+  ]
+});
+
+console.log(result.messages[result.messages.length - 1].content);</code></pre>
+    </div>
+
+    <div class="tip">
+      <div class="tip-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        LangGraph
+      </div>
+      <p>LangChain.js 的新一代 Agent 基于 <code>LangGraph</code> 构建，提供图结构的执行引擎、循环、检查点等能力。安装：<code>npm install @langchain/langgraph</code></p>
+    </div>
+  </section>
+
+  <!-- CHEATSHEET -->
+  <section class="section" id="cheatsheet">
+    <div class="section-label">Quick Reference</div>
+    <h2>速查表</h2>
+    <p>常用代码片段，复制即用。</p>
+
+    <div class="collapsible" id="cs-memory">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <h4>对话记忆</h4>
+        <div class="arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
+          <div class="code-block" style="margin-top:8px">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="code-filename">memory.ts</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  复制
+                </button>
+              </div>
+            </div>
+            <pre><code>import { ChatOpenAI } from "@langchain/openai";
+import { BufferMemory } from "langchain/memory";
+import { ConversationChain } from "langchain/chains";
+
+const model = new ChatOpenAI({ modelName: "gpt-4o-mini" });
+const memory = new BufferMemory();
+const chain = new ConversationChain({ llm: model, memory });
+
+// 第一轮
+const r1 = await chain.invoke({ input: "我叫小明" });
+// 第二轮 — 模型会记得你叫小明
+const r2 = await chain.invoke({ input: "我叫什么名字？" });
+console.log(r2.response); // "你叫小明"</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsible" id="cs-output">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <h4>结构化输出 (Zod Schema)</h4>
+        <div class="arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
+          <div class="code-block" style="margin-top:8px">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="code-filename">structured.ts</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  复制
+                </button>
+              </div>
+            </div>
+            <pre><code>import { ChatOpenAI } from "@langchain/openai";
+import { z } from "zod";
+
+const model = new ChatOpenAI({ modelName: "gpt-4o-mini" });
+const structuredModel = model.withStructuredOutput(
+  z.object({
+    sentiment: z.enum(["positive", "negative", "neutral"]),
+    confidence: z.number().min(0).max(1),
+    summary: z.string(),
+  })
+);
+
+const result = await structuredModel.invoke(
+  "分析这段话的情感：今天天气真好，心情愉快！"
+);
+// { sentiment: "positive", confidence: 0.95, summary: "..." }</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsible" id="cs-stream">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        <h4>流式输出</h4>
+        <div class="arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
+          <div class="code-block" style="margin-top:8px">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="code-filename">stream.ts</span>
+                <button class="copy-btn" onclick="copyCode(this)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  复制
+                </button>
+              </div>
+            </div>
+            <pre><code>import { ChatOpenAI } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+
+const chain = new PromptTemplate.fromTemplate("给 {topic} 写一句标语")
+  .pipe(new ChatOpenAI({ modelName: "gpt-4o-mini", streaming: true }))
+  .pipe(new StringOutputParser());
+
+const stream = await chain.stream({ topic: "AI 教育" });
+for await (const chunk of stream) {
+  process.stdout.write(chunk);
+}
+// 逐字输出：让 每 个 人 都 能 拥 有 A I 助 手 ...</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>基于 <a href="https://js.langchain.com/docs/" target="_blank">LangChain.js v0.3</a> · 快速入门指南</p>
+</footer>
+
+<!-- SCROLL TO TOP -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+</button>
+
+<script>
+// ── Theme Toggle ──
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+const sunIcon = document.getElementById('sunIcon');
+const moonIcon = document.getElementById('moonIcon');
+
+function setTheme(theme) {
+  html.dataset.theme = theme;
+  sunIcon.style.display = theme === 'dark' ? 'none' : 'block';
+  moonIcon.style.display = theme === 'dark' ? 'block' : 'none';
+  localStorage.setItem('lc-theme', theme);
+}
+
+themeToggle.addEventListener('click', () => {
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+});
+
+// 恢复上次主题
+const saved = localStorage.getItem('lc-theme');
+if (saved) setTheme(saved);
+else if (window.matchMedia('(prefers-color-scheme:dark)').matches) setTheme('dark');
+
+// ── Copy Code ──
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const code = block.querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>已复制';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>复制';
+    }, 2000);
+  });
+}
+
+// ── Collapsible ──
+function toggleCollapsible(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.arrow');
+  const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+
+  if (isOpen) {
+    body.style.maxHeight = '0px';
+    arrow.classList.remove('open');
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    arrow.classList.add('open');
+  }
+}
+
+// ── Scroll Progress ──
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrolled / total * 100) + '%';
+});
+
+// ── Scroll To Top Button ──
+const scrollTopBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', () => {
+  scrollTopBtn.classList.toggle('show', window.scrollY > 400);
+});
+
+// ── Section Reveal (IntersectionObserver) ──
+const sections = document.querySelectorAll('.section');
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+sections.forEach(s => revealObserver.observe(s));
+
+// ── Scroll Spy (nav + TOC) ──
+const navLinksAll = document.querySelectorAll('.nav-links a');
+const tocLinks = document.querySelectorAll('.toc a');
+const sectionIds = Array.from(sections).map(s => s.id);
+
+function updateActive() {
+  let current = '';
+  const scrollY = window.scrollY + 100;
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= scrollY) current = id;
+  });
+  const activate = (links) => {
+    links.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  };
+  activate(navLinksAll);
+  activate(tocLinks);
+}
+window.addEventListener('scroll', updateActive);
+updateActive();
+</script>
+</body>
+</html>
