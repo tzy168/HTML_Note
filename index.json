@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T07:32:03.650Z",
+  "generatedAt": "2026-06-29T09:32:36.592Z",
   "tree": [
     {
       "name": "AI",
@@ -32,6 +32,11 @@
       "name": "codeGraph",
       "type": "file",
       "path": "codeGraph.html"
+    },
+    {
+      "name": "langchainjs-quickstart",
+      "type": "file",
+      "path": "langchainjs-quickstart.html"
     },
     {
       "name": "nestjs-quickstart",
