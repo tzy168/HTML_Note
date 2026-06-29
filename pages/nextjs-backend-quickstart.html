@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next.js 后端模块快速入门</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface2: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-dim: #64748b;
+            --accent: #2563eb;
+            --accent2: #7c3aed;
+            --green: #16a34a;
+            --orange: #ea580c;
+            --pink: #db2777;
+            --yellow: #ca8a04;
+            --code-bg: #1e293b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            margin-bottom: 40px;
+        }
+        .toc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 48px;
+        }
+        .toc h3 {
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+        .toc ol {
+            padding-left: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 24px;
+        }
+        .toc a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color .2s;
+        }
+        .toc a:hover { color: var(--accent); }
+        section {
+            margin-bottom: 56px;
+            scroll-margin-top: 20px;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--surface2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h2 .tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .tag-core { background: #dbeafe; color: var(--accent); }
+        .tag-adv  { background: #ede9fe; color: var(--accent2); }
+        .tag-tip  { background: #dcfce7; color: var(--green); }
+        p { margin-bottom: 14px; color: var(--text); }
+        ul, ol { margin-bottom: 14px; padding-left: 24px; }
+        li { margin-bottom: 6px; color: var(--text); }
+        li strong { color: var(--accent); }
+        .note {
+            background: #eff6ff;
+            border-left: 3px solid var(--accent);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 0.93rem;
+        }
+        .note-warn {
+            background: #fff7ed;
+            border-left-color: var(--orange);
+        }
+        .note strong { color: var(--accent); }
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 16px 0;
+            overflow-x: auto;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            position: relative;
+        }
+        pre .lang {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            background: var(--surface2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        :not(pre) > code {
+            background: var(--surface2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            color: var(--accent);
+        }
+        .comment { color: #64748b; }
+        .kw { color: #c084fc; }
+        .str { color: #4ade80; }
+        .fn { color: #38bdf8; }
+        .type { color: #fb923c; }
+        .num { color: #facc15; }
+        .dir { color: #f472b6; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92rem;
+        }
+        th {
+            background: var(--surface);
+            color: var(--accent);
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--surface2);
+            color: var(--text);
+        }
+        tr:hover td { background: var(--surface); }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .card h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .card p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0; }
+        .flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        .flow .step {
+            background: var(--accent2);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .flow .arrow { color: var(--text-dim); font-size: 1.2rem; }
+        .divider {
+            border: none;
+            border-top: 1px solid var(--surface2);
+            margin: 40px 0;
+        }
+        @media (max-width: 640px) {
+            .toc ol { grid-template-columns: 1fr; }
+            .grid-2 { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8rem; }
+            pre { font-size: 0.8rem; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>Next.js 后端模块快速入门</h1>
+<p class="subtitle">基于 App Router (Next.js 15+)，覆盖 API 开发核心知识点，帮你快速上手全栈开发。</p>
+
+<nav class="toc">
+    <h3>目录</h3>
+    <ol>
+        <li><a href="#overview">架构总览</a></li>
+        <li><a href="#route-handlers">Route Handlers (API)</a></li>
+        <li><a href="#server-actions">Server Actions</a></li>
+        <li><a href="#server-components">Server Components</a></li>
+        <li><a href="#data-fetching">数据获取模式</a></li>
+        <li><a href="#middleware">Middleware</a></li>
+        <li><a href="#dynamic-routes">动态路由与参数</a></li>
+        <li><a href="#cookies-auth">Cookies 与认证</a></li>
+        <li><a href="#db">数据库集成</a></li>
+        <li><a href="#error-handling">错误处理</a></li>
+        <li><a href="#caching">缓存策略</a></li>
+        <li><a href="#env-deploy">环境变量与部署</a></li>
+    </ol>
+</nav>
+
+<!-- ==================== 1. 架构总览 ==================== -->
+<section id="overview">
+<h2>1. 架构总览 <span class="tag tag-core">核心</span></h2>
+
+<p>Next.js 的后端能力建立在 <strong>App Router</strong> 之上，核心思路：每个文件夹即一个路由，特殊文件定义行为。</p>
+
+<div class="grid-2">
+    <div class="card">
+        <h4>route.ts / route.js</h4>
+        <p>定义 REST API 端点，替代旧的 Pages Router 中的 <code>/api/</code> 目录</p>
+    </div>
+    <div class="card">
+        <h4>page.tsx (服务端组件)</h4>
+        <p>默认在服务端渲染，可直接访问数据库、文件系统</p>
+    </div>
+    <div class="card">
+        <h4>'use server' Actions</h4>
+        <p>表单提交与数据变更的利器，无需手写 API</p>
+    </div>
+    <div class="card">
+        <h4>middleware.ts</h4>
+        <p>请求拦截器，处理认证、重定向、日志</p>
+    </div>
+</div>
+
+<div class="note">
+    <strong>关键原则：</strong>App Router 中，默认所有组件都是 <strong>Server Component</strong>。只有标注 <code>'use client'</code> 才会在浏览器执行。这意味着你可以在组件里直接写后端逻辑。
+</div>
+
+<pre><span class="comment">// 典型项目结构</span>
+app/
+├── layout.tsx          <span class="comment"># 根布局</span>
+├── page.tsx            <span class="comment"># 首页 (服务端组件)</span>
+├── api/
+│   └── users/
+│       ├── route.ts    <span class="comment"># GET /api/users, POST /api/users</span>
+│       └── [id]/
+│           └── route.ts  <span class="comment"># GET /api/users/:id</span>
+├── auth/
+│   ├── page.tsx        <span class="comment"># /auth 页面</span>
+│   └── login/
+│       └── page.tsx    <span class="comment"># /auth/login</span>
+└── middleware.ts        <span class="comment"># 边缘中间件</span><span class="lang">结构</span></pre>
+</section>
+
+<!-- ==================== 2. Route Handlers ==================== -->
+<section id="route-handlers">
+<h2>2. Route Handlers <span class="tag tag-core">核心</span></h2>
+
+<p>在 <code>route.ts</code> 中导出 HTTP 方法函数来创建 API 端点。支持 <code>GET</code>、<code>POST</code>、<code>PUT</code>、<code>PATCH</code>、<code>DELETE</code>、<code>HEAD</code>、<code>OPTIONS</code>。</p>
+
+<pre><span class="comment">// app/api/users/route.ts</span>
+<span class="kw">import</span> { NextResponse } <span class="kw">from</span> <span class="str">'next/server'</span>
+
+<span class="comment">// GET /api/users</span>
+<span class="kw">export async function</span> <span class="fn">GET</span>() {
+  <span class="kw">const</span> users = <span class="kw">await</span> <span class="fn">db.user.findMany</span>()
+
+  <span class="kw">return</span> NextResponse.<span class="fn">json</span>(users)
+}
+
+<span class="comment">// POST /api/users</span>
+<span class="kw">export async function</span> <span class="fn">POST</span>(<span class="type">request</span>: Request) {
+  <span class="kw">const</span> body = <span class="kw">await</span> request.<span class="fn">json</span>()
+  <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">db.user.create</span>({ data: body })
+
+  <span class="kw">return</span> NextResponse.<span class="fn">json</span>(user, { status: <span class="num">201</span> })
+}<span class="lang">typescript</span></pre>
+
+<h3 style="margin-top:24px; font-size:1.1rem; color:var(--accent2)">Request 对象常用方法</h3>
+<table>
+    <tr><th>方法</th><th>用途</th></tr>
+    <tr><td><code>request.json()</code></td><td>解析 JSON Body</td></tr>
+    <tr><td><code>request.text()</code></td><td>解析纯文本 Body</td></tr>
+    <tr><td><code>request.formData()</code></td><td>解析表单数据</td></tr>
+    <tr><td><code>request.nextUrl.searchParams</code></td><td>获取 URL 查询参数</td></tr>
+    <tr><td><code>request.headers</code></td><td>读取请求头</td></tr>
+</table>
+
+<div class="note">
+    <strong>NextResponse.json()</strong> 等价于 <code>new Response(JSON.stringify(data), { headers: {'Content-Type': 'application/json'} })</code>，更简洁。
+</div>
+</section>
+
+<!-- ==================== 3. Server Actions ==================== -->
+<section id="server-actions">
+<h2>3. Server Actions <span class="tag tag-core">核心</span></h2>
+
+<p>Server Actions 是 Next.js 后端最优雅的特性之一：直接从前端调用服务端函数，无需手写 API 路由。</p>
+
+<div class="flow">
+    <span class="step">用户点击</span>
+    <span class="arrow">→</span>
+    <span class="step">触发 Server Action</span>
+    <span class="arrow">→</span>
+    <span class="step">服务端执行</span>
+    <span class="arrow">→</span>
+    <span class="step">返回结果/重定向</span>
+</div>
+
+<pre><span class="comment">// app/actions.ts</span>
+<span class="str">'use server'</span>
+
+<span class="kw">import</span> { revalidatePath } <span class="kw">from</span> <span class="str">'next/cache'</span>
+<span class="kw">import</span> { redirect } <span class="kw">from</span> <span class="str">'next/navigation'</span>
+
+<span class="kw">export async function</span> <span class="fn">createPost</span>(<span class="type">formData</span>: FormData) {
+  <span class="kw">const</span> title = formData.<span class="fn">get</span>(<span class="str">'title'</span>) <span class="kw">as</span> <span class="type">string</span>
+  <span class="kw">const</span> content = formData.<span class="fn">get</span>(<span class="str">'content'</span>) <span class="kw">as</span> <span class="type">string</span>
+
+  <span class="kw">await</span> <span class="fn">db.post.create</span>({ data: { title, content } })
+
+  <span class="comment">// 刷新页面缓存 + 重定向</span>
+  <span class="fn">revalidatePath</span>(<span class="str">'/posts'</span>)
+  <span class="fn">redirect</span>(<span class="str">'/posts'</span>)
+}<span class="lang">typescript</span></pre>
+
+<pre><span class="comment">// app/posts/new/page.tsx — 绑定到表单</span>
+<span class="kw">import</span> { createPost } <span class="kw">from</span> <span class="str">'@/app/actions'</span>
+
+<span class="kw">export default function</span> <span class="fn">NewPostPage</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="dir">form</span> action={createPost}&gt;
+      &lt;<span class="dir">input</span> name=<span class="str">"title"</span> required /&gt;
+      &lt;<span class="dir">textarea</span> name=<span class="str">"content"</span> required /&gt;
+      &lt;<span class="dir">button</span> type=<span class="str">"submit"</span>&gt;发布&lt;/<span class="dir">button</span>&gt;
+    &lt;/<span class="dir">form</span>&gt;
+  )
+}<span class="lang">tsx</span></pre>
+
+<div class="note">
+    <strong>Server Action vs Route Handler 怎么选？</strong>如果操作和 UI 表单紧密关联 → 用 Server Action。如果需要给第三方调用、或返回非 JSON 数据 → 用 Route Handler。
+</div>
+
+<h3 style="margin-top:24px; font-size:1.1rem; color:var(--accent2)">useActionState（推荐模式）</h3>
+<p>Next.js 15 引入了 <code>useActionState</code>，统一管理状态和错误：</p>
+<pre><span class="str">'use client'</span>
+<span class="kw">import</span> { useActionState } <span class="kw">from</span> <span class="str">'react'</span>
+<span class="kw">import</span> { createUser } <span class="kw">from</span> <span class="str">'@/app/actions'</span>
+
+<span class="kw">export default function</span> <span class="fn">Form</span>() {
+  <span class="kw">const</span> [state, formAction, isPending] = <span class="fn">useActionState</span>(createUser, <span class="kw">null</span>)
+
+  <span class="kw">return</span> (
+    &lt;<span class="dir">form</span> action={formAction}&gt;
+      {state?.error &amp;&amp; &lt;<span class="dir">p</span> style={{color:<span class="str">'red'</span>}}&gt;{state.error}&lt;/<span class="dir">p</span>&gt;}
+      &lt;<span class="dir">input</span> name=<span class="str">"name"</span> /&gt;
+      &lt;<span class="dir">button</span> disabled={isPending}&gt;{isPending ? <span class="str">'提交中...'</span> : <span class="str">'提交'</span>}&lt;/<span class="dir">button</span>&gt;
+    &lt;/<span class="dir">form</span>&gt;
+  )
+}<span class="lang">tsx</span></pre>
+</section>
+
+<!-- ==================== 4. Server Components ==================== -->
+<section id="server-components">
+<h2>4. Server Components <span class="tag tag-core">核心</span></h2>
+
+<p>App Router 的默认组件类型。在服务端渲染，可以直接调用数据库、读取文件、使用服务端密钥。</p>
+
+<pre><span class="comment">// app/page.tsx — 无需 'use client'，默认服务端组件</span>
+<span class="kw">import</span> { db } <span class="kw">from</span> <span class="str">'@/lib/db'</span>
+
+<span class="kw">export default async function</span> <span class="fn">HomePage</span>() {
+  <span class="comment">// 直接查库，无需 API</span>
+  <span class="kw">const</span> posts = <span class="kw">await</span> db.<span class="fn">post.findMany</span>({
+    orderBy: { createdAt: <span class="str">'desc'</span> },
+    take: <span class="num">10</span>,
+  })
+
+  <span class="kw">return</span> (
+    &lt;<span class="dir">main</span>&gt;
+      {posts.<span class="fn">map</span>(<span class="type">post</span> =&gt; (
+        &lt;<span class="dir">article</span> key={post.id}&gt;
+          &lt;<span class="dir">h2</span>&gt;{post.title}&lt;/<span class="dir">h2</span>&gt;
+          &lt;<span class="dir">p</span>&gt;{post.content}&lt;/<span class="dir">p</span>&gt;
+        &lt;/<span class="dir">article</span>&gt;
+      ))}
+    &lt;/<span class="dir">main</span>&gt;
+  )
+}<span class="lang">tsx</span></pre>
+
+<div class="grid-2">
+    <div class="card">
+        <h4 style="color:var(--green)">Server Component</h4>
+        <p>可访问数据库、文件系统、环境变量；不能使用 useState/useEffect；不能添加事件监听器</p>
+    </div>
+    <div class="card">
+        <h4 style="color:var(--orange)">Client Component</h4>
+        <p>需标记 <code>'use client'</code>；可使用 hooks 和浏览器 API；不能直接访问数据库</p>
+    </div>
+</div>
+</section>
+
+<!-- ==================== 5. 数据获取 ==================== -->
+<section id="data-fetching">
+<h2>5. 数据获取模式 <span class="tag tag-core">核心</span></h2>
+
+<table>
+    <tr><th>场景</th><th>方案</th><th>缓存行为</th></tr>
+    <tr><td>页面初始化加载</td><td>Server Component 中 <code>async/await</code></td><td>默认缓存（可配置）</td></tr>
+    <tr><td>用户交互后加载</td><td>Client Component + <code>fetch</code> / SWR / TanStack Query</td><td>客户端管理</td></tr>
+    <tr><td>表单提交/数据变更</td><td>Server Actions</td><td>revalidatePath/Tag</td></tr>
+    <tr><td>第三方 API 端点</td><td>Route Handlers</td><td>默认不缓存</td></tr>
+</table>
+
+<pre><span class="comment">// Server Component 中直接 fetch</span>
+<span class="kw">export default async function</span> <span class="fn">WeatherPage</span>() {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.weather.com/...'</span>, {
+    next: { revalidate: <span class="num">3600</span> }  <span class="comment">// ISR: 每小时重新验证</span>
+  })
+  <span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>()
+
+  <span class="kw">return</span> &lt;<span class="dir">div</span>&gt;温度: {data.temp}°C&lt;/<span class="dir">div</span>&gt;
+}<span class="lang">tsx</span></pre>
+
+<div class="note">
+    <strong>fetch 缓存选项：</strong><code>{ cache: 'no-store' }</code> 每次请求重新获取；<code>{ next: { revalidate: N } }</code> N 秒后过期重新验证；默认在 build 时缓存。
+</div>
+</section>
+
+<!-- ==================== 6. Middleware ==================== -->
+<section id="middleware">
+<h2>6. Middleware <span class="tag tag-adv">进阶</span></h2>
+
+<p>在请求到达页面或 API 之前执行，适合做认证检查、重定向、国际化路由。</p>
+
+<pre><span class="comment">// middleware.ts (项目根目录)</span>
+<span class="kw">import</span> { NextResponse } <span class="kw">from</span> <span class="str">'next/server'</span>
+<span class="kw">import type</span> { NextRequest } <span class="kw">from</span> <span class="str">'next/server'</span>
+
+<span class="kw">export function</span> <span class="fn">middleware</span>(<span class="type">request</span>: NextRequest) {
+  <span class="kw">const</span> token = request.cookies.<span class="fn">get</span>(<span class="str">'token'</span>)?.value
+
+  <span class="comment">// 未登录用户访问 /dashboard 时重定向到 /login</span>
+  <span class="kw">if</span> (!token &amp;&amp; request.nextUrl.pathname.<span class="fn">startsWith</span>(<span class="str">'/dashboard'</span>)) {
+    <span class="kw">return</span> NextResponse.<span class="fn">redirect</span>(<span class="kw">new</span> <span class="type">URL</span>(<span class="str">'/login'</span>, request.url))
+  }
+}
+
+<span class="comment">// 配置匹配路径（只有匹配的路径才会执行 middleware）</span>
+<span class="kw">export const</span> config = {
+  matcher: [<span class="str">'/dashboard/:path*'</span>, <span class="str">'/api/:path*'</span>]
+}<span class="lang">typescript</span></pre>
+
+<div class="note note-warn">
+    <strong>注意：</strong>Middleware 运行在 Edge Runtime，不支持 Node.js 全部 API（如 <code>fs</code>、部分 npm 包）。如需完整 Node 能力，请在 Route Handler 中处理。
+</div>
+</section>
+
+<!-- ==================== 7. 动态路由 ==================== -->
+<section id="dynamic-routes">
+<h2>7. 动态路由与参数 <span class="tag tag-core">核心</span></h2>
+
+<p>使用 <code>[参数名]</code> 创建动态路由段。</p>
+
+<pre><span class="comment">// app/api/users/[id]/route.ts</span>
+<span class="kw">export async function</span> <span class="fn">GET</span>(
+  request: <span class="type">Request</span>,
+  { params }: { params: Promise&lt;{ id: <span class="type">string</span> }&gt; }  <span class="comment">// Next.js 15 中 params 是 Promise</span>
+) {
+  <span class="kw">const</span> { id } = <span class="kw">await</span> params
+
+  <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">db.user.findUnique</span>({ where: { id: <span class="fn">Number</span>(id) } })
+
+  <span class="kw">if</span> (!user) {
+    <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ error: <span class="str">'Not found'</span> }, { status: <span class="num">404</span> })
+  }
+
+  <span class="kw">return</span> NextResponse.<span class="fn">json</span>(user)
+}<span class="lang">typescript</span></pre>
+
+<pre><span class="comment">// Catch-all 路由: app/shop/[...slug]/page.tsx</span>
+<span class="comment">// /shop/a → { slug: ['a'] }</span>
+<span class="comment">// /shop/a/b/c → { slug: ['a', 'b', 'c'] }</span><span class="lang">注释</span></pre>
+
+<div class="note">
+    <strong>Next.js 15 变更：</strong><code>params</code> 现在是 <code>Promise</code> 类型，必须使用 <code>await</code> 解包。这是与 14 版本的主要区别。
+</div>
+</section>
+
+<!-- ==================== 8. Cookies & Auth ==================== -->
+<section id="cookies-auth">
+<h2>8. Cookies 与认证 <span class="tag tag-adv">进阶</span></h2>
+
+<pre><span class="comment">// 在 Route Handler 中设置 Cookie</span>
+<span class="kw">import</span> { cookies } <span class="kw">from</span> <span class="str">'next/headers'</span>
+
+<span class="kw">export async function</span> <span class="fn">POST</span>(<span class="type">request</span>: Request) {
+  <span class="kw">const</span> cookieStore = <span class="kw">await</span> <span class="fn">cookies</span>()
+  cookieStore.<span class="fn">set</span>(<span class="str">'token'</span>, <span class="str">'jwt-value'</span>, {
+    httpOnly: <span class="kw">true</span>,
+    secure: <span class="kw">true</span>,
+    sameSite: <span class="str">'lax'</span>,
+    maxAge: <span class="num">60</span> * <span class="num">60</span> * <span class="num">24</span> * <span class="num">7</span>,  <span class="comment">// 7天</span>
+    path: <span class="str">'/'</span>,
+  })
+
+  <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ message: <span class="str">'登录成功'</span> })
+}<span class="lang">typescript</span></pre>
+
+<pre><span class="comment">// 在 Server Component 中读取 Cookie</span>
+<span class="kw">import</span> { cookies } <span class="kw">from</span> <span class="str">'next/headers'</span>
+
+<span class="kw">export default async function</span> <span class="fn">ProfilePage</span>() {
+  <span class="kw">const</span> cookieStore = <span class="kw">await</span> <span class="fn">cookies</span>()
+  <span class="kw">const</span> token = cookieStore.<span class="fn">get</span>(<span class="str">'token'</span>)?.value
+  <span class="comment">// 用 token 查询用户...</span>
+}<span class="lang">typescript</span></pre>
+
+<div class="note">
+    <strong>认证方案推荐：</strong>个人项目用 NextAuth.js（Auth.js v5）；企业项目考虑自研 JWT + Cookie。两者都能和 Server Components / Middleware 无缝配合。
+</div>
+</section>
+
+<!-- ==================== 9. 数据库 ==================== -->
+<section id="db">
+<h2>9. 数据库集成 <span class="tag tag-adv">进阶</span></h2>
+
+<p>Next.js 对数据库无绑定，但 <strong>Prisma</strong> 是社区最主流的选择。</p>
+
+<pre><span class="comment">// lib/db.ts — Prisma 客户端单例</span>
+<span class="kw">import</span> { PrismaClient } <span class="kw">from</span> <span class="str">'@prisma/client'</span>
+
+<span class="kw">const</span> <span class="fn">globalForPrisma</span> = <span class="kw">globalThis as</span> <span class="kw">unknown as</span> { prisma: PrismaClient }
+<span class="kw">export const</span> db = globalForPrisma.prisma || <span class="kw">new</span> <span class="type">PrismaClient</span>()
+
+<span class="kw">if</span> (process.env.NODE_ENV !== <span class="str">'production'</span>) {
+  globalForPrisma.prisma = db
+}<span class="lang">typescript</span></pre>
+
+<table>
+    <tr><th>ORM / 工具</th><th>特点</th></tr>
+    <tr><td><strong>Prisma</strong></td><td>类型安全，声明式 schema，迁移工具完善</td></tr>
+    <tr><td><strong>Drizzle</strong></td><td>更轻量，SQL-like API，性能优</td></tr>
+    <tr><td><strong>Kysely</strong></td><td>纯 TypeScript SQL 查询构建器</td></tr>
+    <tr><td><strong>Neon / PlanetScale</strong></td><td>Serverless 数据库，按请求计费</td></tr>
+</table>
+
+<div class="note note-warn">
+    <strong>Serverless 注意：</strong>开发中要避免热重载创建多个数据库连接，上面代码中的 <code>globalThis</code> 技巧正是为此。
+</div>
+</section>
+
+<!-- ==================== 10. 错误处理 ==================== -->
+<section id="error-handling">
+<h2>10. 错误处理 <span class="tag tag-tip">实用</span></h2>
+
+<pre><span class="comment">// app/api/users/route.ts</span>
+<span class="kw">export async function</span> <span class="fn">POST</span>(<span class="type">request</span>: Request) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> body = <span class="kw">await</span> request.<span class="fn">json</span>()
+
+    <span class="comment">// 输入验证</span>
+    <span class="kw">if</span> (!body.name || body.name.length &lt; <span class="num">2</span>) {
+      <span class="kw">return</span> NextResponse.<span class="fn">json</span>(
+        { error: <span class="str">'名称至少 2 个字符'</span> },
+        { status: <span class="num">400</span> }
+      )
+    }
+
+    <span class="kw">const</span> user = <span class="kw">await</span> <span class="fn">db.user.create</span>({ data: body })
+    <span class="kw">return</span> NextResponse.<span class="fn">json</span>(user, { status: <span class="num">201</span> })
+
+  } <span class="kw">catch</span> (error) {
+    <span class="kw">if</span> (error <span class="kw">instanceof</span> <span class="type">SyntaxError</span>) {
+      <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ error: <span class="str">'请求体格式错误'</span> }, { status: <span class="num">400</span> })
+    }
+    console.<span class="fn">error</span>(<span class="str">'创建用户失败:'</span>, error)
+    <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ error: <span class="str">'服务器内部错误'</span> }, { status: <span class="num">500</span> })
+  }
+}<span class="lang">typescript</span></pre>
+
+<h3 style="margin-top:24px; font-size:1.1rem; color:var(--accent2)">页面级错误边界</h3>
+<pre><span class="comment">// app/error.tsx — 捕获该路由段内所有未处理异常</span>
+<span class="str">'use client'</span>
+
+<span class="kw">export default function</span> <span class="fn">Error</span>({
+  error,
+  reset,
+}: {
+  error: <span class="type">Error</span> &amp; { digest?: <span class="type">string</span> }
+  reset: () =&gt; <span class="type">void</span>
+}) {
+  <span class="kw">return</span> (
+    &lt;<span class="dir">div</span>&gt;
+      &lt;<span class="dir">h2</span>&gt;出了点问题&lt;/<span class="dir">h2</span>&gt;
+      &lt;<span class="dir">p</span>&gt;{error.message}&lt;/<span class="dir">p</span>&gt;
+      &lt;<span class="dir">button</span> onClick={() =&gt; <span class="fn">reset</span>()}&gt;重试&lt;/<span class="dir">button</span>&gt;
+    &lt;/<span class="dir">div</span>&gt;
+  )
+}<span class="lang">tsx</span></pre>
+</section>
+
+<!-- ==================== 11. 缓存 ==================== -->
+<section id="caching">
+<h2>11. 缓存策略 <span class="tag tag-adv">进阶</span></h2>
+
+<table>
+    <tr><th>策略</th><th>配置</th><th>适用场景</th></tr>
+    <tr><td>静态生成 (SSG)</td><td>默认行为</td><td>博客文章、文档</td></tr>
+    <tr><td>ISR (增量再生)</td><td><code>revalidate: N</code></td><td>定时更新的列表页</td></tr>
+    <tr><td>不缓存</td><td><code>cache: 'no-store'</code></td><td>用户相关数据</td></tr>
+    <tr><td>按需刷新</td><td><code>revalidatePath()</code> / <code>revalidateTag()</code></td><td>CMS 内容更新</td></tr>
+</table>
+
+<pre><span class="comment">// 方式1: fetch 级别控制</span>
+<span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>, {
+  cache: <span class="str">'no-store'</span>           <span class="comment">// 每次都重新请求</span>
+  <span class="comment">// 或</span>
+  next: { revalidate: <span class="num">3600</span> }     <span class="comment">// 1小时后重新验证</span>
+})
+
+<span class="comment">// 方式2: route segment 级别控制</span>
+<span class="comment">// app/dashboard/layout.tsx</span>
+<span class="kw">export const</span> dynamic = <span class="str">'force-dynamic'</span>   <span class="comment"># 每次请求都动态渲染</span>
+<span class="kw">export const</span> revalidate = <span class="num">3600</span>            <span class="comment"># 最大过期时间</span>
+<span class="kw">export const</span> fetchCache = <span class="str">'force-no-store'</span>  <span class="comment"># 强制不缓存 fetch</span><span class="lang">typescript</span></pre>
+
+<pre><span class="comment">// Server Action 中按需刷新</span>
+<span class="str">'use server'</span>
+<span class="kw">import</span> { revalidateTag, revalidatePath } <span class="kw">from</span> <span class="str">'next/cache'</span>
+
+<span class="kw">export async function</span> <span class="fn">updateProduct</span>(id: <span class="type">string</span>) {
+  <span class="kw">await</span> <span class="fn">db.product.update</span>({ ... })
+  <span class="fn">revalidateTag</span>(<span class="str">'products'</span>)     <span class="comment"># 刷新所有标记了此 tag 的缓存</span>
+  <span class="fn">revalidatePath</span>(<span class="str">'/products'</span>)   <span class="comment"># 刷新此路径的缓存</span>
+}<span class="lang">typescript</span></pre>
+</section>
+
+<!-- ==================== 12. 环境变量 & 部署 ==================== -->
+<section id="env-deploy">
+<h2>12. 环境变量与部署 <span class="tag tag-tip">实用</span></h2>
+
+<pre><span class="comment"># .env.local — 仅开发环境使用，不提交到 Git</span>
+DATABASE_URL=<span class="str">"postgresql://user:pass@localhost:5432/mydb"</span>
+JWT_SECRET=<span class="str">"your-secret-key"</span>
+
+<span class="comment"># .env.production — 部署到 Vercel 时在控制台设置</span>
+<span class="comment"># 或在 vercel.json 中配置</span><span class="lang">bash</span></pre>
+
+<table>
+    <tr><th>文件</th><th>环境</th><th>是否提交 Git</th></tr>
+    <tr><td><code>.env.local</code></td><td>本地开发</td><td>否（gitignore）</td></tr>
+    <tr><td><code>.env.development</code></td><td>开发环境</td><td>是（团队共享）</td></tr>
+    <tr><td><code>.env.production</code></td><td>生产环境</td><td>是（团队共享）</td></tr>
+</table>
+
+<div class="note">
+    <strong>Server 端</strong>可以直接访问所有环境变量；<strong>Client 端</strong>只能访问以 <code>NEXT_PUBLIC_</code> 开头的变量。例如：<code>NEXT_PUBLIC_API_URL=https://api.example.com</code>。
+</div>
+
+<h3 style="margin-top:24px; font-size:1.1rem; color:var(--accent2)">常用部署命令</h3>
+<pre><span class="comment"># 构建（默认输出 standalone 模式，适合 Docker）</span>
+npm run build
+
+<span class="comment"># 生产环境启动</span>
+npm run start      <span class="comment"># 默认监听 3000 端口，端口可通过 PORT 环境变量覆盖</span>
+
+<span class="comment"># 部署到 Vercel（推荐）</span>
+npx vercel         <span class="comment"># 一键部署，自动识别 Next.js 项目</span><span class="lang">bash</span></pre>
+
+<hr class="divider">
+
+<h2 style="border:none;">快速参考速查表</h2>
+<table>
+    <tr><th>需要做</th><th>用什么</th></tr>
+    <tr><td>创建 REST API</td><td><code>app/api/.../route.ts</code> 导出 GET/POST 等</td></tr>
+    <tr><td>处理表单提交</td><td>Server Action + <code>'use server'</code></td></tr>
+    <tr><td>在页面中展示数据</td><td>Server Component 中直接 <code>await</code></td></tr>
+    <tr><td>请求拦截/权限检查</td><td><code>middleware.ts</code></td></tr>
+    <tr><td>读写 Cookie</td><td><code>next/headers</code> 的 <code>cookies()</code></td></tr>
+    <tr><td>管理用户会话</td><td>NextAuth.js (Auth.js v5)</td></tr>
+    <tr><td>操作数据库</td><td>Prisma / Drizzle</td></tr>
+    <tr><td>控制缓存</td><td><code>revalidatePath</code> / <code>revalidateTag</code> / route segment config</td></tr>
+    <tr><td>处理错误</td><td><code>try/catch</code> + <code>error.tsx</code></td></tr>
+    <tr><td>存储密钥/URL</td><td><code>.env.local</code> + <code>NEXT_PUBLIC_</code> 前缀（客户端）</td></tr>
+</table>
+
+<div class="note" style="background: #f5f3ff; border-left-color: var(--accent2);">
+    <strong>下一步建议：</strong>用一个「待办事项 API + 前端页面」项目练手——包含 CRUD、认证、错误处理和缓存刷新，足以覆盖 90% 的实际场景。
+</div>
+
+</div>
+</body>
+</html>
