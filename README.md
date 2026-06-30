@@ -1,6 +1,7 @@
 # HTML Note
 
 一个基于 GitHub Pages 的 HTML 文件导航系统。
+https://tzy168.github.io/HTML_Note/
 
 ## 目录结构
 
