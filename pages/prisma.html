@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prisma 快速入门 — 5 分钟上手指南</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --google-blue: #1a73e8;
+    --google-red: #ea4335;
+    --google-yellow: #fbbc04;
+    --google-green: #34a853;
+    --surface: #ffffff;
+    --bg: #f8f9fa;
+    --text: #202124;
+    --text-secondary: #5f6368;
+    --text-tertiary: #80868b;
+    --border: #dadce0;
+    --code-bg: #f1f3f4;
+    --code-dark: #1e1e1e;
+    --shadow-sm: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-md: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --shadow-lg: 0 2px 6px 2px rgba(60,64,67,.15), 0 8px 24px 8px rgba(60,64,67,.15);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', 'Google Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Google-style Top Bar ===== */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    height: 64px;
+    display: flex; align-items: center; padding: 0 24px;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,.88);
+    transition: box-shadow .3s;
+  }
+  .topbar.scrolled { box-shadow: var(--shadow-sm); }
+  .topbar-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Google Sans', sans-serif; font-weight: 500; font-size: 18px;
+    color: var(--text); text-decoration: none;
+  }
+  .topbar-logo svg { width: 28px; height: 28px; }
+  .topbar-nav { display: flex; gap: 4px; margin-left: 32px; }
+  .topbar-nav a {
+    padding: 8px 16px; border-radius: 24px; font-size: 14px; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none; transition: all .2s;
+  }
+  .topbar-nav a:hover { background: #e8f0fe; color: var(--google-blue); }
+  .topbar-nav a.active { background: #d2e3fc; color: var(--google-blue); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .topbar-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer;
+    transition: all .2s;
+  }
+  .topbar-pill:hover { background: var(--code-bg); }
+  .topbar-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ===== Hero ===== */
+  .hero {
+    padding: 120px 24px 60px;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse, rgba(26,115,232,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 24px;
+    background: #e8f0fe; color: var(--google-blue);
+    font-size: 13px; font-weight: 600; margin-bottom: 24px;
+    letter-spacing: .3px;
+  }
+  .hero-badge .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--google-blue);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .5; transform: scale(1.4); }
+  }
+  .hero h1 {
+    font-family: 'Google Sans', sans-serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700; line-height: 1.15;
+    color: var(--text); margin-bottom: 16px;
+  }
+  .hero h1 .gradient-text {
+    background: linear-gradient(135deg, var(--google-blue), var(--google-green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 18px; color: var(--text-secondary); max-width: 640px;
+    margin: 0 auto 32px; line-height: 1.7;
+  }
+  .hero-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 28px; border-radius: 24px; font-size: 15px; font-weight: 600;
+    border: none; cursor: pointer; transition: all .25s; text-decoration: none;
+    font-family: 'Google Sans', sans-serif;
+  }
+  .btn-primary {
+    background: var(--google-blue); color: #fff;
+    box-shadow: 0 1px 3px 0 rgba(26,115,232,.4);
+  }
+  .btn-primary:hover {
+    background: #1765cc;
+    box-shadow: 0 2px 8px 0 rgba(26,115,232,.5);
+    transform: translateY(-1px);
+  }
+  .btn-outline {
+    background: var(--surface); color: var(--google-blue);
+    border: 1.5px solid var(--google-blue);
+  }
+  .btn-outline:hover {
+    background: #e8f0fe; transform: translateY(-1px);
+  }
+
+  /* ===== Progress Indicator ===== */
+  .progress-bar {
+    position: fixed; top: 64px; left: 0; right: 0; z-index: 99;
+    height: 3px; background: transparent;
+  }
+  .progress-bar .fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--google-blue), var(--google-green));
+    transition: width .15s linear;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* ===== Step Sidebar + Content ===== */
+  .main-container {
+    max-width: 1200px; margin: 0 auto;
+    padding: 40px 24px 80px;
+    display: grid; grid-template-columns: 240px 1fr; gap: 48px;
+  }
+  @media (max-width: 900px) {
+    .main-container { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  .sidebar {
+    position: sticky; top: 80px; align-self: start;
+  }
+  .sidebar-title {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 12px;
+  }
+  .sidebar ul { list-style: none; }
+  .sidebar li a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    font-size: 14px; color: var(--text-secondary);
+    text-decoration: none; transition: all .2s; position: relative;
+  }
+  .sidebar li a .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    background: var(--code-bg); color: var(--text-tertiary);
+    transition: all .3s;
+  }
+  .sidebar li a.completed .step-num {
+    background: var(--google-green); color: #fff;
+  }
+  .sidebar li a.active {
+    background: #e8f0fe; color: var(--google-blue); font-weight: 500;
+  }
+  .sidebar li a.active .step-num { background: var(--google-blue); color: #fff; }
+  .sidebar li a:hover:not(.active) { background: var(--code-bg); }
+
+  /* ===== Step Cards ===== */
+  .step-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 40px;
+    margin-bottom: 32px;
+    transition: all .4s cubic-bezier(.4,0,.2,1);
+    opacity: 0; transform: translateY(24px);
+  }
+  .step-card.visible { opacity: 1; transform: translateY(0); }
+  .step-card:hover { box-shadow: var(--shadow-md); }
+  .step-card.completed { border-color: var(--google-green); }
+  .step-card.completed::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--google-green); border-radius: 12px 12px 0 0;
+  }
+  .step-card { position: relative; }
+
+  .step-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+  .step-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    transition: all .3s;
+  }
+  .step-card.completed .step-icon { background: #e6f4ea; }
+  .step-icon.blue { background: #e8f0fe; }
+  .step-icon.red { background: #fce8e6; }
+  .step-icon.yellow { background: #fef7e0; }
+  .step-icon.green { background: #e6f4ea; }
+  .step-icon.purple { background: #f3e8fd; }
+
+  .step-header-text h2 {
+    font-family: 'Google Sans', sans-serif;
+    font-size: 22px; font-weight: 600; margin-bottom: 4px;
+  }
+  .step-header-text p { font-size: 14px; color: var(--text-secondary); }
+
+  /* ===== Code Blocks (Google-style Material) ===== */
+  .code-group { margin: 20px 0; }
+  .code-tabs {
+    display: flex; gap: 0; border-radius: var(--radius) var(--radius) 0 0;
+    overflow: hidden; background: #202124;
+  }
+  .code-tab {
+    padding: 8px 20px; font-size: 13px; font-weight: 500;
+    background: #3c4043; color: #9aa0a6; border: none; cursor: pointer;
+    transition: all .2s; font-family: 'JetBrains Mono', monospace;
+  }
+  .code-tab.active { background: var(--code-dark); color: #a8dab5; }
+  .code-tab:hover:not(.active) { background: #4a4d51; }
+  .code-block {
+    background: var(--code-dark); border-radius: 0 0 var(--radius) var(--radius);
+    padding: 20px 24px; overflow-x: auto; position: relative;
+  }
+  .code-block code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; line-height: 1.7; color: #e8eaed;
+    display: block; white-space: pre;
+  }
+  .code-block .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #5f6368;
+    background: #3c4043; color: #9aa0a6; font-size: 12px; cursor: pointer;
+    opacity: 0; transition: all .2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .code-block:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { background: #4a4d51; color: #e8eaed; }
+  .copy-btn.copied { border-color: var(--google-green); color: var(--google-green); }
+
+  /* Syntax colors */
+  .kw { color: #c586c0; }
+  .str { color: #ce9178; }
+  .cm { color: #6a9955; }
+  .fn { color: #dcdcaa; }
+  .tp { color: #4ec9b0; }
+  .op { color: #d4d4d4; }
+  .num { color: #b5cea8; }
+  .prop { color: #9cdcfe; }
+  .attr { color: #92d3ff; }
+
+  /* ===== Info/Tip boxes ===== */
+  .callout {
+    padding: 16px 20px; border-radius: var(--radius-sm);
+    margin: 20px 0; display: flex; gap: 12px;
+    font-size: 14px; line-height: 1.6;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #e8f0fe; color: #174ea6; }
+  .callout.tip { background: #e6f4ea; color: #137333; }
+  .callout.warn { background: #fef7e0; color: #b06000; }
+
+  /* ===== File tree ===== */
+  .file-tree {
+    background: var(--code-bg); border-radius: var(--radius-sm);
+    padding: 16px 20px; margin: 16px 0; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .file-tree .folder { color: var(--google-blue); }
+  .file-tree .file { color: var(--text); }
+
+  /* ===== Diagram ===== */
+  .flow-diagram {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 24px 0; flex-wrap: wrap;
+  }
+  .flow-node {
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500; text-align: center;
+    transition: all .3s; cursor: default;
+  }
+  .flow-node:hover { transform: scale(1.05); }
+  .flow-arrow {
+    font-size: 20px; color: var(--text-tertiary); padding: 0 8px;
+  }
+
+  /* ===== Checklist ===== */
+  .checklist { list-style: none; margin: 16px 0; }
+  .checklist li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; font-size: 15px;
+    border-bottom: 1px solid #f1f3f4; cursor: pointer;
+    transition: all .2s; user-select: none;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .checkbox {
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+    border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
+    transition: all .3s cubic-bezier(.4,0,.2,1);
+  }
+  .checklist li.checked .checkbox {
+    background: var(--google-green); border-color: var(--google-green);
+  }
+  .checklist .checkmark {
+    opacity: 0; transform: scale(0); transition: all .25s cubic-bezier(.175,.885,.32,1.275);
+  }
+  .checklist li.checked .checkmark { opacity: 1; transform: scale(1); }
+  .checklist li.checked span { text-decoration: line-through; color: var(--text-tertiary); }
+  .checklist li:hover { background: #f8f9fa; margin: 0 -8px; padding: 10px 8px; border-radius: 8px; }
+
+  /* ===== Accordion ===== */
+  .accordion { margin: 16px 0; }
+  .accordion-item { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .accordion-trigger {
+    width: 100%; padding: 14px 20px; display: flex; justify-content: space-between;
+    align-items: center; background: var(--surface); border: none; cursor: pointer;
+    font-size: 15px; font-weight: 500; color: var(--text); transition: background .2s;
+    font-family: 'Google Sans', sans-serif;
+  }
+  .accordion-trigger:hover { background: var(--code-bg); }
+  .accordion-trigger .arrow {
+    transition: transform .3s; font-size: 12px; color: var(--text-tertiary);
+  }
+  .accordion-item.open .accordion-trigger .arrow { transform: rotate(90deg); }
+  .accordion-body {
+    max-height: 0; overflow: hidden; transition: max-height .35s cubic-bezier(.4,0,.2,1);
+  }
+  .accordion-body-inner { padding: 0 20px 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center; padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-tertiary); font-size: 13px;
+  }
+  .footer a { color: var(--google-blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 12px; }
+
+  /* ===== Completion Animation ===== */
+  .confetti-container {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 200; overflow: hidden;
+  }
+  .confetti {
+    position: absolute; width: 10px; height: 10px; border-radius: 2px;
+    animation: confetti-fall 3s forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    padding: 12px 24px; border-radius: 12px;
+    background: #323232; color: #fff; font-size: 14px;
+    box-shadow: var(--shadow-lg); z-index: 300;
+    transition: transform .4s cubic-bezier(.4,0,.2,1);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ===== Search overlay ===== */
+  .search-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.5); z-index: 150;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 120px; opacity: 0; visibility: hidden;
+    transition: all .3s;
+  }
+  .search-overlay.open { opacity: 1; visibility: visible; }
+  .search-box {
+    width: 560px; max-width: 90vw;
+    background: var(--surface); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); overflow: hidden;
+    transform: scale(.95); transition: transform .3s;
+  }
+  .search-overlay.open .search-box { transform: scale(1); }
+  .search-input-wrap {
+    display: flex; align-items: center; padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input-wrap svg { width: 20px; height: 20px; color: var(--text-tertiary); flex-shrink: 0; }
+  .search-input {
+    flex: 1; border: none; outline: none; font-size: 16px;
+    padding: 0 12px; font-family: 'Inter', sans-serif;
+    background: transparent; color: var(--text);
+  }
+  .search-input::placeholder { color: var(--text-tertiary); }
+  .search-kbd { padding: 2px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--border); color: var(--text-tertiary); }
+  .search-results { padding: 8px; max-height: 320px; overflow-y: auto; }
+  .search-result-item {
+    padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; color: var(--text-secondary);
+    transition: background .15s;
+  }
+  .search-result-item:hover, .search-result-item.focused { background: var(--code-bg); }
+  .search-result-item mark { background: #fef7e0; color: var(--text); padding: 0 2px; border-radius: 2px; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 900px) {
+    .topbar-nav { display: none; }
+    .step-card { padding: 24px; }
+    .hero h1 { font-size: 32px; }
+    .hero p { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="topbar" id="topbar">
+  <a href="#" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none">
+      <path d="M20 4L6 12v16l14 8 14-8V12L20 4z" fill="url(#g)"/>
+      <defs><linearGradient id="g" x1="6" y1="4" x2="34" y2="36">
+        <stop stop-color="#1a73e8"/><stop offset="1" stop-color="#34a853"/>
+      </linearGradient></defs>
+    </svg>
+    Prisma Quickstart
+  </a>
+  <nav class="topbar-nav">
+    <a href="#overview" class="active">概览</a>
+    <a href="#step1">安装</a>
+    <a href="#step2">模型</a>
+    <a href="#step3">查询</a>
+    <a href="#step4">进阶</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="topbar-pill" id="searchBtn" title="搜索">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      搜索
+      <span class="search-kbd" style="margin-left:4px">/</span>
+    </div>
+    <div class="topbar-pill">
+      <span class="dot" style="background:var(--google-green)"></span>
+      Prisma 6.x
+    </div>
+  </div>
+</header>
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+
+<!-- Search Overlay -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索步骤、命令、关键词...">
+      <span class="search-kbd">ESC</span>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="pulse"></span>
+    基于 Prisma 官方最新文档（2025）
+  </div>
+  <h1>
+    <span class="gradient-text">Prisma</span> 快速入门
+  </h1>
+  <p>从零开始，用最现代的 Node.js ORM 管理数据库。类型安全、声明式建模、极简查询 —— 5 分钟完成第一个项目。</p>
+  <div class="hero-actions">
+    <a href="#step1" class="btn btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      开始上手
+    </a>
+    <a href="https://www.prisma.io/docs/getting-started/quickstart-prismaPostgres" target="_blank" class="btn btn-outline">
+      官方文档
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- Main Content -->
+<div class="main-container">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-title">学习进度</div>
+    <ul>
+      <li><a href="#step0" id="nav-0"><span class="step-num">0</span> 前置准备</a></li>
+      <li><a href="#step1" id="nav-1"><span class="step-num">1</span> 创建项目</a></li>
+      <li><a href="#step2" id="nav-2"><span class="step-num">2</span> 安装依赖</a></li>
+      <li><a href="#step3" id="nav-3"><span class="step-num">3</span> 初始化 Prisma</a></li>
+      <li><a href="#step4" id="nav-4"><span class="step-num">4</span> 定义数据模型</a></li>
+      <li><a href="#step5" id="nav-5"><span class="step-num">5</span> 运行迁移</a></li>
+      <li><a href="#step6" id="nav-6"><span class="step-num">6</span> 实例化 Client</a></li>
+      <li><a href="#step7" id="nav-7"><span class="step-num">7</span> 编写查询</a></li>
+      <li><a href="#step8" id="nav-8"><span class="step-num">8</span> Prisma Studio</a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <main>
+
+    <!-- Overview -->
+    <section id="overview">
+      <div class="step-card visible" style="opacity:1;transform:none;">
+        <div class="step-header">
+          <div class="step-icon blue">&#x1f3af;</div>
+          <div class="step-header-text">
+            <h2>Prisma 是什么？</h2>
+            <p>下一代 Node.js & TypeScript ORM</p>
+          </div>
+        </div>
+        <p style="margin-bottom:20px;">
+          Prisma 是一个现代化的对象关系映射（ORM）工具，帮助开发者在 TypeScript/Node.js 中以<strong>类型安全</strong>的方式读写数据库。核心理念是：先定义 Schema，自动生成类型安全的 Client。
+        </p>
+
+        <div class="flow-diagram">
+          <div class="flow-node" style="background:#e8f0fe;color:#174ea6;">Schema 定义</div>
+          <div class="flow-arrow">&#10132;</div>
+          <div class="flow-node" style="background:#fef7e0;color:#b06000;">迁移生成</div>
+          <div class="flow-arrow">&#10132;</div>
+          <div class="flow-node" style="background:#e6f4ea;color:#137333;">Client 生成</div>
+          <div class="flow-arrow">&#10132;</div>
+          <div class="flow-node" style="background:#f3e8fd;color:#7627bb;">类型安全查询</div>
+        </div>
+
+        <div class="callout tip" style="margin-top:24px;">
+          <span class="callout-icon">&#x1f4a1;</span>
+          <div>
+            <strong>核心优势：</strong>自动补全、类型推导、声明式数据模型、直观的迁移管理。相比传统 ORM（如 TypeORM / Sequelize），减少约 40% 的样板代码。
+          </div>
+        </div>
+
+        <div class="file-tree" style="margin-top:20px;">
+          <div class="folder">📁 prisma/</div>
+          <div style="padding-left:20px;">
+            <div class="file">📄 schema.prisma</div>
+            <div class="folder">📁 migrations/</div>
+          </div>
+          <div class="file" style="margin-top:4px;">📄 .env</div>
+          <div class="file">📄 prisma.config.ts</div>
+          <div class="folder" style="margin-top:4px;">📁 generated/prisma/</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 0: Prerequisites -->
+    <section id="step0">
+      <div class="step-card" data-step="0">
+        <div class="step-header">
+          <div class="step-icon blue">&#x2705;</div>
+          <div class="step-header-text">
+            <h2>前置准备</h2>
+            <p>确保你的环境已就绪</p>
+          </div>
+        </div>
+        <ul class="checklist" id="checklist0">
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>已安装 Node.js 18+（推荐 20+）</span>
+          </li>
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>已安装 TypeScript（本教程基于 TS）</span>
+          </li>
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>有 PostgreSQL 数据库（或使用免费的 Prisma Postgres）</span>
+          </li>
+        </ul>
+        <div class="callout info">
+          <span class="callout-icon">&#x2139;</span>
+          <div>没有数据库？Prisma 提供免费托管的 <strong>Prisma Postgres</strong>，可通过 <code>npx create-db</code> 一键创建，零配置启动。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 1: Create Project -->
+    <section id="step1">
+      <div class="step-card" data-step="1">
+        <div class="step-header">
+          <div class="step-icon green">&#x1f4c1;</div>
+          <div class="step-header-text">
+            <h2>创建项目</h2>
+            <p>初始化一个新的 TypeScript 项目</p>
+          </div>
+        </div>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab(event, 0, 'bash')">Bash</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="cm"># 创建项目目录</span>
+<span class="kw">mkdir</span> hello-prisma
+<span class="kw">cd</span> hello-prisma
+
+<span class="cm"># 初始化 npm + 安装 TypeScript 工具链</span>
+<span class="kw">npm</span> init -y
+<span class="kw">npm</span> install typescript tsx @types/node <span class="attr">--save-dev</span>
+<span class="kw">npx</span> tsc <span class="attr">--init</span></code>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">&#x2139;</span>
+          <div><code>tsx</code> 让你可以直接运行 TypeScript 文件，无需手动编译。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Install Dependencies -->
+    <section id="step2">
+      <div class="step-card" data-step="2">
+        <div class="step-header">
+          <div class="step-icon yellow">&#x1f4e6;</div>
+          <div class="step-header-text">
+            <h2>安装 Prisma 依赖</h2>
+            <p>安装 CLI、Client 及数据库驱动</p>
+          </div>
+        </div>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab(event, 1, 'npm')">npm</button>
+            <button class="code-tab" onclick="switchTab(event, 1, 'pnpm')">pnpm</button>
+            <button class="code-tab" onclick="switchTab(event, 1, 'bun')">bun</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code id="code-1-npm"><span class="cm"># 安装 Prisma CLI（开发依赖）</span>
+<span class="kw">npm</span> install prisma <span class="attr">--save-dev</span>
+
+<span class="cm"># 安装 Prisma Client + PostgreSQL 驱动</span>
+<span class="kw">npm</span> install @prisma/client @prisma/adapter-pg pg dotenv</code>
+            <code id="code-1-pnpm" style="display:none"><span class="cm"># 安装 Prisma CLI（开发依赖）</span>
+<span class="kw">pnpm</span> add prisma <span class="attr">-D</span>
+
+<span class="cm"># 安装 Prisma Client + PostgreSQL 驱动</span>
+<span class="kw">pnpm</span> add @prisma/client @prisma/adapter-pg pg dotenv</code>
+            <code id="code-1-bun" style="display:none"><span class="cm"># 安装 Prisma CLI（开发依赖）</span>
+<span class="kw">bun</span> add prisma <span class="attr">--dev</span>
+
+<span class="cm"># 安装 Prisma Client + PostgreSQL 驱动</span>
+<span class="kw">bun</span> add @prisma/client @prisma/adapter-pg pg dotenv</code>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">
+              <span>各包的作用详解</span>
+              <span class="arrow">&#x25B6;</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-body-inner">
+                <strong>prisma</strong> — CLI 工具，提供 <code>prisma init</code>、<code>prisma migrate</code>、<code>prisma generate</code> 等命令<br>
+                <strong>@prisma/client</strong> — Prisma Client 运行时库，用于查询数据库<br>
+                <strong>@prisma/adapter-pg</strong> — node-postgres 驱动适配器，连接 Prisma Client 与数据库<br>
+                <strong>pg</strong> — node-postgres 底层驱动<br>
+                <strong>dotenv</strong> — 从 <code>.env</code> 文件加载环境变量
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: ESM + Init -->
+    <section id="step3">
+      <div class="step-card" data-step="3">
+        <div class="step-header">
+          <div class="step-icon blue">&#x1f50c;</div>
+          <div class="step-header-text">
+            <h2>配置 ESM + 初始化 Prisma</h2>
+            <p>设置模块系统并创建 Prisma 项目结构</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom:12px;font-weight:500;font-size:15px;">首先，更新 <code>tsconfig.json</code> 启用 ESM：</p>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab(event, 2, 'tsconfig')">tsconfig.json</button>
+            <button class="code-tab" onclick="switchTab(event, 2, 'pkgjson')">package.json</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code id="code-2-tsconfig">{
+  <span class="prop">"compilerOptions"</span>: {
+    <span class="prop">"module"</span>: <span class="str">"ESNext"</span>,
+    <span class="prop">"moduleResolution"</span>: <span class="str">"bundler"</span>,
+    <span class="prop">"target"</span>: <span class="str">"ES2023"</span>,
+    <span class="prop">"strict"</span>: <span class="num">true</span>,
+    <span class="prop">"esModuleInterop"</span>: <span class="num">true</span>,
+    <span class="prop">"ignoreDeprecations"</span>: <span class="str">"6.0"</span>
+  }
+}</code>
+            <code id="code-2-pkgjson" style="display:none">{
+  <span class="prop">"type"</span>: <span class="str">"module"</span>
+}</code>
+          </div>
+        </div>
+
+        <p style="margin:24px 0 12px;font-weight:500;font-size:15px;">然后，初始化 Prisma：</p>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active">Bash</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="cm"># 初始化 Prisma 项目</span>
+<span class="kw">npx</span> prisma init <span class="attr">--output</span> ../generated/prisma
+
+<span class="cm"># 创建 Prisma Postgres 数据库（如使用托管数据库）</span>
+<span class="kw">npx</span> create-db</code>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">&#x1f4a1;</span>
+          <div><code>prisma init</code> 会自动创建 <code>prisma/schema.prisma</code>、<code>.env</code> 和 <code>prisma.config.ts</code>。使用 <code>--output</code> 指定 Client 生成路径，避免污染源码目录。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Schema -->
+    <section id="step4">
+      <div class="step-card" data-step="4">
+        <div class="step-header">
+          <div class="step-icon purple">&#x1f4dd;</div>
+          <div class="step-header-text">
+            <h2>定义数据模型</h2>
+            <p>在 schema.prisma 中声明你的数据结构</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom:16px;">打开 <code>prisma/schema.prisma</code>，添加以下模型（经典的 User &#x2194; Post 一对多关系）：</p>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active">schema.prisma</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="kw">generator</span> <span class="tp">client</span> {
+  <span class="prop">provider</span> = <span class="str">"prisma-client"</span>
+  <span class="prop">output</span>   = <span class="str">"../generated/prisma"</span>
+}
+
+<span class="kw">datasource</span> <span class="tp">db</span> {
+  <span class="prop">provider</span> = <span class="str">"postgresql"</span>
+}
+
+<span class="kw">model</span> <span class="tp">User</span> {
+  <span class="prop">id</span>    <span class="tp">Int</span>    <span class="attr">@id</span> <span class="attr">@default</span>(autoincrement())
+  <span class="prop">email</span> <span class="tp">String</span> <span class="attr">@unique</span>
+  <span class="prop">name</span>  <span class="tp">String</span>?
+  <span class="prop">posts</span> <span class="tp">Post</span>[]
+}
+
+<span class="kw">model</span> <span class="tp">Post</span> {
+  <span class="prop">id</span>        <span class="tp">Int</span>      <span class="attr">@id</span> <span class="attr">@default</span>(autoincrement())
+  <span class="prop">title</span>     <span class="tp">String</span>
+  <span class="prop">content</span>   <span class="tp">String</span>?
+  <span class="prop">published</span> <span class="tp">Boolean</span> <span class="attr">@default</span>(false)
+  <span class="prop">author</span>    <span class="tp">User</span>    <span class="attr">@relation</span>(fields: [authorId], references: [id])
+  <span class="prop">authorId</span>  <span class="tp">Int</span>
+}</code>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">
+              <span>Schema 语法要点</span>
+              <span class="arrow">&#x25B6;</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-body-inner">
+                <strong><code>@id</code></strong> — 标记主键<br>
+                <strong><code>@default(autoincrement())</code></strong> — 自增默认值<br>
+                <strong><code>@unique</code></strong> — 唯一约束<br>
+                <strong><code>String?</code></strong> — 可选字段（可为 null）<br>
+                <strong><code>@relation</code></strong> — 定义外键关系，<code>fields</code> 指本表列，<code>references</code> 指目标表列
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 5: Migrate -->
+    <section id="step5">
+      <div class="step-card" data-step="5">
+        <div class="step-header">
+          <div class="step-icon green">&#x1f504;</div>
+          <div class="step-header-text">
+            <h2>运行数据库迁移</h2>
+            <p>将 Schema 变更同步到数据库</p>
+          </div>
+        </div>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active">Bash</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="cm"># 创建并应用迁移（首次命名为 init）</span>
+<span class="kw">npx</span> prisma migrate dev <span class="attr">--name</span> init
+
+<span class="cm"># 生成 Prisma Client 代码</span>
+<span class="kw">npx</span> prisma generate</code>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <span class="callout-icon">&#x2139;</span>
+          <div>
+            <code>migrate dev</code> 做了两件事：<br>
+            1. 根据 Schema 创建 SQL 迁移文件<br>
+            2. 在数据库中执行这些迁移<br>
+            <br>
+            <strong>注意：</strong>开发阶段用 <code>migrate dev</code>，生产环境用 <code>migrate deploy</code>（不创建新迁移）。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 6: PrismaClient -->
+    <section id="step6">
+      <div class="step-card" data-step="6">
+        <div class="step-header">
+          <div class="step-icon blue">&#x1f517;</div>
+          <div class="step-header-text">
+            <h2>实例化 Prisma Client</h2>
+            <p>创建与数据库的连接实例</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom:16px;">创建 <code>lib/prisma.ts</code> 文件：</p>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active">lib/prisma.ts</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="kw">import</span> <span class="str">"dotenv/config"</span>;
+<span class="kw">import</span> { <span class="tp">PrismaPg</span> } <span class="kw">from</span> <span class="str">"@prisma/adapter-pg"</span>;
+<span class="kw">import</span> { <span class="tp">PrismaClient</span> } <span class="kw">from</span> <span class="str">"../generated/prisma/client"</span>;
+
+<span class="kw">const</span> <span class="prop">connectionString</span> = <span class="str">`${process.env.DATABASE_URL}`</span>;
+
+<span class="kw">const</span> <span class="prop">adapter</span> = <span class="kw">new</span> <span class="fn">PrismaPg</span>({ <span class="prop">connectionString</span> });
+<span class="kw">const</span> <span class="prop">prisma</span> = <span class="kw">new</span> <span class="fn">PrismaClient</span>({ <span class="prop">adapter</span> });
+
+<span class="kw">export</span> { <span class="prop">prisma</span> };</code>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">&#x1f4a1;</span>
+          <div>通过 driver adapter 模式连接数据库是 Prisma 最新的推荐做法。此模式支持连接池优化、边缘运行时（Edge Runtime）等高级场景。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 7: Write Queries -->
+    <section id="step7">
+      <div class="step-card" data-step="7">
+        <div class="step-header">
+          <div class="step-icon red">&#x1f680;</div>
+          <div class="step-header-text">
+            <h2>编写你的第一个查询</h2>
+            <p>增删改查，类型安全，自动补全</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom:16px;">创建 <code>script.ts</code>，试试最常用的操作：</p>
+
+        <div class="code-group">
+          <div class="code-tabs">
+            <button class="code-tab active">script.ts</button>
+          </div>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="kw">import</span> { <span class="prop">prisma</span> } <span class="kw">from</span> <span class="str">"./lib/prisma"</span>;
+
+<span class="kw">async function</span> <span class="fn">main</span>() {
+  <span class="cm">// ✅ CREATE — 创建用户 + 关联文章</span>
+  <span class="kw">const</span> <span class="prop">user</span> = <span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">user.create</span>({
+    <span class="prop">data</span>: {
+      <span class="prop">name</span>:  <span class="str">"Alice"</span>,
+      <span class="prop">email</span>: <span class="str">"alice@prisma.io"</span>,
+      <span class="prop">posts</span>: {
+        <span class="fn">create</span>: {
+          <span class="prop">title</span>:     <span class="str">"Hello World"</span>,
+          <span class="prop">content</span>:   <span class="str">"My first post!"</span>,
+          <span class="prop">published</span>: <span class="num">true</span>,
+        },
+      },
+    },
+    <span class="prop">include</span>: { <span class="prop">posts</span>: <span class="num">true</span> },
+  });
+  <span class="fn">console.log</span>(<span class="str">"Created user:"</span>, <span class="prop">user</span>);
+
+  <span class="cm">// ✅ READ — 查询所有用户及文章</span>
+  <span class="kw">const</span> <span class="prop">allUsers</span> = <span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">user.findMany</span>({
+    <span class="prop">include</span>: { <span class="prop">posts</span>: <span class="num">true</span> },
+  });
+  <span class="fn">console.log</span>(<span class="str">"All users:"</span>, JSON.<span class="fn">stringify</span>(<span class="prop">allUsers</span>, <span class="num">null</span>, <span class="num">2</span>));
+}
+
+<span class="fn">main</span>()
+  .<span class="fn">then</span>(<span class="kw">async</span> () => { <span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">$disconnect</span>(); })
+  .<span class="fn">catch</span>(<span class="kw">async</span> (e) => {
+    <span class="fn">console.error</span>(e);
+    <span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">$disconnect</span>();
+    <span class="prop">process</span>.<span class="fn">exit</span>(<span class="num">1</span>);
+  });</code>
+          </div>
+        </div>
+
+        <p style="margin-bottom:12px;">运行脚本：</p>
+        <div class="code-group">
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="kw">npx</span> tsx script.ts</code>
+          </div>
+        </div>
+
+        <div class="accordion" style="margin-top:20px;">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAccordion(this)">
+              <span>更多常用查询模式</span>
+              <span class="arrow">&#x25B6;</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-body-inner">
+                <div class="code-block" style="margin-bottom:12px;">
+<code><span class="cm">// UPDATE — 更新记录</span>
+<span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">user.update</span>({
+  <span class="prop">where</span>: { <span class="prop">email</span>: <span class="str">"alice@prisma.io"</span> },
+  <span class="prop">data</span>:  { <span class="prop">name</span>: <span class="str">"Alice Updated"</span> },
+});
+
+<span class="cm">// DELETE — 删除记录</span>
+<span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">post.deleteMany</span>({
+  <span class="prop">where</span>: { <span class="prop">published</span>: <span class="num">false</span> },
+});
+
+<span class="cm">// FILTER — 条件筛选</span>
+<span class="kw">const</span> <span class="prop">publishedPosts</span> = <span class="kw">await</span> <span class="prop">prisma</span>.<span class="fn">post.findMany</span>({
+  <span class="prop">where</span>: { <span class="prop">published</span>: <span class="num">true</span> },
+  <span class="prop">orderBy</span>: { <span class="prop">id</span>: <span class="str">"desc"</span> },
+  <span class="prop">take</span>: <span class="num">10</span>,
+});</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 8: Prisma Studio -->
+    <section id="step8">
+      <div class="step-card" data-step="8">
+        <div class="step-header">
+          <div class="step-icon yellow">&#x1f3a8;</div>
+          <div class="step-header-text">
+            <h2>Prisma Studio</h2>
+            <p>内置的数据库可视化管理工具</p>
+          </div>
+        </div>
+
+        <p style="margin-bottom:16px;">Prisma 自带一个类似 Firebase Console 的数据库浏览器，一行命令启动：</p>
+
+        <div class="code-group">
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyCode(this)">复制</button>
+            <code><span class="kw">npx</span> prisma studio</code>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <span class="callout-icon">&#x1f4a1;</span>
+          <div>自动打开 <code>http://localhost:5555</code>，可以可视化地浏览、筛选、编辑、创建和删除数据。非常适合开发调试。</div>
+        </div>
+
+        <p style="margin:24px 0 12px;font-weight:500;font-size:15px;">恭喜！你已经完成了 Prisma 的全部核心流程。&#x1f389;</p>
+        <ul class="checklist" id="finalChecklist">
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>创建了 TypeScript 项目</span>
+          </li>
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>安装了 Prisma CLI + Client</span>
+          </li>
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>定义了数据模型（Schema）</span>
+          </li>
+          <li onclick="toggleCheck(this)">
+            <div class="checkbox"><svg class="checkmark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span>成功运行了迁移和查询</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Next Steps -->
+    <div class="step-card visible" style="opacity:1;transform:none;background:linear-gradient(135deg,#e8f0fe 0%,#e6f4ea 100%);border:none;">
+      <h2 style="font-family:'Google Sans',sans-serif;font-size:22px;margin-bottom:12px;">接下来学什么？</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px;">
+        <a href="https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/introduction" target="_blank" style="text-decoration:none;padding:16px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;display:block;">
+          <div style="font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px;">Client API</div>
+          <div style="font-size:13px;color:var(--text-secondary);">高级查询、过滤、分页</div>
+        </a>
+        <a href="https://www.prisma.io/docs/orm/prisma-migrate" target="_blank" style="text-decoration:none;padding:16px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;display:block;">
+          <div style="font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px;">Migrations</div>
+          <div style="font-size:13px;color:var(--text-secondary);">Schema 演进与迁移管理</div>
+        </a>
+        <a href="https://www.prisma.io/docs/orm/prisma-client/queries/advanced/query-optimization-performance" target="_blank" style="text-decoration:none;padding:16px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;display:block;">
+          <div style="font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px;">Performance</div>
+          <div style="font-size:13px;color:var(--text-secondary);">查询优化与性能调优</div>
+        </a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="https://www.prisma.io/docs" target="_blank">官方文档</a>
+    <a href="https://github.com/prisma/prisma" target="_blank">GitHub</a>
+    <a href="https://pris.ly/discord" target="_blank">Discord 社区</a>
+  </div>
+  <p>内容来源：Prisma 官方文档 2025 版本 | 本页面仅用于学习参考</p>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Confetti container -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+  // ===== Scroll progress bar =====
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = (scrollTop / docHeight) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+
+    // Topbar shadow
+    document.getElementById('topbar').classList.toggle('scrolled', scrollTop > 10);
+  });
+
+  // ===== Intersection Observer for card animations =====
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        // Mark step as active in sidebar
+        const step = entry.target.dataset.step;
+        if (step !== undefined) {
+          document.querySelectorAll('.sidebar li a').forEach((a, i) => {
+            a.classList.toggle('active', i == step);
+            a.classList.toggle('completed', i < step);
+          });
+        }
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.step-card:not([style*="opacity:1"])').forEach(card => observer.observe(card));
+
+  // ===== Copy Code =====
+  function copyCode(btn) {
+    const codeBlock = btn.parentElement.querySelector('code:not([style*="display:none"])');
+    const text = codeBlock.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '已复制!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ===== Tab Switching =====
+  function switchTab(event, group, tabId) {
+    const tabsContainer = event.target.parentElement;
+    const codeBlocks = tabsContainer.parentElement.querySelectorAll('code[id^="code-' + group + '-"]');
+
+    // If code doesn't have id-based grouping, use index
+    if (codeBlocks.length === 0) {
+      const allTabs = tabsContainer.querySelectorAll('.code-tab');
+      const allCodes = tabsContainer.parentElement.querySelectorAll('.code-block code');
+      allTabs.forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      const idx = Array.from(allTabs).indexOf(event.target);
+      allCodes.forEach((c, i) => c.style.display = i === idx ? 'block' : 'none');
+    } else {
+      tabsContainer.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      codeBlocks.forEach(c => c.style.display = 'none');
+      const target = document.getElementById('code-' + group + '-' + tabId);
+      if (target) target.style.display = 'block';
+    }
+  }
+
+  // ===== Checklist =====
+  function toggleCheck(li) {
+    li.classList.toggle('checked');
+    // Check if all items in the final checklist are done
+    if (li.closest('#finalChecklist')) {
+      const items = li.closest('#finalChecklist').querySelectorAll('li');
+      const allChecked = Array.from(items).every(item => item.classList.contains('checked'));
+      if (allChecked) {
+        showConfetti();
+        showToast('🎉 太棒了！你已经掌握了 Prisma 的核心知识！');
+      }
+    }
+  }
+
+  // ===== Accordion =====
+  function toggleAccordion(trigger) {
+    const item = trigger.parentElement;
+    const body = item.querySelector('.accordion-body');
+    const inner = body.querySelector('.accordion-body-inner');
+
+    if (item.classList.contains('open')) {
+      body.style.maxHeight = '0';
+      item.classList.remove('open');
+    } else {
+      body.style.maxHeight = inner.scrollHeight + 'px';
+      item.classList.add('open');
+    }
+  }
+
+  // ===== Toast =====
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // ===== Confetti =====
+  function showConfetti() {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#1a73e8', '#ea4335', '#fbbc04', '#34a853', '#f3e8fd', '#e8f0fe'];
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.animationDelay = Math.random() * 1.5 + 's';
+      confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+      confetti.style.width = (6 + Math.random() * 8) + 'px';
+      confetti.style.height = (6 + Math.random() * 8) + 'px';
+      container.appendChild(confetti);
+    }
+    setTimeout(() => container.innerHTML = '', 5000);
+  }
+
+  // ===== Keyboard Shortcuts =====
+  document.addEventListener('keydown', (e) => {
+    // '/' to open search
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+      const active = document.activeElement;
+      if (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        openSearch();
+      }
+    }
+    // ESC to close search
+    if (e.key === 'Escape') closeSearch();
+  });
+
+  // ===== Search =====
+  const searchBtn = document.getElementById('searchBtn');
+  const searchOverlay = document.getElementById('searchOverlay');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+
+  const searchData = [
+    { title: '前置准备', section: '#step0', keywords: 'node typescript 环境 前置 prerequisite' },
+    { title: '创建项目 mkdir init', section: '#step1', keywords: 'npm init project 创建 目录' },
+    { title: '安装依赖 install', section: '#step2', keywords: 'install prisma client adapter pg pnpm bun' },
+    { title: 'ESM 配置 + prisma init', section: '#step3', keywords: 'esm tsconfig init 初始化 module' },
+    { title: '定义数据模型 schema.prisma', section: '#step4', keywords: 'schema model 用户 文章 关系 relation user post' },
+    { title: '运行迁移 migrate', section: '#step5', keywords: 'migrate migration 迁移 database deploy' },
+    { title: '实例化 PrismaClient', section: '#step6', keywords: 'prisma client adapter 连接 实例化' },
+    { title: '编写查询 CRUD', section: '#step7', keywords: 'create read update delete 查询 findMany script' },
+    { title: 'Prisma Studio 可视化', section: '#step8', keywords: 'studio 可视化 浏览器 数据库 浏览' },
+  ];
+
+  searchBtn.addEventListener('click', openSearch);
+  searchOverlay.addEventListener('click', (e) => {
+    if (e.target === searchOverlay) closeSearch();
+  });
+
+  function openSearch() {
+    searchOverlay.classList.add('open');
+    setTimeout(() => searchInput.focus(), 100);
+    renderSearch('');
+  }
+
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    searchInput.value = '';
+  }
+
+  searchInput.addEventListener('input', (e) => renderSearch(e.target.value));
+
+  function renderSearch(query) {
+    const q = query.toLowerCase().trim();
+    const filtered = q
+      ? searchData.filter(item =>
+          item.title.toLowerCase().includes(q) || item.keywords.toLowerCase().includes(q)
+        )
+      : searchData;
+
+    searchResults.innerHTML = filtered.length === 0
+      ? '<div style="padding:20px;text-align:center;color:var(--text-tertiary);font-size:14px;">未找到匹配内容</div>'
+      : filtered.map(item => {
+          const title = q
+            ? item.title.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>')
+            : item.title;
+          return `<div class="search-result-item" onclick="closeSearch();document.querySelector('${item.section}').scrollIntoView({behavior:'smooth',block:'center'})">${title}</div>`;
+        }).join('');
+  }
+
+  // ===== Nav active state on scroll =====
+  const sections = document.querySelectorAll('section[id^="step"]');
+  const navLinks = document.querySelectorAll('.sidebar li a');
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        const idx = parseInt(id.replace('step', ''));
+        navLinks.forEach((a, i) => {
+          a.classList.toggle('active', i === idx);
+          a.classList.toggle('completed', i < idx);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -60% 0px' });
+
+  sections.forEach(section => navObserver.observe(section));
+
+  // ===== Smooth anchor links =====
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+</script>
+</body>
+</html>
