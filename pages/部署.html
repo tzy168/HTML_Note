@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目部署上线指南 — NestJS · Prisma 7 · PostgreSQL 18 · Docker</title>
+    <style id="theme-vars">
+:root {
+  /* ── Google Material Design Palette ── */
+  --color-primary: #1a73e8;
+  --color-primary-light: #4a90e2;
+  --color-primary-dark: #1557b0;
+  --color-primary-bg: #e8f0fe;
+  --color-primary-surface: #d2e3fc;
+
+  /* Neutrals */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-tertiary: #f1f3f4;
+  --color-surface: #ffffff;
+  --color-surface-variant: #f8f9fa;
+  --color-border: #dadce0;
+  --color-border-light: #e8eaed;
+  --color-text-primary: #202124;
+  --color-text-secondary: #5f6368;
+  --color-text-tertiary: #80868b;
+  --color-text-on-primary: #ffffff;
+
+  /* State Colors */
+  --state-success: #1e8e3e;
+  --state-success-bg: #e6f4ea;
+  --state-warning: #f9ab00;
+  --state-warning-bg: #fef7e0;
+  --state-error: #d93025;
+  --state-error-bg: #fce8e6;
+  --state-info: #1a73e8;
+  --state-info-bg: #e8f0fe;
+
+  /* Code / Tech accent */
+  --color-code-bg: #f1f3f4;
+  --color-code-text: #1a73e8;
+  --color-code-border: #dadce0;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.04);
+  --shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.08), 0 1px 2px -1px rgba(60, 64, 67, 0.04);
+  --shadow-lg: 0 4px 6px -1px rgba(60, 64, 67, 0.06), 0 2px 4px -2px rgba(60, 64, 67, 0.04);
+  --shadow-xl: 0 10px 15px -3px rgba(60, 64, 67, 0.05), 0 4px 6px -4px rgba(60, 64, 67, 0.03);
+
+  /* Typography */
+  --font-sans: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-mono: 'Google Sans Mono', 'Roboto Mono', 'Fira Code', 'Courier New', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+}
+
+.dark {
+  --color-bg: #1e1e2e;
+  --color-bg-secondary: #2a2a3c;
+  --color-bg-tertiary: #32324a;
+  --color-surface: #2a2a3c;
+  --color-surface-variant: #32324a;
+  --color-border: #3c3c58;
+  --color-border-light: #32324a;
+  --color-text-primary: #e8eaed;
+  --color-text-secondary: #9aa0a6;
+  --color-text-tertiary: #80868b;
+  --color-text-on-primary: #ffffff;
+  --color-primary-bg: #1a3a5c;
+  --color-primary-surface: #1e2f4a;
+  --color-code-bg: #2a2a3c;
+  --state-success-bg: #1b3626;
+  --state-warning-bg: #3d2e0a;
+  --state-error-bg: #3d1f1c;
+  --state-info-bg: #1a3a5c;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.25), 0 1px 2px -1px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.15);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--color-bg);
+    --color-foreground: var(--color-text-primary);
+    --color-primary: var(--color-primary);
+    --color-primary-foreground: var(--color-text-on-primary);
+    --color-muted: var(--color-bg-secondary);
+    --color-muted-foreground: var(--color-text-secondary);
+    --color-card: var(--color-surface);
+    --color-card-foreground: var(--color-text-primary);
+    --color-border: var(--color-border);
+    --color-input: var(--color-border);
+    --color-ring: var(--color-primary);
+    --radius-sm: var(--radius-sm);
+    --radius-md: var(--radius-md);
+    --radius-lg: var(--radius-lg);
+    --radius-xl: var(--radius-xl);
+  }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text-primary); }
+    td, th { word-break: break-all; word-break: auto-phrase; }
+    th { white-space: nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        background-color: currentColor;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+      }
+      .dark nav[style*="backdrop-filter"] {
+        background: rgba(30, 30, 46, 0.8) !important;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main>
+
+      <!-- ═══════════ STICKY NAV ═══════════ -->
+      <nav data-dom-id="sticky-nav" class="fixed top-0 left-0 right-0 z-50" style="background:rgba(255,255,255,0.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--color-border-light);">
+        <div class="scroll-progress" style="position:absolute;top:0;left:0;height:3px;background:var(--color-primary);width:0%;transition:width 0.1s linear;border-radius:0 2px 2px 0;"></div>
+        <div class="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
+          <div class="flex items-center gap-2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span class="font-semibold text-sm" style="color:var(--color-text-primary);">Deploy Guide</span>
+          </div>
+          <div class="hidden md:flex items-center gap-1">
+            <a href="#step-1" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">准备环境</a>
+            <a href="#step-2" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">Docker化</a>
+            <a href="#step-3" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">数据库</a>
+            <a href="#step-4" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">Compose</a>
+            <a href="#step-5" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">Nginx</a>
+            <a href="#step-6" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">SSL</a>
+            <a href="#step-7" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors" style="color:var(--color-text-secondary);">验证</a>
+          </div>
+          <div class="flex items-center gap-2">
+            <button data-dom-id="dark-toggle" class="w-8 h-8 flex items-center justify-center rounded-full transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);" aria-label="Toggle dark mode">
+              <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <svg class="moon-icon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <!-- mobile menu button -->
+            <button data-dom-id="mobile-menu-btn" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);" aria-label="Menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- mobile nav -->
+        <div data-dom-id="mobile-nav" class="md:hidden hidden px-4 pb-3 flex flex-wrap gap-1">
+          <a href="#step-1" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">准备环境</a>
+          <a href="#step-2" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">Docker化</a>
+          <a href="#step-3" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">数据库</a>
+          <a href="#step-4" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">Compose</a>
+          <a href="#step-5" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">Nginx</a>
+          <a href="#step-6" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">SSL</a>
+          <a href="#step-7" class="nav-link px-3 py-1.5 text-xs rounded-lg whitespace-nowrap" style="color:var(--color-text-secondary);">验证</a>
+        </div>
+      </nav>
+
+      <!-- ═══════════ HERO ═══════════ -->
+      <section data-dom-id="hero" class="relative overflow-hidden" style="padding-top:56px;">
+        <div class="absolute inset-0">
+          <img src="../assets/hero-deployment.jpg" alt="" class="w-full h-full object-cover" />
+          <div class="absolute inset-0" style="background:linear-gradient(135deg, rgba(26,115,232,0.88) 0%, rgba(21,87,176,0.92) 50%, rgba(15,55,110,0.95) 100%);"></div>
+        </div>
+        <!-- floating decorative circles -->
+        <div class="absolute top-20 right-10 w-32 h-32 rounded-full opacity-20" style="background:rgba(255,255,255,0.15);animation:float 6s ease-in-out infinite;"></div>
+        <div class="absolute bottom-16 left-16 w-20 h-20 rounded-full opacity-10" style="background:rgba(255,255,255,0.2);animation:float 8s ease-in-out 2s infinite;"></div>
+        <div class="absolute top-40 left-1/3 w-12 h-12 rounded-full opacity-15" style="background:rgba(255,255,255,0.1);animation:float 5s ease-in-out 1s infinite;"></div>
+
+        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center">
+          <h1 class="text-white font-bold tracking-tight mb-4" style="font-size:clamp(2.25rem,5vw,3.75rem);line-height:1.15;text-wrap:balance;word-break:keep-all;overflow-wrap:break-word;">从本地到公网</h1>
+          <p class="text-white text-lg sm:text-xl mb-8 max-w-2xl mx-auto" style="opacity:0.9;line-height:1.6;">NestJS + Prisma 7 + PostgreSQL 18 全链路部署指南</p>
+          <div class="flex flex-wrap justify-center gap-2 mb-10">
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);">NestJS</span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);">Prisma 7</span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);">PostgreSQL 18</span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);">Docker</span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-white" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);">Nginx</span>
+          </div>
+          <a href="#step-1" class="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-lg text-white transition-all" style="background:var(--color-primary);box-shadow:0 2px 8px rgba(26,115,232,0.4);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            开始部署
+          </a>
+        </div>
+      </section>
+
+      <!-- ═══════════ ARCHITECTURE DIAGRAM ═══════════ -->
+      <section data-dom-id="architecture" class="py-16 sm:py-20 reveal-section" style="background:var(--color-bg-secondary);">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <h2 class="text-2xl sm:text-3xl font-bold text-center mb-3 tracking-tight" style="color:var(--color-text-primary);">部署架构总览</h2>
+          <p class="text-center mb-12 text-sm" style="color:var(--color-text-secondary);max-width:560px;margin-left:auto;margin-right:auto;line-height:1.6;">从本地代码到公网访问，完整链路一览无余。每个节点都是本指南的一个关键步骤。</p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-0">
+            <!-- Node 1 -->
+            <div class="arch-node group relative flex flex-col items-center gap-2 p-4 rounded-xl cursor-default transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);min-width:130px;">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <span class="text-xs font-semibold" style="color:var(--color-text-primary);">本地开发</span>
+              <span class="arch-tooltip hidden group-hover:block absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 text-xs rounded-lg whitespace-nowrap z-10" style="background:var(--color-text-primary);color:var(--color-bg);">编写 NestJS 代码</span>
+            </div>
+            <svg class="hidden sm:block" width="40" height="24" viewBox="0 0 40 24"><path d="M0 12 L30 12" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="28,8 36,12 28,16" fill="var(--color-border)"/></svg>
+            <svg class="sm:hidden" width="24" height="30" viewBox="0 0 24 30"><path d="M12 0 L12 22" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="8,20 12,28 16,20" fill="var(--color-border)"/></svg>
+            <!-- Node 2 -->
+            <div class="arch-node group relative flex flex-col items-center gap-2 p-4 rounded-xl cursor-default transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);min-width:130px;">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--state-info-bg);color:var(--state-info);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
+              </div>
+              <span class="text-xs font-semibold" style="color:var(--color-text-primary);">Docker 构建</span>
+              <span class="arch-tooltip hidden group-hover:block absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 text-xs rounded-lg whitespace-nowrap z-10" style="background:var(--color-text-primary);color:var(--color-bg);">多阶段构建镜像</span>
+            </div>
+            <svg class="hidden sm:block" width="40" height="24" viewBox="0 0 40 24"><path d="M0 12 L30 12" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="28,8 36,12 28,16" fill="var(--color-border)"/></svg>
+            <svg class="sm:hidden" width="24" height="30" viewBox="0 0 24 30"><path d="M12 0 L12 22" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="8,20 12,28 16,20" fill="var(--color-border)"/></svg>
+            <!-- Node 3 -->
+            <div class="arch-node group relative flex flex-col items-center gap-2 p-4 rounded-xl cursor-default transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);min-width:130px;">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--state-success-bg);color:var(--state-success);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              </div>
+              <span class="text-xs font-semibold" style="color:var(--color-text-primary);">Docker Compose</span>
+              <span class="arch-tooltip hidden group-hover:block absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 text-xs rounded-lg whitespace-nowrap z-10" style="background:var(--color-text-primary);color:var(--color-bg);">编排 App + DB</span>
+            </div>
+            <svg class="hidden sm:block" width="40" height="24" viewBox="0 0 40 24"><path d="M0 12 L30 12" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="28,8 36,12 28,16" fill="var(--color-border)"/></svg>
+            <svg class="sm:hidden" width="24" height="30" viewBox="0 0 24 30"><path d="M12 0 L12 22" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="8,20 12,28 16,20" fill="var(--color-border)"/></svg>
+            <!-- Node 4 -->
+            <div class="arch-node group relative flex flex-col items-center gap-2 p-4 rounded-xl cursor-default transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);min-width:130px;">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--state-warning-bg);color:var(--state-warning);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <span class="text-xs font-semibold" style="color:var(--color-text-primary);">Nginx 代理</span>
+              <span class="arch-tooltip hidden group-hover:block absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 text-xs rounded-lg whitespace-nowrap z-10" style="background:var(--color-text-primary);color:var(--color-bg);">反向代理 + SSL</span>
+            </div>
+            <svg class="hidden sm:block" width="40" height="24" viewBox="0 0 40 24"><path d="M0 12 L30 12" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="28,8 36,12 28,16" fill="var(--color-border)"/></svg>
+            <svg class="sm:hidden" width="24" height="30" viewBox="0 0 24 30"><path d="M12 0 L12 22" stroke="var(--color-border)" stroke-width="2" stroke-dasharray="4 3"/><polygon points="8,20 12,28 16,20" fill="var(--color-border)"/></svg>
+            <!-- Node 5 -->
+            <div class="arch-node group relative flex flex-col items-center gap-2 p-4 rounded-xl cursor-default transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);min-width:130px;">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--color-primary);color:var(--color-text-on-primary);">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <span class="text-xs font-semibold" style="color:var(--color-text-primary);">公网访问</span>
+              <span class="arch-tooltip hidden group-hover:block absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 text-xs rounded-lg whitespace-nowrap z-10" style="background:var(--color-text-primary);color:var(--color-bg);">HTTPS 上线</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ DEPLOYMENT STEPS ═══════════ -->
+      <section class="py-16 sm:py-20" style="background:var(--color-bg);">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <div class="text-center mb-12 reveal-section">
+            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3" style="color:var(--color-text-primary);">分步部署指南</h2>
+            <p class="text-sm" style="color:var(--color-text-secondary);max-width:480px;margin:0 auto;line-height:1.6;">按照以下 7 个步骤，将本地 NestJS 项目安全部署到阿里云服务器。每步均可独立完成。</p>
+          </div>
+
+          <!-- ──────── STEP 1 ──────── -->
+          <div id="step-1" data-step="1" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-1" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">1</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">服务器环境准备</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">安装 Docker、Nginx，配置防火墙</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~15 min</span>
+                <input type="checkbox" data-dom-id="step-check-1" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">首先通过 SSH 连接到阿里云 ECS 实例，然后安装所有必需的基础软件。</p>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Terminal</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># SSH 连接服务器
+ssh root@your-server-ip
+
+# 系统更新
+sudo apt update && sudo apt upgrade -y
+
+# 安装 Docker
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable docker && sudo systemctl start docker
+
+# 将当前用户加入 docker 组（免 sudo）
+sudo usermod -aG docker $USER
+
+# 安装 Nginx
+sudo apt install nginx -y
+
+# 配置防火墙
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-info-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>Tip:</strong> 阿里云安全组也需要放行 80、443、22 端口，在 ECS 控制台 &gt; 安全组 &gt; 配置规则中操作。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 2 ──────── -->
+          <div id="step-2" data-step="2" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-2" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">2</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">项目 Docker 化 — 编写 Dockerfile</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">多阶段构建，优化镜像体积</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~10 min</span>
+                <input type="checkbox" data-dom-id="step-check-2" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">使用多阶段构建，在 builder 阶段编译 TypeScript 并生成 Prisma Client，在 runner 阶段仅保留运行时文件。</p>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Dockerfile</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">FROM node:22-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+EXPOSE 3000
+CMD ["node", "dist/main.js"]</code></pre>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">.dockerignore</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">node_modules
+dist
+.git
+.env
+*.md
+test
+coverage</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-warning-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>Important:</strong> Prisma generate 必须在 builder 阶段运行，否则 runner 阶段缺少编译产物。同时确保 COPY Prisma 相关目录。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 3 ──────── -->
+          <div id="step-3" data-step="3" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-3" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">3</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">Prisma 7 + PostgreSQL 18 配置</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">新版 provider、PG18 数据卷路径变更</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~15 min</span>
+                <input type="checkbox" data-dom-id="step-check-3" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">Prisma 7 带来了重大改进：全新的 <code class="px-1.5 py-0.5 rounded text-xs font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">prisma-client</code> provider，不再依赖 Rust 编译，bundle 体积缩小 90%，查询速度提升 3 倍。</p>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-success-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <div class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;">
+                      <strong>Prisma 7 关键变化：</strong><br>
+                      - generator provider 改为 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">prisma-client</code>（非 prisma-client-js）<br>
+                      - 新增 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">prisma.config.ts</code> 动态配置文件<br>
+                      - Dockerfile build 阶段需运行 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">npx prisma generate</code>
+                    </div>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">schema.prisma (generator)</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">generator client {
+  provider = "prisma-client"
+  output   = "../node_modules/.prisma/client"
+}</code></pre>
+                  </div>
+
+                  <p class="text-sm font-semibold mt-2" style="color:var(--color-text-primary);">PostgreSQL 18 Docker 服务配置</p>
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-error-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-error)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>PG18 Volume 路径变更：</strong>PostgreSQL 18 使用 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">/var/lib/postgresql</code> 而非 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">/var/lib/postgresql/data</code>。如果使用旧路径会导致数据丢失！</p>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">docker-compose.yml (db service)</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">db:
+  image: postgres:18-alpine
+  restart: unless-stopped
+  environment:
+    POSTGRES_USER: ${DB_USER}
+    POSTGRES_PASSWORD: ${DB_PASSWORD}
+    POSTGRES_DB: ${DB_NAME}
+  volumes:
+    - pg_data:/var/lib/postgresql
+  ports:
+    - "5432:5432"
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+    interval: 5s
+    timeout: 3s
+    retries: 5</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 4 ──────── -->
+          <div id="step-4" data-step="4" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-4" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">4</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">Docker Compose 编排</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">App + DB 完整编排，端口安全绑定</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~10 min</span>
+                <input type="checkbox" data-dom-id="step-check-4" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">完整的 docker-compose.yml 编排应用和数据库服务。注意 App 端口绑定到 <code class="px-1.5 py-0.5 rounded text-xs font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">127.0.0.1</code>，仅通过 Nginx 反向代理对外暴露。</p>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">docker-compose.yml</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pg_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pg_data:</code></pre>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">.env</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">DB_USER=myapp
+DB_PASSWORD=your-strong-password-here
+DB_NAME=myapp_db</code></pre>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Deploy Commands</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># 启动所有服务
+docker compose up --build -d
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+docker compose down</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-info-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>Security:</strong> 端口 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">127.0.0.1:3000:3000</code> 绑定仅允许本机访问，外部请求必须经过 Nginx 代理，避免直接暴露应用端口。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 5 ──────── -->
+          <div id="step-5" data-step="5" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-5" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">5</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">Nginx 反向代理配置</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">反向代理到 3000 端口，WebSocket 支持</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~10 min</span>
+                <input type="checkbox" data-dom-id="step-check-5" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">创建 Nginx 站点配置，将 80 端口请求代理到本地 3000 端口。</p>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">/etc/nginx/sites-available/your-app</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;">server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}</code></pre>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Enable & Reload</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># 创建软链接启用站点
+sudo ln -s /etc/nginx/sites-available/your-app /etc/nginx/sites-enabled/
+
+# 测试配置语法
+sudo nginx -t
+
+# 重载 Nginx
+sudo systemctl reload nginx</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-info-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>WebSocket 支持：</strong><code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">Upgrade</code> 和 <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">Connection</code> 头确保 WebSocket 连接可以正常升级。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 6 ──────── -->
+          <div id="step-6" data-step="6" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-6" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">6</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">SSL 证书 (Let's Encrypt)</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">免费 HTTPS，自动续期</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~5 min</span>
+                <input type="checkbox" data-dom-id="step-check-6" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">使用 Certbot 自动获取 Let's Encrypt 免费 SSL 证书，并自动配置 Nginx HTTPS。</p>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-warning-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>Prerequisite:</strong> 域名 DNS 已解析到服务器 IP，Nginx 配置已完成，80 端口可正常访问。</p>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Terminal</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># 安装 Certbot
+sudo snap install --classic certbot
+
+# 获取 SSL 证书（自动修改 Nginx 配置）
+sudo certbot --nginx -d your-domain.com
+
+# 验证自动续期
+sudo certbot renew --dry-run</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-success-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <p class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;"><strong>Auto-renewal:</strong>Certbot 安装时会自动创建 systemd timer，证书到期前会自动续期，无需手动操作。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ──────── STEP 7 ──────── -->
+          <div id="step-7" data-step="7" class="step-card mb-4 reveal-section rounded-xl overflow-hidden transition-all" style="background:var(--color-surface);box-shadow:var(--shadow-md);border:1px solid var(--color-border-light);">
+            <button data-dom-id="step-toggle-7" class="step-toggle w-full flex items-center gap-4 px-5 py-4 text-left transition-colors" style="background:transparent;border:none;cursor:pointer;">
+              <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:var(--color-primary);">7</div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-semibold truncate" style="color:var(--color-text-primary);">部署验证与维护</h3>
+                <p class="text-xs truncate mt-0.5" style="color:var(--color-text-tertiary);">健康检查、常用运维命令、故障排查</p>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="text-xs px-2 py-0.5 rounded-md whitespace-nowrap" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">~10 min</span>
+                <input type="checkbox" data-dom-id="step-check-7" class="step-check w-4 h-4 rounded cursor-pointer accent-[var(--color-primary)]" />
+                <svg class="chevron-icon w-5 h-5 transition-transform" style="color:var(--color-text-tertiary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </button>
+            <div class="step-content" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;">
+              <div class="px-5 pb-5 pt-0" style="border-top:1px solid var(--color-border-light);">
+                <div class="pt-4 space-y-4">
+                  <p class="text-sm" style="color:var(--color-text-secondary);line-height:1.7;">部署完成后，通过以下命令验证服务状态，并了解日常运维中常用的排查命令。</p>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Verify Services</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># 查看所有容器状态
+docker compose ps
+
+# 访问健康检查接口
+curl http://127.0.0.1:3000/health
+
+# 查看 HTTPS
+curl -I https://your-domain.com</code></pre>
+                  </div>
+
+                  <div class="code-block relative rounded-lg overflow-hidden" style="background:#202124;">
+                    <div class="flex items-center justify-between px-4 py-2" style="background:rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <span class="text-xs font-mono" style="color:rgba(255,255,255,0.5);">Daily Operations</span>
+                      <button data-dom-id="copy-btn" class="copy-btn flex items-center gap-1.5 px-2 py-1 text-xs rounded-md transition-colors" style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>复制</span>
+                      </button>
+                    </div>
+                    <pre class="p-4 overflow-x-auto"><code class="text-xs sm:text-sm font-mono" style="color:#e8eaed;line-height:1.7;"># 查看应用日志
+docker compose logs -f app
+
+# 进入数据库
+docker compose exec db psql -U myapp -d myapp_db
+
+# 代码更新后重新部署
+docker compose up --build -d
+
+# 重启单个服务
+docker compose restart app</code></pre>
+                  </div>
+
+                  <div class="flex items-start gap-2 p-3 rounded-lg" style="background:var(--state-warning-bg);">
+                    <svg class="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div class="text-xs" style="color:var(--color-text-secondary);line-height:1.6;">
+                      <strong>Common Issues:</strong><br>
+                      - 容器启动失败: <code class="px-1 py-0.5 rounded font-mono" style="background:var(--color-code-bg);color:var(--color-code-text);">docker compose logs app</code> 查看错误<br>
+                      - 数据库连接失败: 检查 .env 和 DATABASE_URL<br>
+                      - Nginx 502: 确认 app 容器正在运行，端口 3000 正常监听
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ QUICK REFERENCE ═══════════ -->
+      <section data-dom-id="quick-ref" class="py-16 sm:py-20 reveal-section" style="background:var(--color-bg-secondary);">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <h2 class="text-2xl sm:text-3xl font-bold text-center mb-3 tracking-tight" style="color:var(--color-text-primary);">命令速查表</h2>
+          <p class="text-center mb-10 text-sm" style="color:var(--color-text-secondary);">所有关键命令一目了然，按用途分类。</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Setup -->
+            <div class="rounded-xl p-4" style="background:var(--color-surface);box-shadow:var(--shadow-sm);border:1px solid var(--color-border-light);">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background:var(--color-primary-bg);color:var(--color-primary);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </div>
+                <span class="text-xs font-semibold" style="color:var(--color-primary);">环境安装</span>
+              </div>
+              <div class="space-y-2">
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">sudo apt update && sudo apt upgrade -y</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">curl -fsSL https://get.docker.com | sh</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">sudo apt install nginx -y</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deploy -->
+            <div class="rounded-xl p-4" style="background:var(--color-surface);box-shadow:var(--shadow-sm);border:1px solid var(--color-border-light);">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background:var(--state-success-bg);color:var(--state-success);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                </div>
+                <span class="text-xs font-semibold" style="color:var(--state-success);">部署操作</span>
+              </div>
+              <div class="space-y-2">
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">docker compose up --build -d</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">docker compose restart app</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">sudo systemctl reload nginx</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Debug -->
+            <div class="rounded-xl p-4" style="background:var(--color-surface);box-shadow:var(--shadow-sm);border:1px solid var(--color-border-light);">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background:var(--state-error-bg);color:var(--state-error);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                </div>
+                <span class="text-xs font-semibold" style="color:var(--state-error);">调试排查</span>
+              </div>
+              <div class="space-y-2">
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">docker compose logs -f app</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">docker compose ps</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+                <div class="relative group rounded-md px-3 py-2 cursor-pointer transition-colors" style="background:var(--color-code-bg);">
+                  <code class="text-xs font-mono block truncate" style="color:var(--color-text-primary);">sudo nginx -t</code>
+                  <button data-dom-id="copy-btn" class="copy-btn absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ FOOTER ═══════════ -->
+      <footer class="py-12" style="background:var(--color-bg-secondary);border-top:1px solid var(--color-border-light);">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="text-xs px-2.5 py-1 rounded-lg" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">NestJS</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">Prisma 7</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">PostgreSQL 18</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">Docker</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">Nginx</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+              <a href="https://docs.nestjs.com" target="_blank" rel="noopener" class="text-xs transition-colors" style="color:var(--color-primary);">NestJS Docs</a>
+              <a href="https://www.prisma.io/docs" target="_blank" rel="noopener" class="text-xs transition-colors" style="color:var(--color-primary);">Prisma Docs</a>
+              <a href="https://www.postgresql.org/docs/18/" target="_blank" rel="noopener" class="text-xs transition-colors" style="color:var(--color-primary);">PG18 Docs</a>
+              <a href="https://docs.docker.com" target="_blank" rel="noopener" class="text-xs transition-colors" style="color:var(--color-primary);">Docker Docs</a>
+            </div>
+          </div>
+          <div class="mt-6 pt-6 text-center" style="border-top:1px solid var(--color-border-light);">
+            <p class="text-xs" style="color:var(--color-text-tertiary);">Last updated: 2026-07-02 &middot; Built with care for developers</p>
+          </div>
+        </div>
+      </footer>
+
+      <!-- ═══════════ BACK TO TOP ═══════════ -->
+      <button data-dom-id="back-to-top" class="fixed bottom-6 right-6 w-10 h-10 rounded-full flex items-center justify-center transition-all opacity-0 pointer-events-none z-40" style="background:var(--color-primary);color:var(--color-text-on-primary);box-shadow:var(--shadow-lg);" aria-label="Back to top">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+
+    </main>
+
+    <script>
+    (function() {
+      /* ── Dark Mode Toggle ── */
+      var darkToggle = document.querySelector('[data-dom-id="dark-toggle"]');
+      var sunIcon = darkToggle.querySelector('.sun-icon');
+      var moonIcon = darkToggle.querySelector('.moon-icon');
+      var htmlEl = document.documentElement;
+
+      function setDark(isDark) {
+        if (isDark) {
+          htmlEl.classList.add('dark');
+          htmlEl.classList.remove('light');
+          sunIcon.classList.add('hidden');
+          moonIcon.classList.remove('hidden');
+          darkToggle.style.background = 'var(--color-bg-tertiary)';
+        } else {
+          htmlEl.classList.remove('dark');
+          htmlEl.classList.add('light');
+          sunIcon.classList.remove('hidden');
+          moonIcon.classList.add('hidden');
+          darkToggle.style.background = 'var(--color-bg-tertiary)';
+        }
+        try { localStorage.setItem('deploy-guide-dark', isDark ? '1' : '0'); } catch(e) {}
+      }
+
+      try {
+        var saved = localStorage.getItem('deploy-guide-dark');
+        if (saved === '1') setDark(true);
+      } catch(e) {}
+
+      darkToggle.addEventListener('click', function() {
+        setDark(!htmlEl.classList.contains('dark'));
+      });
+
+      /* ── Scroll Progress Bar ── */
+      var progressBar = document.querySelector('.scroll-progress');
+      window.addEventListener('scroll', function() {
+        var scrollTop = window.scrollY || document.documentElement.scrollTop;
+        var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+        progressBar.style.width = progress + '%';
+      }, { passive: true });
+
+      /* ── Smooth Scroll Nav Links ── */
+      document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          var targetId = this.getAttribute('href').slice(1);
+          var target = document.getElementById(targetId);
+          if (target) {
+            e.preventDefault();
+            var navHeight = 70;
+            var y = target.getBoundingClientRect().top + window.scrollY - navHeight;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            // close mobile nav
+            var mobileNav = document.querySelector('[data-dom-id="mobile-nav"]');
+            if (mobileNav) mobileNav.classList.add('hidden');
+          }
+        });
+      });
+
+      /* ── Mobile Menu Toggle ── */
+      var mobileBtn = document.querySelector('[data-dom-id="mobile-menu-btn"]');
+      var mobileNav = document.querySelector('[data-dom-id="mobile-nav"]');
+      if (mobileBtn && mobileNav) {
+        mobileBtn.addEventListener('click', function() {
+          mobileNav.classList.toggle('hidden');
+        });
+      }
+
+      /* ── Collapsible Step Cards ── */
+      document.querySelectorAll('.step-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var card = this.closest('.step-card');
+          var content = card.querySelector('.step-content');
+          var chevron = this.querySelector('.chevron-icon');
+          if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+            content.style.maxHeight = '0px';
+            chevron.style.transform = 'rotate(0deg)';
+          } else {
+            content.style.maxHeight = content.scrollHeight + 'px';
+            chevron.style.transform = 'rotate(180deg)';
+          }
+        });
+      });
+
+      /* ── Code Copy Buttons ── */
+      document.querySelectorAll('[data-dom-id="copy-btn"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var codeBlock = this.closest('.code-block') || this.closest('[style*="background"]');
+          var codeEl = codeBlock ? codeBlock.querySelector('code') : null;
+          if (codeEl) {
+            var text = codeEl.textContent;
+            navigator.clipboard.writeText(text).then(function() {
+              var span = btn.querySelector('span');
+              if (span) {
+                var orig = span.textContent;
+                span.textContent = 'Copied!';
+                span.style.color = '#34a853';
+                setTimeout(function() {
+                  span.textContent = orig;
+                  span.style.color = '';
+                }, 1500);
+              }
+            }).catch(function() {});
+          }
+        });
+      });
+
+      /* ── Intersection Observer — Reveal Sections ── */
+      var revealSections = document.querySelectorAll('.reveal-section');
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+      revealSections.forEach(function(sec) {
+        sec.style.opacity = '0';
+        sec.style.transform = 'translateY(24px)';
+        sec.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(sec);
+      });
+
+      /* ── Step Completion Checkboxes (localStorage) ── */
+      var checks = document.querySelectorAll('.step-check');
+      function loadChecks() {
+        try {
+          var saved = JSON.parse(localStorage.getItem('deploy-guide-steps') || '{}');
+          checks.forEach(function(c) {
+            var step = c.getAttribute('data-dom-id').replace('step-check-', '');
+            if (saved[step]) {
+              c.checked = true;
+              var card = c.closest('.step-card');
+              if (card) {
+                card.style.opacity = '0.65';
+              }
+            }
+          });
+        } catch(e) {}
+      }
+      function saveChecks() {
+        var data = {};
+        checks.forEach(function(c) {
+          var step = c.getAttribute('data-dom-id').replace('step-check-', '');
+          data[step] = c.checked ? '1' : '';
+        });
+        try { localStorage.setItem('deploy-guide-steps', JSON.stringify(data)); } catch(e) {}
+      }
+      loadChecks();
+      checks.forEach(function(c) {
+        c.addEventListener('change', function() {
+          var card = this.closest('.step-card');
+          if (card) {
+            card.style.opacity = this.checked ? '0.65' : '1';
+          }
+          saveChecks();
+        });
+      });
+
+      /* ── Back to Top Button ── */
+      var btt = document.querySelector('[data-dom-id="back-to-top"]');
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 400) {
+          btt.style.opacity = '1';
+          btt.style.pointerEvents = 'auto';
+        } else {
+          btt.style.opacity = '0';
+          btt.style.pointerEvents = 'none';
+        }
+      }, { passive: true });
+      btt.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      /* ── Architecture Node Hover Effects ── */
+      document.querySelectorAll('.arch-node').forEach(function(node) {
+        node.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-4px)';
+          this.style.boxShadow = 'var(--shadow-xl)';
+        });
+        node.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = 'var(--shadow-md)';
+        });
+      });
+    })();
+    </script>
+</body>
+</html>
