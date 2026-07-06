@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T05:44:21.697Z",
+  "generatedAt": "2026-07-06T05:44:46.419Z",
   "tree": [
     {
       "name": "AI",
@@ -47,6 +47,11 @@
       "name": "nextjs-backend-quickstart",
       "type": "file",
       "path": "nextjs-backend-quickstart.html"
+    },
+    {
+      "name": "nextjs",
+      "type": "file",
+      "path": "nextjs.html"
     },
     {
       "name": "prisma",
