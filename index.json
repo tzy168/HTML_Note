@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T05:42:24.631Z",
+  "generatedAt": "2026-07-06T05:44:21.697Z",
   "tree": [
     {
       "name": "AI",
@@ -42,11 +42,6 @@
       "name": "nestjs-quickstart",
       "type": "file",
       "path": "nestjs-quickstart.html"
-    },
-    {
-      "name": "NestJs",
-      "type": "file",
-      "path": "NestJs.html"
     },
     {
       "name": "nextjs-backend-quickstart",
