@@ -4,6 +4,43 @@ const path = require('path');
 const PAGES_DIR = 'pages';
 const OUTPUT_FILE = 'index.json';
 
+// 子目录内是否包含任意 .html（用于识别“页面包”目录）
+function dirContainsHtml(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (dirContainsHtml(fullPath)) return true;
+    } else if (entry.name.endsWith('.html')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// 识别 Trae 等导出的页面包：目录内仅一个入口 html（index.html 或与目录同名），子目录只有静态资源
+function getPageBundleHtml(dir, dirName) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let htmlFile = null;
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (dirContainsHtml(fullPath)) return null;
+    } else if (entry.name.endsWith('.html')) {
+      if (htmlFile) return null;
+      htmlFile = entry.name;
+    }
+  }
+
+  if (!htmlFile) return null;
+
+  const baseName = htmlFile.replace(/\.html$/, '');
+  if (htmlFile === 'index.html' || baseName === dirName) {
+    return htmlFile;
+  }
+  return null;
+}
+
 function scanDir(dir, basePath = '') {
   const items = [];
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -20,14 +57,23 @@ function scanDir(dir, basePath = '') {
     const relativePath = path.join(basePath, entry.name).replace(/\\/g, '/');
 
     if (entry.isDirectory()) {
-      const children = scanDir(fullPath, relativePath);
-      if (children.length > 0) {
+      const bundleHtml = getPageBundleHtml(fullPath, entry.name);
+      if (bundleHtml) {
         items.push({
           name: entry.name,
-          type: 'folder',
-          path: relativePath,
-          children: children
+          type: 'file',
+          path: path.join(relativePath, bundleHtml).replace(/\\/g, '/')
         });
+      } else {
+        const children = scanDir(fullPath, relativePath);
+        if (children.length > 0) {
+          items.push({
+            name: entry.name,
+            type: 'folder',
+            path: relativePath,
+            children: children
+          });
+        }
       }
     } else if (entry.name.endsWith('.html')) {
       items.push({
