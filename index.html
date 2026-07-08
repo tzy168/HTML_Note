@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>HTML Note</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600&display=swap" rel="stylesheet">
@@ -492,21 +492,150 @@
     .tree-item:nth-child(7) { animation-delay: 0.14s; }
     .tree-item:nth-child(8) { animation-delay: 0.16s; }
 
+    /* Mobile menu button & backdrop: hidden on desktop, revealed by media query */
+    .menu-btn {
+      display: none;
+    }
+
+    .sidebar-backdrop {
+      display: none;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-      body { flex-direction: column; }
-      .sidebar {
-        width: 100%;
-        height: 45vh;
-        min-width: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
+      body {
+        flex-direction: row;
       }
-      .main { height: 55vh; }
+
+      /* Sidebar becomes a slide-in drawer overlaying the main content */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(300px, 85vw);
+        min-width: 0;
+        height: 100dvh;
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+        z-index: 100;
+        border-right: 1px solid var(--border-color);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      /* Neutralize the desktop "collapsed" (44px) state on mobile —
+         the drawer pattern replaces the collapse affordance */
+      .sidebar.collapsed {
+        width: min(300px, 85vw);
+        min-width: 0;
+      }
+
+      .sidebar.collapsed .sidebar-header,
+      .sidebar.collapsed .search-wrap,
+      .sidebar.collapsed .tree-scroll {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .collapse-btn {
+        display: none;
+      }
+
+      .sidebar-header {
+        padding-top: calc(24px + env(safe-area-inset-top));
+      }
+
+      .tree-scroll {
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      }
+
+      /* Dimmed backdrop shown when the drawer is open */
+      .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.32);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-base);
+        z-index: 90;
+      }
+
+      .sidebar-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Hamburger trigger, fixed at top-left, mobile only */
+      .menu-btn {
+        display: flex;
+        position: fixed;
+        top: calc(12px + env(safe-area-inset-top));
+        left: 12px;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(20px) saturate(1.4);
+        -webkit-backdrop-filter: blur(20px) saturate(1.4);
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+        cursor: pointer;
+        z-index: 80;
+        transition: transform var(--transition-fast);
+      }
+
+      .menu-btn:active {
+        transform: scale(0.94);
+      }
+
+      .main {
+        height: 100vh;
+        width: 100%;
+      }
+
+      /* Welcome screen scales down for small viewports */
+      .welcome {
+        padding: 72px 24px 24px;
+      }
+
+      .welcome .logo-wrap {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        border-radius: 18px;
+        margin-bottom: 22px;
+      }
+
+      .welcome h2 {
+        font-size: 19px;
+      }
+
+      .welcome p {
+        font-size: 13px;
+        max-width: 280px;
+      }
+
+      /* Larger tap targets for touch input */
+      .tree-item-content {
+        padding-top: 9px;
+        padding-bottom: 9px;
+        margin: 2px 0;
+      }
     }
   </style>
 </head>
 <body>
+  <button class="menu-btn" id="menuBtn" aria-label="打开导航菜单" aria-expanded="false" aria-controls="sidebar">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </button>
   <aside class="sidebar" id="sidebar">
     <button class="collapse-btn" id="collapseBtn" title="收起侧边栏 [">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -534,6 +663,8 @@
       </div>
     </div>
   </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
   <main class="main" id="main">
     <div class="welcome">
@@ -639,6 +770,8 @@
             loadPage(item.path);
             setActive(content);
             activePath = item.path;
+            // 移动端选中文件后收起抽屉，让出空间预览内容
+            closeMobileDrawer();
           });
 
           el.appendChild(content);
@@ -690,11 +823,22 @@
       });
     });
 
-    // Sidebar collapse toggle
+    // Sidebar collapse toggle (desktop) + mobile drawer logic
     const sidebar = document.getElementById('sidebar');
     const collapseBtn = document.getElementById('collapseBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const mainEl = document.getElementById('main');
+
+    // 视口是否处于移动端断点（与 CSS media query 对齐）
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
     function toggleSidebar() {
+      // 移动端由抽屉接管，不使用桌面 collapsed 状态
+      if (isMobile()) {
+        toggleMobileDrawer();
+        return;
+      }
       const isCollapsed = sidebar.classList.toggle('collapsed');
       collapseBtn.title = isCollapsed ? '展开侧边栏 [' : '收起侧边栏 [';
       localStorage.setItem('sidebarCollapsed', isCollapsed);
@@ -702,11 +846,48 @@
 
     collapseBtn.addEventListener('click', toggleSidebar);
 
-    // Restore collapsed state
-    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+    // 移动端抽屉开关
+    function openMobileDrawer() {
+      sidebar.classList.add('open');
+      backdrop.classList.add('open');
+      backdrop.setAttribute('aria-hidden', 'false');
+      menuBtn.setAttribute('aria-expanded', 'true');
+      // 抽屉覆盖时把主内容置为 inert，避免键盘/读屏聚焦到背后
+      mainEl.inert = true;
+    }
+
+    function closeMobileDrawer() {
+      if (!sidebar.classList.contains('open')) return;
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('open');
+      backdrop.setAttribute('aria-hidden', 'true');
+      menuBtn.setAttribute('aria-expanded', 'false');
+      mainEl.inert = false;
+    }
+
+    function toggleMobileDrawer() {
+      if (sidebar.classList.contains('open')) {
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+    }
+
+    menuBtn.addEventListener('click', toggleMobileDrawer);
+    backdrop.addEventListener('click', closeMobileDrawer);
+
+    // 仅桌面端恢复 collapsed 状态；移动端不恢复，避免与抽屉冲突
+    if (!isMobile() && localStorage.getItem('sidebarCollapsed') === 'true') {
       sidebar.classList.add('collapsed');
       collapseBtn.title = '展开侧边栏 [';
     }
+
+    // 横竖屏切换 / 桌面↔移动端切换时清理抽屉残留状态
+    window.addEventListener('resize', () => {
+      if (!isMobile()) {
+        closeMobileDrawer();
+      }
+    });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -715,6 +896,11 @@
         document.getElementById('search').focus();
       }
       if (e.key === 'Escape') {
+        // 移动端抽屉打开时优先关闭抽屉
+        if (isMobile() && sidebar.classList.contains('open')) {
+          closeMobileDrawer();
+          return;
+        }
         document.getElementById('search').value = '';
         document.getElementById('search').dispatchEvent(new Event('input'));
         document.getElementById('search').blur();
