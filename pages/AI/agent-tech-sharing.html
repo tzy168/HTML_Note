@@ -131,7 +131,7 @@
     margin:40px 0 14px;
     scroll-margin-top:24px;
   }
-  h4{font-size:16px;margin:26px 0 10px;color:var(--text);}
+  h4{font-size:16px;margin:26px 0 10px;color:var(--text);scroll-margin-top:24px;}
   p{margin:0 0 16px;}
   ul,ol{margin:0 0 16px;padding-left:24px;}
   li{margin-bottom:8px;}
@@ -344,6 +344,126 @@
   .demo p:last-child{margin-bottom:0;}
   .demo code{font-size:12px;}
 
+  /* ---------- 交互演示：工作流 / Agent Loop ---------- */
+  .sim{border:1px solid var(--border);border-radius:12px;background:#fff;margin:0 0 12px;overflow:hidden;}
+  .sim svg{display:block;width:100%;height:auto;}
+  .sim__top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:var(--bg-soft);border-bottom:1px solid var(--border);}
+  .sim__dots{display:flex;gap:5px;}
+  .sim__dot{width:9px;height:9px;border-radius:50%;background:#d8dee4;}
+  .sim__name{font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .sim__ctrl{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+  .sim__body{display:grid;grid-template-columns:minmax(0,1fr) 292px;}
+  .sim__stage{padding:12px 14px 4px;min-width:0;}
+  .sim__side{padding:14px;border-left:1px solid var(--border);background:#fbfcfd;min-width:0;}
+  .sim__side h5{margin:0 0 8px;font-size:11.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;font-weight:600;}
+  .sim__side pre{margin:0 0 16px;font-size:12px;line-height:1.7;padding:10px 12px;background:#fff;max-height:196px;overflow:auto;}
+  .sim__foot{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .sim__note{flex:1 1 280px;min-width:0;font-size:13.5px;line-height:1.7;color:#3d444d;}
+  .sim__note b{color:var(--text);}
+  .sim__note code{font-size:12px;}
+  .sim__stat{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;padding-top:2px;}
+  .sim__turn{
+    display:inline-block;font-size:11.5px;font-family:var(--mono);padding:1px 8px;border-radius:999px;
+    background:var(--accent-soft);color:var(--accent);margin-left:2px;
+  }
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn:not(:disabled):hover{transform:scale(1.04);}
+  .btn:not(:disabled):active{transform:scale(.96);}
+  .btn{transition:transform .18s ease,background .18s ease;}
+
+  /* 步骤轨迹 */
+  .trace{list-style:none;margin:0;padding:0;font-size:12.5px;}
+  .trace li{display:flex;align-items:center;gap:7px;padding:4px 0;color:#a0a6ad;border-bottom:1px dashed #eaeef2;}
+  .trace li:last-child{border-bottom:none;}
+  .trace li.is-done{color:var(--text);}
+  .trace li.is-cur{color:var(--accent);font-weight:600;}
+  .trace li.is-skip{color:#a0a6ad;text-decoration:line-through;}
+  .trace .idx{
+    flex:0 0 18px;height:18px;line-height:18px;text-align:center;border-radius:50%;
+    background:#eaeef2;color:#8c959f;font-size:10.5px;font-weight:700;
+  }
+  .trace li.is-done .idx{background:var(--green-soft);color:var(--green);}
+  .trace li.is-cur .idx{background:var(--accent);color:#fff;}
+
+  /* msg[] 列表 */
+  .msgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:268px;overflow-y:auto;}
+  .msg{border:1px solid var(--border);border-radius:8px;background:#fff;padding:7px 10px;font-size:12px;line-height:1.65;word-break:break-word;}
+  .msg.is-new{animation:pop .3s ease;}
+  @keyframes pop{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .msg__role{
+    display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;
+    padding:0 6px;border-radius:999px;margin-right:6px;vertical-align:1px;
+  }
+  .msg--user .msg__role{background:#eaeef2;color:#57606a;}
+  .msg--assistant .msg__role{background:var(--accent-soft);color:var(--accent);}
+  .msg--tool .msg__role{background:var(--green-soft);color:var(--green);}
+  .msg--final{border-color:#a7f3d0;background:#f4fef8;}
+
+  /* SVG 节点 / 连线状态 */
+  .wf .node{opacity:.5;transition:opacity .2s ease;}
+  .wf .node.is-done,.wf .node.is-cur{opacity:1;}
+  .wf .n{fill:#f6f8fa;stroke:#d8dee4;stroke-width:1.5;transition:fill .2s ease,stroke .2s ease,stroke-width .2s ease;}
+  .wf .n--llm{fill:#ddf4ff;stroke:#b6e3ff;}
+  .wf .n--cond{fill:#fff8c5;stroke:#f0d98a;}
+  .wf .n--out{fill:#fbefff;stroke:#d8b9ff;}
+  .wf .n--purple{fill:#fbefff;stroke:#d8b9ff;}
+  .wf .n--green{fill:#dafbe1;stroke:#a7f3d0;}
+  .wf .node.is-done .n{fill:#dafbe1;stroke:#a7f3d0;}
+  .wf .node.is-cur .n{stroke:var(--accent);stroke-width:2.6;}
+  .wf .node.is-skip .n{stroke-dasharray:4 3;fill:#fbfcfd;}
+  .wf .node.is-cur text{font-weight:600;}
+  .wf text{font-size:13px;fill:#1f2328;}
+  .wf text.sm{font-size:11px;fill:#656d76;}
+  .wf .halo{fill:none;stroke:var(--accent);stroke-width:2;opacity:0;}
+  .wf .node.is-cur .halo{opacity:1;animation:pulse 1.5s ease-out infinite;}
+  @keyframes pulse{0%{opacity:.55;}70%{opacity:0;}100%{opacity:0;}}
+  .wf .edge{stroke:#d0d7de;stroke-width:1.5;fill:none;transition:stroke .2s ease,stroke-width .2s ease;}
+  .wf .edge.is-taken{stroke:var(--accent);stroke-width:2.4;}
+  .wf .box{fill:#fafbfc;stroke:#d8dee4;stroke-width:1.5;stroke-dasharray:5 4;}
+  #wfSvg .edge{marker-end:url(#wfA);}
+  #wfSvg .edge.is-taken{marker-end:url(#wfB);}
+  #loopSvg .edge{marker-end:url(#lpA);}
+  #loopSvg .edge.is-taken{marker-end:url(#lpB);}
+  .wf .lbl{font-size:11px;fill:#656d76;}
+
+  /* 演示三：SSE 帧 → 界面渲染 */
+  .sim--stream .sim__body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .sim__pane{padding:12px 14px;min-width:0;}
+  .sim__pane--raw{background:#fbfcfd;border-left:1px solid var(--border);}
+  .sim__pane--ui .blk{font-size:13px;}
+  .sim__pane--ui .blk__title{font-size:13px;}
+  .sim__pane--ui .blk__body{font-size:12.5px;}
+  .sim__pane--ui .blk--nest{padding:8px 8px 8px 10px;}
+  .pane__hd{
+    display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:11px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  }
+  .pane__hd b{
+    margin-left:auto;font-weight:500;text-transform:none;letter-spacing:0;
+    font-family:var(--mono);font-size:11px;color:#8c959f;
+  }
+  .pane__scroll{max-height:404px;overflow-y:auto;overscroll-behavior:contain;}
+  .frames{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+  .frame{
+    border:1px solid var(--border);border-radius:7px;background:#fff;padding:7px 9px;
+    font-family:var(--mono);font-size:11.5px;line-height:1.65;color:#3d444d;
+    white-space:pre-wrap;word-break:break-all;
+  }
+  .frame.is-cur{border-color:#b6e3ff;background:#f5fbff;animation:pop .25s ease;}
+  .frame__type{
+    display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;
+    padding:0 6px;border-radius:999px;background:#eaeef2;color:#57606a;margin-right:6px;
+  }
+  .frame--think .frame__type{background:var(--bg-soft);color:#57606a;}
+  .frame--tool .frame__type{background:var(--accent-soft);color:var(--accent);}
+  .frame--sub .frame__type{background:var(--purple-soft);color:var(--purple);}
+  .frame--final .frame__type{background:var(--green-soft);color:var(--green);}
+  .stream__meta{
+    margin:10px 0 0;padding-top:9px;border-top:1px dashed var(--border);
+    font-size:11.5px;font-family:var(--mono);color:var(--muted);
+  }
+  .stream__meta.is-on{color:var(--green);}
+
   @media (max-width:1080px){
     .layout{flex-direction:column;gap:0;padding:0 20px 60px;}
     .toc{
@@ -354,6 +474,10 @@
     .content{padding-top:24px;}
     h1{font-size:29px;}
     .cards,.two-col{grid-template-columns:1fr;}
+    .sim__body{grid-template-columns:1fr;}
+    .sim--stream .sim__body{grid-template-columns:1fr;}
+    .sim__side,.sim__pane--raw{border-left:none;border-top:1px solid var(--border);}
+    .sim__ctrl{margin-left:0;width:100%;}
   }
   @media print{
     .toc{display:none;}
@@ -377,7 +501,9 @@
       <li><a href="#s1-3" class="sub">1.3 优劣对比与适用边界</a></li>
       <li><a href="#part2">二、两种 Agent 的工作方式</a></li>
       <li><a href="#s2-1" class="sub">2.1 工作流式：按图施工</a></li>
+      <li><a href="#s2-1-demo" class="sub" style="padding-left:38px">· 交互演示</a></li>
       <li><a href="#s2-2" class="sub">2.2 自主式：一个循环</a></li>
+      <li><a href="#s2-2-demo" class="sub" style="padding-left:38px">· 交互演示</a></li>
       <li><a href="#s2-3" class="sub">2.3 本质差异一句话</a></li>
       <li><a href="#part3">三、前端流式输出</a></li>
       <li><a href="#s3-1" class="sub">3.1 为什么必须流式</a></li>
@@ -385,6 +511,7 @@
       <li><a href="#s3-3" class="sub">3.3 事件类型清单</a></li>
       <li><a href="#s3-4" class="sub">3.4 前端解析与分发</a></li>
       <li><a href="#s3-5" class="sub">3.5 按 type 渲染不同样式</a></li>
+      <li><a href="#s3-5-demo" class="sub" style="padding-left:38px">· 交互演示</a></li>
       <li><a href="#s3-6" class="sub">3.6 五类事件的渲染要点</a></li>
       <li><a href="#s3-7" class="sub">3.7 工程化细节</a></li>
       <li><a href="#outro">四、小结</a></li>
@@ -735,6 +862,136 @@
       <strong>LLM 调用次数是常数级的</strong>（图里有几个 LLM 节点就调几次），所以成本和延迟都算得出来。这是它能进生产、能承诺 SLA 的根本原因。
     </div>
 
+    <h4 id="s2-1-demo">动手点一点：工作流是怎么"按图施工"的</h4>
+
+    <p>点「下一步」，看引擎如何逐个点亮节点、把结果写进共享 State，以及<strong>没有命中的分支会被整体跳过</strong>。这个例子里用户问"我的订单到哪了"。</p>
+
+    <div class="sim">
+      <div class="sim__top">
+        <span class="sim__dots"><span class="sim__dot"></span><span class="sim__dot"></span><span class="sim__dot"></span></span>
+        <span class="sim__name">graph.run({ question: "我的订单到哪了" })</span>
+        <span class="sim__ctrl">
+          <button type="button" class="btn" id="wfPrev">← 上一步</button>
+          <button type="button" class="btn btn--primary" id="wfNext">下一步 →</button>
+          <button type="button" class="btn" id="wfAuto">自动播放</button>
+          <button type="button" class="btn btn--ghost" id="wfReset">重置</button>
+        </span>
+      </div>
+
+      <div class="sim__body">
+        <div class="sim__stage">
+          <svg id="wfSvg" class="wf" viewBox="0 0 980 250" xmlns="http://www.w3.org/2000/svg" role="img"
+               aria-label="工作流式 Agent 逐步执行的交互示意图"
+               font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">
+            <defs>
+              <marker id="wfA" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#b1bac3"/>
+              </marker>
+              <marker id="wfB" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#1f6feb"/>
+              </marker>
+            </defs>
+
+            <g fill="none">
+              <path id="e1" class="edge" d="M130,124 L164,124"/>
+              <path id="e2" class="edge" d="M310,124 L320,124"/>
+              <path id="e3" class="edge" d="M396,124 L412,124 L412,48 L424,48"/>
+              <path id="e4" class="edge" d="M396,124 L424,124"/>
+              <path id="e5" class="edge" d="M396,124 L412,124 L412,200 L424,200"/>
+              <path id="e6" class="edge" d="M580,48 L602,48 L602,124 L624,124"/>
+              <path id="e7" class="edge" d="M580,124 L624,124"/>
+              <path id="e8" class="edge" d="M580,200 L602,200 L602,124 L624,124"/>
+              <path id="e9" class="edge" d="M746,124 L788,124"/>
+            </g>
+
+            <g class="node" id="n-start">
+              <rect class="halo" x="8" y="96" width="126" height="56" rx="12"/>
+              <rect class="n" x="12" y="100" width="118" height="48" rx="9"/>
+              <text x="71" y="120" text-anchor="middle">用户输入</text>
+              <text class="sm" x="71" y="136" text-anchor="middle">__start__</text>
+            </g>
+
+            <g class="node" id="n-classify">
+              <rect class="halo" x="164" y="96" width="150" height="56" rx="12"/>
+              <rect class="n n--llm" x="168" y="100" width="142" height="48" rx="9"/>
+              <text x="239" y="120" text-anchor="middle">意图识别（LLM）</text>
+              <text class="sm" x="239" y="136" text-anchor="middle">classify</text>
+            </g>
+
+            <g class="node" id="n-route">
+              <rect class="halo" x="318" y="90" width="84" height="68" rx="12"/>
+              <polygon class="n n--cond" points="324,124 360,152 396,124 360,96"/>
+              <text x="360" y="121" text-anchor="middle" font-size="11">条件</text>
+              <text x="360" y="135" text-anchor="middle" font-size="11">路由</text>
+            </g>
+
+            <g class="node" id="n-retrieve">
+              <rect class="halo" x="424" y="22" width="160" height="52" rx="12"/>
+              <rect class="n" x="428" y="26" width="152" height="44" rx="9"/>
+              <text x="504" y="46" text-anchor="middle">知识库检索</text>
+              <text class="sm" x="504" y="61" text-anchor="middle">vector_search</text>
+            </g>
+
+            <g class="node" id="n-queryOrder">
+              <rect class="halo" x="424" y="98" width="160" height="52" rx="12"/>
+              <rect class="n" x="428" y="102" width="152" height="44" rx="9"/>
+              <text x="504" y="122" text-anchor="middle">订单查询 API</text>
+              <text class="sm" x="504" y="137" text-anchor="middle">query_order</text>
+            </g>
+
+            <g class="node" id="n-code">
+              <rect class="halo" x="424" y="174" width="160" height="52" rx="12"/>
+              <rect class="n" x="428" y="178" width="152" height="44" rx="9"/>
+              <text x="504" y="198" text-anchor="middle">代码执行器</text>
+              <text class="sm" x="504" y="213" text-anchor="middle">code_runner</text>
+            </g>
+
+            <g class="node" id="n-merge">
+              <rect class="halo" x="624" y="98" width="126" height="52" rx="12"/>
+              <rect class="n" x="628" y="102" width="118" height="44" rx="9"/>
+              <text x="687" y="122" text-anchor="middle">结果聚合</text>
+              <text class="sm" x="687" y="137" text-anchor="middle">merge</text>
+            </g>
+
+            <g class="node" id="n-answer">
+              <rect class="halo" x="788" y="98" width="168" height="52" rx="12"/>
+              <rect class="n n--out" x="792" y="102" width="160" height="44" rx="9"/>
+              <text x="872" y="122" text-anchor="middle">LLM 总结输出</text>
+              <text class="sm" x="872" y="137" text-anchor="middle">answer</text>
+            </g>
+
+            <text class="lbl" x="12" y="22">绿=已执行　蓝框=正在执行　虚线=被跳过（根本不会运行）</text>
+            <text class="lbl" x="12" y="240">分支由开发者写的条件函数决定，模型只负责在节点里"填空"，全程不参与流程走向决策</text>
+          </svg>
+        </div>
+
+        <div class="sim__side">
+          <h5>共享 State</h5>
+          <pre><code id="wfState"></code></pre>
+          <h5>执行轨迹</h5>
+          <ul class="trace" id="wfTrace">
+            <li><span class="idx">1</span>用户输入</li>
+            <li><span class="idx">2</span>意图识别（LLM）</li>
+            <li><span class="idx">3</span>条件路由</li>
+            <li><span class="idx">4</span>知识库检索</li>
+            <li><span class="idx">5</span>订单查询 API</li>
+            <li><span class="idx">6</span>结果聚合</li>
+            <li><span class="idx">7</span>LLM 总结输出</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sim__foot">
+        <p class="sim__note" id="wfNote" aria-live="polite"></p>
+        <span class="sim__stat" id="wfProg"></span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="label">对照自主 Agent 看这张图</span>
+      注意第 4 步：<strong>知识库检索与代码执行器两个节点是"死"的</strong>——无论模型多想调用，图上没有通往它们的边，它们就不会执行。这正是工作流"可控"的来源，也是它"不灵活"的代价。
+    </div>
+
     <h3 id="s2-2">2.2 自主式：一个循环，模型自己决定何时停</h3>
 
     <p>自主 Agent 没有图。<strong>它只有一个循环，以及一个不断变长的消息数组 <code>msg[]</code>。</strong>流程如下：</p>
@@ -861,6 +1118,115 @@
 }</code></pre>
 
     <p>注意第 ⑤ 步里的注释 <code>报错也喂给模型，让它自己重试</code>——这是自主 Agent 与"传统程序"最大的思维差异：<strong>错误不再是异常，而是给模型的反馈</strong>。模型看到"文件不存在"，会自己换个路径再试；看到"参数格式不对"，会自己修正参数。</p>
+
+    <h4 id="s2-2-demo">动手点一点：Agent Loop 转起来的样子</h4>
+
+    <p>点「下一步」，一次走一个阶段。重点看两件事：<strong>右侧 <code>msg[]</code> 每转一圈就变长一截</strong>（上下文只增不减），以及<strong>循环什么时候停</strong>——不是走完固定步数，而是某一轮模型不再返回 <code>tool_calls</code>。</p>
+
+    <div class="sim">
+      <div class="sim__top">
+        <span class="sim__dots"><span class="sim__dot"></span><span class="sim__dot"></span><span class="sim__dot"></span></span>
+        <span class="sim__name">agentLoop("我的订单 A10086 到哪了")</span>
+        <span class="sim__ctrl">
+          <button type="button" class="btn" id="lpPrev">← 上一步</button>
+          <button type="button" class="btn btn--primary" id="lpNext">下一步 →</button>
+          <button type="button" class="btn" id="lpAuto">自动播放</button>
+          <button type="button" class="btn btn--ghost" id="lpReset">重置</button>
+        </span>
+      </div>
+
+      <div class="sim__body">
+        <div class="sim__stage">
+          <svg id="loopSvg" class="wf" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg" role="img"
+               aria-label="自主 Agent 的循环执行过程交互示意图"
+               font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">
+            <defs>
+              <marker id="lpA" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#b1bac3"/>
+              </marker>
+              <marker id="lpB" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#1f6feb"/>
+              </marker>
+            </defs>
+
+            <g fill="none">
+              <path id="l1" class="edge" d="M455,42 C 522,42 567,80 567,106"/>
+              <path id="l2" class="edge" d="M567,166 L567,230"/>
+              <path id="l3" class="edge" d="M470,262 L470,306 L145,306 L145,294"/>
+              <path id="l4" class="edge" d="M145,234 L145,196"/>
+              <path id="l5" class="edge" d="M145,110 C 145,52 230,42 251,42"/>
+              <path id="l6" class="edge" d="M567,290 L567,351 L454,351"/>
+            </g>
+
+            <g class="node" id="n-ctx">
+              <rect class="halo" x="251" y="10" width="208" height="64" rx="13"/>
+              <rect class="n n--llm" x="255" y="14" width="200" height="56" rx="10"/>
+              <text x="355" y="38" text-anchor="middle">① 组装上下文</text>
+              <text class="sm" x="355" y="57" text-anchor="middle">system + msg[] + tools</text>
+            </g>
+
+            <g class="node" id="n-llm">
+              <rect class="halo" x="466" y="106" width="203" height="64" rx="13"/>
+              <rect class="n n--llm" x="470" y="110" width="195" height="56" rx="10"/>
+              <text x="567" y="134" text-anchor="middle">② 调用 LLM API</text>
+              <text class="sm" x="567" y="153" text-anchor="middle">stream: true</text>
+            </g>
+
+            <g class="node" id="n-decide">
+              <rect class="halo" x="466" y="230" width="203" height="64" rx="13"/>
+              <rect class="n n--cond" x="470" y="234" width="195" height="56" rx="10"/>
+              <text x="567" y="258" text-anchor="middle">③ LLM 决策</text>
+              <text class="sm" x="567" y="277" text-anchor="middle">结束 / 调 tool？</text>
+            </g>
+
+            <g class="node" id="n-tool">
+              <rect class="halo" x="51" y="230" width="188" height="64" rx="13"/>
+              <rect class="n n--purple" x="55" y="234" width="180" height="56" rx="10"/>
+              <text x="145" y="258" text-anchor="middle">④ 执行 tool</text>
+              <text class="sm" x="145" y="277" text-anchor="middle">runTool(name, args)</text>
+            </g>
+
+            <g class="node" id="n-write">
+              <rect class="halo" x="51" y="106" width="188" height="64" rx="13"/>
+              <rect class="n n--purple" x="55" y="110" width="180" height="56" rx="10"/>
+              <text x="145" y="134" text-anchor="middle">⑤ 结果写回</text>
+              <text class="sm" x="145" y="153" text-anchor="middle">role: 'tool'</text>
+            </g>
+
+            <g class="node" id="n-final">
+              <rect class="halo" x="251" y="322" width="203" height="58" rx="13"/>
+              <rect class="n n--green" x="255" y="326" width="195" height="50" rx="10"/>
+              <text x="352" y="349" text-anchor="middle">输出最终结果</text>
+              <text class="sm" x="352" y="366" text-anchor="middle">循环终止</text>
+            </g>
+
+            <rect class="box" x="240" y="150" width="200" height="68" rx="11"/>
+            <text x="340" y="176" text-anchor="middle" font-size="14" font-weight="600">msg[]</text>
+            <text id="loopCount" class="sm" x="340" y="198" text-anchor="middle">0 条 · 全程携带</text>
+
+            <text class="lbl" x="307" y="298" text-anchor="middle">需要工具 → 继续转</text>
+            <text class="lbl" x="578" y="322">不再需要工具</text>
+            <text class="lbl" x="12" y="24">蓝框 = 当前阶段</text>
+            <text class="lbl" x="12" y="394">↑ 每转一圈回到 ①，带着更长的 msg[] 再问一次；循环次数不固定，靠 MAX_TURNS 兜底</text>
+          </svg>
+        </div>
+
+        <div class="sim__side">
+          <h5>msg[] · 上下文 <span class="sim__turn" id="lpCount">0 条</span></h5>
+          <ul class="msgs" id="lpMsgs"></ul>
+        </div>
+      </div>
+
+      <div class="sim__foot">
+        <p class="sim__note" id="lpNote" aria-live="polite"></p>
+        <span class="sim__stat" id="lpStat"></span>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <span class="label">把两个演示放在一起看</span>
+      工作流那边 <strong>7 步就结束了</strong>，且路径在图里已经写死；自主 Agent 这里<strong>转了几圈取决于模型</strong>——同一个问题换个模型、换个 temperature，可能 2 轮就收工，也可能转 8 轮。代价是 <code>msg[]</code> 线性膨胀：第 3 轮时上下文已经是第 1 轮的 5 倍，这也是为什么长任务必须做<strong>摘要压缩</strong>。
+    </div>
 
     <h3 id="s2-3">2.3 本质差异一句话</h3>
 
@@ -1395,6 +1761,54 @@
     </div>
     <p class="fig-note">图 4 · 六种 Block 样式的实际渲染效果（灰=思考，蓝=工具，紫=子 Agent，橙=待确认，红=错误）</p>
 
+    <h4 id="s3-5-demo">动手跑一遍：一帧 SSE 进来，界面怎么变</h4>
+
+    <p>上面是静态效果，下面把<strong>时间维度</strong>加回来。点「开始测试」，左边是用户看到的界面，右边是同一时刻后端推来的原始帧——每来一帧，左边就动一下。重点看三件事：</p>
+
+    <ul class="checklist">
+      <li><strong>帧和 Block 不是一一对应的</strong>：连续的两个 <code>text</code> 会并进同一个 Block（否则每个 token 一个 <code>&lt;p&gt;</code>，DOM 会炸）。</li>
+      <li><strong>工具卡按 <code>id</code> 原地更新</strong>：<code>tool_call</code> 建卡（转圈）→ <code>tool_result</code> 只改状态（绿勾 + 展开结果），<strong>不新建卡片</strong>。</li>
+      <li><strong>光标跟着"正在生成的那一块"走</strong>：<code>final</code> 到达时才撤掉，用户一眼能看出"还在跑"还是"跑完了"。</li>
+    </ul>
+
+    <div class="sim sim--stream">
+      <div class="sim__top">
+        <span class="sim__dots"><span class="sim__dot"></span><span class="sim__dot"></span><span class="sim__dot"></span></span>
+        <span class="sim__name">POST /api/agent/chat · Accept: text/event-stream</span>
+        <span class="sim__ctrl">
+          <button type="button" class="btn btn--primary" id="stRun">▶ 开始测试</button>
+          <button type="button" class="btn btn--ghost" id="stReset">重置</button>
+        </span>
+      </div>
+
+      <div class="sim__body">
+        <div class="sim__pane sim__pane--ui">
+          <p class="pane__hd">用户看到的界面 <b id="stBlocks">0 个 Block</b></p>
+          <div class="pane__scroll">
+            <div class="blk-list" id="stUI"></div>
+            <p class="stream__meta" id="stMeta">● 等待第一帧…</p>
+          </div>
+        </div>
+
+        <div class="sim__pane sim__pane--raw">
+          <p class="pane__hd">SSE 收到的原始帧 <b id="stFrames">0 / 13</b></p>
+          <div class="pane__scroll">
+            <ul class="frames" id="stRaw"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sim__foot">
+        <p class="sim__note" id="stNote" aria-live="polite">点「开始测试」，逐帧看界面是怎么被"喂"出来的。</p>
+        <span class="sim__stat" id="stStat"></span>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="label">分享时可以这样讲</span>
+      把左右两栏对照着看，其实就是在讲 3.4 的 <code>reducer</code>：<strong>右边是输入，左边是状态</strong>。既然是纯函数 <code>reducer(state, ev)</code>，那么把右边这段帧序列存下来，就能 100% 复现任意一次会话的界面——这也是排查线上"界面渲染错乱"最有效的手段。
+    </div>
+
     <h4>核心 CSS（可直接抄）</h4>
 
     <p>样式层的关键在于：<strong>基础类管结构，tone 类管配色，status 类管状态</strong>，三者互不干扰，可自由组合。</p>
@@ -1604,6 +2018,542 @@
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+  })();
+
+  /* ================= 演示 A：工作流式 Agent 按图施工 ================= */
+  (function () {
+    var svg = document.getElementById('wfSvg');
+    if (!svg) return;
+
+    var el = {
+      note:  document.getElementById('wfNote'),
+      state: document.getElementById('wfState'),
+      trace: document.getElementById('wfTrace'),
+      prog:  document.getElementById('wfProg'),
+      prev:  document.getElementById('wfPrev'),
+      next:  document.getElementById('wfNext'),
+      auto:  document.getElementById('wfAuto'),
+      reset: document.getElementById('wfReset')
+    };
+    if (!el.note || !el.trace) return;
+
+    // trace 顺序：用户输入 / 意图识别 / 条件路由 / 知识库检索 / 订单查询 / 结果聚合 / 总结输出
+    var steps = [
+      {
+        nodes: { 'n-start': 'cur' },
+        edges: [],
+        trace: ['cur', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo'],
+        state: '{\n  "question": "我的订单到哪了"\n}',
+        note: '引擎从 <b>__start__</b> 出发，先做一次拓扑排序确定节点次序。此刻共享 State 里只有用户输入——<b>图是数据，不是控制流</b>。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'cur' },
+        edges: ['e1'],
+        trace: ['done', 'cur', 'todo', 'todo', 'todo', 'todo', 'todo'],
+        state: '{\n  "question": "我的订单到哪了",\n  "classify": "order"   // ← LLM 节点输出\n}',
+        note: '执行 LLM 节点 <b>classify</b>：模型只输出意图枚举值，<b>它不知道、也不决定</b>接下来走哪条分支。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'done', 'n-route': 'cur' },
+        edges: ['e1', 'e2'],
+        trace: ['done', 'done', 'cur', 'todo', 'todo', 'todo', 'todo'],
+        state: '{\n  "question": "我的订单到哪了",\n  "classify": "order"   // ← LLM 节点输出\n}',
+        note: '执行<b>条件路由</b>：判定函数是开发者写的 <code>ctx =&gt; ctx.classify === "order"</code>，<b>与模型无关</b>，可单测、可审计。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'done', 'n-route': 'done',
+                 'n-queryOrder': 'cur', 'n-retrieve': 'skip', 'n-code': 'skip' },
+        edges: ['e1', 'e2', 'e4'],
+        trace: ['done', 'done', 'done', 'skip', 'cur', 'todo', 'todo'],
+        state: '{\n  "question": "我的订单到哪了",\n  "classify": "order",\n  "order": {\n    "orderId": "A10086",\n    "status": "已签收",\n    "carrier": "顺丰速运",\n    "trackingNo": "SF1234567890"\n  }\n}',
+        note: '命中 order 分支，执行 <b>query_order</b>。注意两个虚线节点：<b>知识库检索与代码执行器被整体跳过</b>，图上没有通往它们的边，它们连一次都不会运行。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'done', 'n-route': 'done',
+                 'n-queryOrder': 'done', 'n-retrieve': 'skip', 'n-code': 'skip', 'n-merge': 'cur' },
+        edges: ['e1', 'e2', 'e4', 'e7'],
+        trace: ['done', 'done', 'done', 'skip', 'done', 'cur', 'todo'],
+        state: '{\n  "question": "我的订单到哪了",\n  "classify": "order",\n  "order": { /* 已签收 · 顺丰 · SF1234567890 */ },\n  "merged": {\n    "status": "已签收",\n    "trackingNo": "SF1234567890"\n  }\n}',
+        note: '进入 <b>merge</b>：纯代码节点，不调模型，把上游结果合并后写回 State。这类节点的耗时和结果都是确定的。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'done', 'n-route': 'done',
+                 'n-queryOrder': 'done', 'n-retrieve': 'skip', 'n-code': 'skip',
+                 'n-merge': 'done', 'n-answer': 'cur' },
+        edges: ['e1', 'e2', 'e4', 'e7', 'e9'],
+        trace: ['done', 'done', 'done', 'skip', 'done', 'done', 'cur'],
+        state: '{\n  ...\n  "answer": "你的订单 A10086 已由顺丰速运发出，\n            目前在成都中转场，预计今日 18:00 前送达。"\n}',
+        note: '最后一个节点 <b>answer</b>：LLM 基于 State 生成答复。整条链路一共只调了 <b>2 次 LLM</b>——成本与延迟在设计期就能算出来。'
+      },
+      {
+        nodes: { 'n-start': 'done', 'n-classify': 'done', 'n-route': 'done',
+                 'n-queryOrder': 'done', 'n-retrieve': 'skip', 'n-code': 'skip',
+                 'n-merge': 'done', 'n-answer': 'done' },
+        edges: ['e1', 'e2', 'e4', 'e7', 'e9'],
+        trace: ['done', 'done', 'done', 'skip', 'done', 'done', 'done'],
+        state: '{\n  ...\n  "answer": "你的订单 A10086 已由顺丰速运发出，\n            目前在成都中转场，预计今日 18:00 前送达。"\n}\n\n// 走到 __end__，流程结束',
+        note: '到达 <b>__end__</b>，流程结束。路径 <b>classify → queryOrder → merge → answer</b> 完全可预测：同样的输入必然同样的路径，可回放、可对单节点做单测。'
+      }
+    ];
+
+    var i = 0, timer = null;
+
+    function render() {
+      var s = steps[i];
+
+      var nodes = svg.querySelectorAll('.node');
+      for (var k = 0; k < nodes.length; k++) {
+        nodes[k].classList.remove('is-cur', 'is-done', 'is-skip');
+      }
+      Object.keys(s.nodes).forEach(function (id) {
+        var n = document.getElementById(id);
+        if (n) n.classList.add('is-' + s.nodes[id]);
+      });
+
+      var edges = svg.querySelectorAll('.edge');
+      for (var m = 0; m < edges.length; m++) edges[m].classList.remove('is-taken');
+      (s.edges || []).forEach(function (id) {
+        var e = document.getElementById(id);
+        if (e) e.classList.add('is-taken');
+      });
+
+      var items = el.trace.children;
+      for (var t = 0; t < items.length; t++) {
+        items[t].className = s.trace[t] !== 'todo' ? 'is-' + s.trace[t] : '';
+      }
+
+      el.state.textContent = s.state;
+      el.note.innerHTML = s.note;
+      el.prog.textContent = '步骤 ' + (i + 1) + ' / ' + steps.length;
+      el.prev.disabled = (i === 0);
+      el.next.disabled = (i === steps.length - 1);
+    }
+
+    function stopAuto() {
+      if (timer) { clearInterval(timer); timer = null; el.auto.textContent = '自动播放'; }
+    }
+
+    el.next.addEventListener('click', function () {
+      stopAuto();
+      if (i < steps.length - 1) { i++; render(); }
+    });
+    el.prev.addEventListener('click', function () {
+      stopAuto();
+      if (i > 0) { i--; render(); }
+    });
+    el.reset.addEventListener('click', function () {
+      stopAuto(); i = 0; render();
+    });
+    el.auto.addEventListener('click', function () {
+      if (timer) { stopAuto(); return; }
+      if (i === steps.length - 1) { i = 0; render(); }
+      el.auto.textContent = '暂停';
+      timer = setInterval(function () {
+        if (i >= steps.length - 1) { stopAuto(); return; }
+        i++; render();
+      }, 1200);
+    });
+
+    render();
+  })();
+
+  /* ================= 演示 B：自主 Agent 的 Loop ================= */
+  (function () {
+    var svg = document.getElementById('loopSvg');
+    if (!svg) return;
+
+    var el = {
+      note:  document.getElementById('lpNote'),
+      stat:  document.getElementById('lpStat'),
+      msgs:  document.getElementById('lpMsgs'),
+      count: document.getElementById('lpCount'),
+      box:   document.getElementById('loopCount'),
+      prev:  document.getElementById('lpPrev'),
+      next:  document.getElementById('lpNext'),
+      auto:  document.getElementById('lpAuto'),
+      reset: document.getElementById('lpReset')
+    };
+    if (!el.note || !el.msgs) return;
+
+    var steps = [
+      { node: 'n-ctx', edge: null, turn: 1, phase: '① 组装上下文',
+        note: '循环开始：用户输入已入队。把 system prompt + <b>msg[]（1 条）</b> + 工具定义拼成这一次请求的 payload。',
+        msg: { role: 'user', text: '我的订单 A10086 到哪了' } },
+
+      { node: 'n-llm', edge: 'l1', turn: 1, phase: '② 调用 LLM',
+        note: '带着 <b>1 条消息</b>请求模型，stream=true。这次请求的目的<b>不是要答案</b>，而是问模型"你下一步想做什么"。' },
+
+      { node: 'n-decide', edge: 'l2', turn: 1, phase: '③ LLM 决策',
+        note: '模型返回 <code>tool_calls</code> → 它要调工具。注意：<b>这个决定是模型自己做的</b>，没有任何人事先画过流程图。',
+        msg: { role: 'assistant', text: 'tool_call: query_order({ orderId: "A10086" })' } },
+
+      { node: 'n-tool', edge: 'l3', turn: 1, phase: '④ 执行 tool',
+        note: '本地执行 <code>query_order</code>，查库 320ms。这一步是确定性代码；若失败，错误信息也会被原样写回。' },
+
+      { node: 'n-write', edge: 'l4', turn: 1, phase: '⑤ 结果写回',
+        note: '以 <code>{ role: "tool" }</code> 追加进 msg[]。<b>msg[] 长度 = 3</b>，上下文变长了——而且只会更长。',
+        msg: { role: 'tool', text: '{ orderId: "A10086", status: "已签收", carrier: "顺丰速运", trackingNo: "SF1234567890" }' } },
+
+      { node: 'n-ctx', edge: 'l5', turn: 2, phase: '① 组装上下文',
+        note: '<b>第 2 轮开始</b>：把已经 3 条的 msg[] <b>全量</b>重新组装。上一轮的所有内容都要再付一次 token。' },
+
+      { node: 'n-llm', edge: 'l1', turn: 2, phase: '② 调用 LLM',
+        note: '带着 <b>3 条消息</b>再次调用模型——历史消息一条都不能少，否则模型会"失忆"。' },
+
+      { node: 'n-decide', edge: 'l2', turn: 2, phase: '③ LLM 决策',
+        note: '模型看到 trackingNo 后判断信息还不够，<b>又返回一个 tool_calls</b>。这一轮要调什么，第 1 轮时无人知晓。',
+        msg: { role: 'assistant', text: 'tool_call: query_tracking({ trackingNo: "SF1234567890" })' } },
+
+      { node: 'n-tool', edge: 'l3', turn: 2, phase: '④ 执行 tool',
+        note: '执行 <code>query_tracking</code>。这就是自主 Agent 的价值：<b>下一步依赖上一步的结果</b>，事前无法穷举。' },
+
+      { node: 'n-write', edge: 'l4', turn: 2, phase: '⑤ 结果写回',
+        note: '第二条 tool 结果写回，<b>msg[] 长度 = 5</b>。上下文已经是第 1 轮的 5 倍——长任务必须做摘要压缩。',
+        msg: { role: 'tool', text: '{ currentNode: "成都中转场", eta: "今日 18:00 前送达" }' } },
+
+      { node: 'n-ctx', edge: 'l5', turn: 3, phase: '① 组装上下文',
+        note: '<b>第 3 轮开始</b>：msg[] 已有 5 条。真实场景里这里就该考虑裁剪/摘要了。' },
+
+      { node: 'n-llm', edge: 'l1', turn: 3, phase: '② 调用 LLM',
+        note: '带着 <b>5 条消息</b>调用模型。注意：循环次数没有上限设计，全靠 <code>MAX_TURNS</code> 硬兜底。' },
+
+      { node: 'n-decide', edge: 'l2', turn: 3, phase: '③ LLM 决策',
+        note: '模型判断信息已足够，<b>没有返回 tool_calls</b> —— 循环就在这里结束。<b>终止条件是模型说了算</b>，不是走到某个节点。' },
+
+      { node: 'n-final', edge: 'l6', turn: 3, phase: '输出最终结果',
+        note: '把本轮返回的文本作为最终答案输出，循环终止，SSE 推 <code>final</code> 后关闭连接。全程 <b>3 轮、2 次工具调用</b>。',
+        msg: { role: 'assistant', final: true, text: '你的订单 A10086 已由顺丰速运发出，目前在成都中转场，预计今日 18:00 前送达。' } }
+    ];
+
+    var i = 0, timer = null;
+
+    function renderMsgs() {
+      var list = [];
+      for (var k = 0; k <= i; k++) { if (steps[k].msg) list.push(steps[k].msg); }
+
+      el.msgs.innerHTML = '';
+      list.forEach(function (m, idx) {
+        var li = document.createElement('li');
+        li.className = 'msg msg--' + m.role + (m.final ? ' msg--final' : '') +
+                       (idx === list.length - 1 ? ' is-new' : '');
+        var tag = document.createElement('span');
+        tag.className = 'msg__role';
+        tag.textContent = m.role;
+        li.appendChild(tag);
+        li.appendChild(document.createTextNode(m.text));
+        el.msgs.appendChild(li);
+      });
+      el.msgs.scrollTop = el.msgs.scrollHeight;
+
+      var n = list.length;
+      el.count.textContent = n + ' 条';
+      if (el.box) el.box.textContent = n + ' 条 · 全程携带';
+    }
+
+    function render() {
+      var s = steps[i];
+
+      var nodes = svg.querySelectorAll('.node');
+      for (var k = 0; k < nodes.length; k++) nodes[k].classList.remove('is-cur');
+      var cur = document.getElementById(s.node);
+      if (cur) cur.classList.add('is-cur');
+
+      var edges = svg.querySelectorAll('.edge');
+      for (var m = 0; m < edges.length; m++) edges[m].classList.remove('is-taken');
+      if (s.edge) {
+        var e = document.getElementById(s.edge);
+        if (e) e.classList.add('is-taken');
+      }
+
+      el.note.innerHTML = s.note;
+      el.stat.textContent = '轮次 ' + s.turn + '/3 · ' + s.phase + ' · 步骤 ' + (i + 1) + '/' + steps.length;
+      el.prev.disabled = (i === 0);
+      el.next.disabled = (i === steps.length - 1);
+      renderMsgs();
+    }
+
+    function stopAuto() {
+      if (timer) { clearInterval(timer); timer = null; el.auto.textContent = '自动播放'; }
+    }
+
+    el.next.addEventListener('click', function () {
+      stopAuto();
+      if (i < steps.length - 1) { i++; render(); }
+    });
+    el.prev.addEventListener('click', function () {
+      stopAuto();
+      if (i > 0) { i--; render(); }
+    });
+    el.reset.addEventListener('click', function () {
+      stopAuto(); i = 0; render();
+    });
+    el.auto.addEventListener('click', function () {
+      if (timer) { stopAuto(); return; }
+      if (i === steps.length - 1) { i = 0; render(); }
+      el.auto.textContent = '暂停';
+      timer = setInterval(function () {
+        if (i >= steps.length - 1) { stopAuto(); return; }
+        i++; render();
+      }, 1000);
+    });
+
+    render();
+  })();
+
+  /* ================= 演示 C：SSE 帧 → 界面渲染 ================= */
+  (function () {
+    var runBtn = document.getElementById('stRun');
+    if (!runBtn) return;
+
+    var el = {
+      ui:     document.getElementById('stUI'),
+      raw:    document.getElementById('stRaw'),
+      note:   document.getElementById('stNote'),
+      stat:   document.getElementById('stStat'),
+      meta:   document.getElementById('stMeta'),
+      nBlock: document.getElementById('stBlocks'),
+      nFrame: document.getElementById('stFrames'),
+      reset:  document.getElementById('stReset')
+    };
+    if (!el.ui || !el.raw) return;
+
+    var uid = 0, cursor = -1, timer = null, state = null;
+
+    function freshState() {
+      uid = 0;
+      return { blocks: [], tools: {}, subs: {}, openSub: null, lastText: null, finished: false, usage: null };
+    }
+
+    // 正文归并：连续的 text 追加到同一个 Block
+    function pushText(s, str) {
+      if (s.lastText && s.lastText === s.blocks[s.blocks.length - 1]) {
+        s.lastText.body += str;
+      } else {
+        s.lastText = { id: 'b' + (++uid), kind: 'text', body: str, streaming: true };
+        s.blocks.push(s.lastText);
+      }
+    }
+
+    function pushTool(s, b) {
+      (s.openSub ? s.openSub.children : s.blocks).push(b);
+      s.tools[b.id] = b;
+    }
+
+    var FRAMES = [
+      {
+        cls: '', ev: { type: 'text', content: '我帮你查' },
+        note: '第 1 帧 <code>text</code>：正文增量到了。新建 text Block，末尾挂上闪烁光标 <code>.caret</code>。',
+        apply: function (s) { pushText(s, '我帮你查'); }
+      },
+      {
+        cls: '', ev: { type: 'text', content: '一下这笔订单的物流状态。' },
+        note: '第 2 帧还是 <code>text</code>：<b>追加进同一个 Block</b>，没有新建 DOM 节点。这条归并规则是流式渲染的地基。',
+        apply: function (s) { pushText(s, '一下这笔订单的物流状态。'); }
+      },
+      {
+        cls: 'frame--think', ev: { type: 'thinking', content: '用户问的是物流状态，需要先拿到运单信息，再判断是否需要走退款流程。' },
+        note: '<code>thinking</code>：渲染成灰色引用块，<b>默认折叠</b>——过程可见，但不抢占用户注意力。',
+        apply: function (s) {
+          s.blocks.push({ id: 'b' + (++uid), kind: 'thinking', tone: 'muted', layout: 'quote',
+            icon: '💭', title: '思考过程', aside: '1.2s', folded: true, caret: true,
+            body: '<p>用户问的是物流状态，需要先拿到运单信息，再判断是否需要走退款流程。</p>' });
+        }
+      },
+      {
+        cls: 'frame--tool', ev: { type: 'tool_call', content: { id: 't1', name: 'query_order', args: { orderId: 'A10086' } } },
+        note: '<code>tool_call</code>：按 <code>id</code> 新建一张工具卡，状态 = <b>执行中</b>（转圈 + 蓝色标题）。',
+        apply: function (s) {
+          pushTool(s, { id: 't1', kind: 'tool', tone: 'accent', status: 'running',
+            icon: '🔧', title: '正在调用 query_order', aside: 'query_order', spin: true });
+        }
+      },
+      {
+        cls: 'frame--tool', ev: { type: 'tool_result', content: { id: 't1', name: 'query_order',
+          output: { orderId: 'A10086', status: '已签收', carrier: '顺丰速运', trackingNo: 'SF1234567890' } } },
+        note: '<code>tool_result</code>：<b>用同一个 id 找到那张卡，原地改状态</b>——绿勾、耗时、展开输出区。卡片位置没动，没有新增节点。',
+        apply: function (s) {
+          var b = s.tools.t1;
+          b.status = 'success'; b.spin = false; b.caret = true;
+          b.title = '已调用 query_order';
+          b.badge = '✓ 成功'; b.badgeCls = 'ok'; b.aside = '320ms';
+          b.body = '<pre><code>' + JSON.stringify(
+            { orderId: 'A10086', status: '已签收', carrier: '顺丰速运', trackingNo: 'SF1234567890' }, null, 2) + '</code></pre>';
+        }
+      },
+      {
+        cls: '', ev: { type: 'text', content: '订单已签收。我再核对一下退款政策，稍等。' },
+        note: '又一个 <code>text</code>，但它和上一个 text 之间隔了工具卡，<b>不连续</b> —— 所以新建 Block，光标也跟了过来。',
+        apply: function (s) { pushText(s, '订单已签收。我再核对一下退款政策，稍等。'); }
+      },
+      {
+        cls: 'frame--sub', ev: { type: 'sub_agent_start', content: { id: 's1', parentId: 'root', task: '核对退款政策' } },
+        note: '<code>sub_agent_start</code>：开一个紫色嵌套容器。之后直到 <code>sub_agent_result</code> 之前的事件，都挂进这个容器。',
+        apply: function (s) {
+          var b = { id: 's1', kind: 'subAgent', tone: 'purple', layout: 'nest', status: 'running',
+            icon: '🤖', title: '子任务：核对退款政策', spin: true, caret: true, children: [] };
+          s.blocks.push(b);
+          s.openSub = b; s.subs.s1 = b;
+        }
+      },
+      {
+        cls: 'frame--tool', ev: { type: 'tool_call', content: { id: 't2', name: 'read_file', args: { path: 'policy/refund.md' } } },
+        note: '子 Agent 内部的 <code>tool_call</code>：渲染进容器的 <code>.blk-list</code>，<b>天然带缩进</b>——组件代码一行没改，只是父级不同。',
+        apply: function (s) {
+          pushTool(s, { id: 't2', kind: 'tool', tone: 'accent', status: 'running',
+            icon: '🔧', title: '正在调用 read_file', aside: 'read_file', spin: true });
+        }
+      },
+      {
+        cls: 'frame--tool', ev: { type: 'tool_result', content: { id: 't2', name: 'read_file', output: '已签收订单 7 天内可申请退款' } },
+        note: '子工具成功。同样是<b>按 id 原地更新</b>，嵌套层级不影响这条规则。',
+        apply: function (s) {
+          var b = s.tools.t2;
+          b.status = 'success'; b.spin = false;
+          b.title = '已调用 read_file';
+          b.badge = '✓ 成功'; b.badgeCls = 'ok'; b.aside = '180ms';
+          b.body = '<pre><code>已签收订单 7 天内可申请退款</code></pre>';
+        }
+      },
+      {
+        cls: 'frame--sub', ev: { type: 'sub_agent_result', content: { id: 's1', result: '符合退款条件' } },
+        note: '<code>sub_agent_result</code>：容器折叠成一行摘要，点开可回看完整轨迹。子 Agent 的复杂度被"关"进了一个组件里。',
+        apply: function (s) {
+          var b = s.subs.s1;
+          b.status = 'success'; b.spin = false; b.folded = true;
+          b.badge = '✓ 已完成 · 1 步'; b.badgeCls = 'ok'; b.aside = '1.8s';
+          s.openSub = null;
+        }
+      },
+      {
+        cls: '', ev: { type: 'text', content: '结论：你的订单 A10086 已签收，' },
+        note: '最后一段正文：光标跟到最新的 Block 上，用户一眼能看出"还在生成"。',
+        apply: function (s) { pushText(s, '结论：你的订单 A10086 已签收，'); }
+      },
+      {
+        cls: '', ev: { type: 'text', content: '符合退款条件，可在 7 天内申请退款。' },
+        note: '仍是 <code>text</code>，继续追加进同一个 Block。真实场景这里是逐 token 到达的，前端靠节流控制重排频率。',
+        apply: function (s) { pushText(s, '符合退款条件，可在 7 天内申请退款。'); }
+      },
+      {
+        cls: 'frame--final', ev: { type: 'final', content: { usage: { prompt_tokens: 1820, completion_tokens: 236 } } },
+        note: '<code>final</code>：撤掉光标、标记结束、显示用量。<b>13 帧 → 7 个 Block</b>：帧是流的，Block 才是 UI 的。<br>正文早已在前面的 text 帧里发完，<code>final</code> 只负责收尾信号 + 用量统计。',
+        apply: function (s) { s.finished = true; s.usage = { p: 1820, c: 236 }; }
+      }
+    ];
+
+    function countBlocks(list) {
+      var n = 0;
+      list.forEach(function (b) {
+        n += 1;
+        if (b.children) n += countBlocks(b.children);
+      });
+      return n;
+    }
+
+    function blockHtml(b) {
+      var cls = ['blk'];
+      if (b.tone)    cls.push('blk--' + b.tone);
+      if (b.layout)  cls.push('blk--' + b.layout);
+      if (b.status)  cls.push('is-' + b.status);
+      if (b.folded)  cls.push('is-folded');
+
+      var h = '<div class="' + cls.join(' ') + '">';
+
+      if (b.kind === 'text') {
+        h += '<div class="blk__body"><p>' + b.body + (b.streaming ? '<span class="caret"></span>' : '') + '</p></div>';
+      } else {
+        h += '<div class="blk__head">';
+        if (b.icon)  h += '<span class="blk__icon">' + b.icon + '</span>';
+        h += '<span class="blk__title">' + b.title + '</span>';
+        if (b.badge) h += '<span class="badge ' + b.badgeCls + '">' + b.badge + '</span>';
+        if (b.spin)  h += '<span class="spin"></span>';
+        if (b.aside) h += '<span class="blk__aside">' + b.aside + '</span>';
+        if (b.caret) h += '<span class="blk__caret">▼</span>';
+        h += '</div>';
+        if (b.body) h += '<div class="blk__body">' + b.body + '</div>';
+      }
+
+      if (b.children && b.children.length) {
+        h += '<div class="blk-list">' + b.children.map(blockHtml).join('') + '</div>';
+      }
+      h += '</div>';
+      return h;
+    }
+
+    function render() {
+      el.ui.innerHTML = state.blocks.length
+        ? state.blocks.map(blockHtml).join('')
+        : '<p style="margin:0;font-size:12.5px;color:#8c959f">等待第一帧…</p>';
+      el.nBlock.textContent = countBlocks(state.blocks) + ' 个 Block';
+
+      el.raw.innerHTML = '';
+      for (var k = 0; k <= cursor; k++) {
+        var f = FRAMES[k];
+        var li = document.createElement('li');
+        li.className = 'frame ' + f.cls + (k === cursor ? ' is-cur' : '');
+        var tag = document.createElement('span');
+        tag.className = 'frame__type';
+        tag.textContent = f.ev.type;
+        li.appendChild(tag);
+        li.appendChild(document.createTextNode('data: ' + JSON.stringify(f.ev)));
+        el.raw.appendChild(li);
+      }
+      el.nFrame.textContent = (cursor + 1) + ' / ' + FRAMES.length;
+
+      if (cursor >= 0) {
+        el.note.innerHTML = FRAMES[cursor].note;
+        el.stat.textContent = '帧 ' + (cursor + 1) + '/' + FRAMES.length + ' · Block ' + countBlocks(state.blocks);
+      } else {
+        el.stat.textContent = '未开始';
+      }
+
+      if (state.finished) {
+        el.meta.className = 'stream__meta is-on';
+        el.meta.textContent = '● 已结束 · usage: prompt ' + state.usage.p + ' / completion ' + state.usage.c + ' tokens';
+      } else if (cursor >= 0) {
+        el.meta.className = 'stream__meta';
+        el.meta.textContent = '● 接收中…（闪烁光标 = 正在生成）';
+      } else {
+        el.meta.className = 'stream__meta';
+        el.meta.textContent = '● 等待第一帧…';
+      }
+
+      el.raw.parentNode.scrollTop = el.raw.parentNode.scrollHeight;
+      el.ui.parentNode.scrollTop = el.ui.parentNode.scrollHeight;
+    }
+
+    function step() {
+      if (cursor >= FRAMES.length - 1) return false;
+      cursor++;
+      FRAMES[cursor].apply(state);
+      render();
+      return true;
+    }
+
+    function pause() {
+      if (timer) { clearInterval(timer); timer = null; }
+      runBtn.textContent = (cursor >= FRAMES.length - 1) ? '↻ 重新测试' : '▶ 继续';
+    }
+
+    function resetAll() {
+      pause();
+      cursor = -1;
+      state = freshState();
+      el.note.innerHTML = '点「开始测试」，逐帧看界面是怎么被"喂"出来的。';
+      runBtn.textContent = '▶ 开始测试';
+      render();
+    }
+
+    runBtn.addEventListener('click', function () {
+      if (timer) { pause(); return; }
+      if (cursor >= FRAMES.length - 1) resetAll();
+      runBtn.textContent = '⏸ 暂停';
+      timer = setInterval(function () { if (!step()) pause(); }, 1200);
+      step();
+    });
+    el.reset.addEventListener('click', resetAll);
+
+    resetAll();
   })();
 </script>
 </body>
