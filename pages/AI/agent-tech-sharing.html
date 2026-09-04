@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="团队内部技术分享：Agent 的两种形态（工作流式 / 自主式）、Agent Loop 运行机制，以及前端基于 SSE 的 data:{type, content} 流式渲染实践。">
+<title>Agent 的两种形态与前端流式渲染实践 · 技术分享</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f6f8fa;
+    --text:#1f2328;
+    --muted:#656d76;
+    --border:#d8dee4;
+    --accent:#1f6feb;
+    --accent-soft:#ddf4ff;
+    --green:#1a7f37;
+    --green-soft:#dafbe1;
+    --purple:#8250df;
+    --purple-soft:#fbefff;
+    --orange:#bc4c00;
+    --orange-soft:#fff8c5;
+    --red:#cf222e;
+    --red-soft:#ffebe9;
+    --code-bg:#f6f8fa;
+    --radius:10px;
+    --mono:"JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16px;
+    line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+  }
+  .layout{
+    display:flex;
+    gap:48px;
+    max-width:1220px;
+    margin:0 auto;
+    padding:0 24px 96px;
+    align-items:flex-start;
+  }
+  /* ---------- 侧边目录 ---------- */
+  .toc{
+    position:sticky;
+    top:24px;
+    width:250px;
+    flex:0 0 250px;
+    max-height:calc(100vh - 48px);
+    overflow-y:auto;
+    padding:20px 8px 20px 0;
+    font-size:14px;
+  }
+  .toc h4{
+    margin:0 0 12px;
+    font-size:12px;
+    letter-spacing:.12em;
+    color:var(--muted);
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .toc ol{list-style:none;margin:0;padding:0;counter-reset:sec;}
+  .toc > ol > li{margin-bottom:2px;}
+  .toc a{
+    display:block;
+    padding:5px 10px;
+    border-radius:6px;
+    color:var(--muted);
+    text-decoration:none;
+    border-left:2px solid transparent;
+    transition:all .15s ease;
+  }
+  .toc a:hover{background:var(--bg-soft);color:var(--accent);}
+  .toc a.sub{padding-left:26px;font-size:13px;}
+  .toc a.active{color:var(--accent);background:var(--accent-soft);border-left-color:var(--accent);font-weight:600;}
+
+  /* ---------- 正文 ---------- */
+  .content{flex:1 1 auto;min-width:0;padding-top:48px;}
+  header.hero{
+    padding:8px 0 8px;
+    margin-bottom:40px;
+  }
+  .kicker{
+    display:inline-block;
+    font-size:12px;
+    letter-spacing:.1em;
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:4px 10px;
+    border-radius:999px;
+    font-weight:600;
+    margin-bottom:18px;
+  }
+  h1{
+    font-size:36px;
+    line-height:1.35;
+    margin:0 0 16px;
+    letter-spacing:-.01em;
+  }
+  .subtitle{color:var(--muted);font-size:17px;margin:0 0 20px;}
+  .meta{font-size:13px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap;}
+
+  h2{
+    font-size:26px;
+    margin:64px 0 20px;
+    padding-top:28px;
+    border-top:1px solid var(--border);
+    scroll-margin-top:24px;
+    letter-spacing:-.01em;
+  }
+  h2 .num{
+    display:inline-block;
+    font-size:14px;
+    color:#fff;
+    background:var(--accent);
+    width:28px;height:28px;
+    line-height:28px;
+    text-align:center;
+    border-radius:8px;
+    margin-right:10px;
+    vertical-align:3px;
+    font-weight:700;
+  }
+  h3{
+    font-size:20px;
+    margin:40px 0 14px;
+    scroll-margin-top:24px;
+  }
+  h4{font-size:16px;margin:26px 0 10px;color:var(--text);}
+  p{margin:0 0 16px;}
+  ul,ol{margin:0 0 16px;padding-left:24px;}
+  li{margin-bottom:8px;}
+  strong{font-weight:600;}
+  code{
+    font-family:var(--mono);
+    font-size:.88em;
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:1px 5px;
+    color:#0550ae;
+    word-break:break-word;
+  }
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    overflow-x:auto;
+    line-height:1.7;
+    font-size:13.5px;
+    margin:0 0 20px;
+  }
+  pre code{
+    background:none;border:none;padding:0;color:var(--text);font-size:inherit;
+  }
+  .cmt{color:#6e7781;}
+  .kw{color:#cf222e;}
+  .str{color:#0a3069;}
+  .fn{color:#8250df;}
+  .num-lit{color:#0550ae;}
+
+  blockquote{
+    margin:0 0 20px;
+    padding:14px 18px;
+    background:var(--bg-soft);
+    border-left:3px solid var(--accent);
+    border-radius:0 var(--radius) var(--radius) 0;
+    color:var(--muted);
+    font-size:15px;
+  }
+  blockquote p:last-child{margin-bottom:0;}
+
+  .callout{
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin:0 0 24px;
+    font-size:15px;
+    background:var(--bg-soft);
+  }
+  .callout.tip{background:var(--accent-soft);border-color:#b6e3ff;}
+  .callout.warn{background:var(--orange-soft);border-color:#f0d98a;}
+  .callout .label{font-weight:700;display:block;margin-bottom:4px;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 24px;
+    font-size:14.5px;
+    display:block;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+  th,td{
+    border:1px solid var(--border);
+    padding:10px 14px;
+    text-align:left;
+    vertical-align:top;
+    white-space:normal;
+  }
+  th{background:var(--bg-soft);font-weight:600;}
+  tbody tr:nth-child(even){background:#fbfcfd;}
+  td code{font-size:12.5px;}
+
+  figure{margin:28px 0 32px;}
+  figure svg{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:16px 8px;}
+  figcaption{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .fig-note{text-align:center;font-size:13px;color:var(--muted);margin:0 0 28px;}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 24px;}
+  .card{
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    background:#fff;
+  }
+  .card h4{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px;}
+  .card .tag{
+    font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;
+  }
+  .tag.blue{background:var(--accent-soft);color:#0969da;}
+  .tag.purple{background:var(--purple-soft);color:var(--purple);}
+  .tag.green{background:var(--green-soft);color:var(--green);}
+  .tag.orange{background:var(--orange-soft);color:var(--orange);}
+  .card ul{margin:0;padding-left:20px;font-size:14.5px;}
+  .card p{font-size:14.5px;margin-bottom:10px;}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .pros{border-left:3px solid var(--green);padding-left:14px;}
+  .cons{border-left:3px solid var(--red);padding-left:14px;}
+  .pros h4,.cons h4{margin-top:0;}
+  .pros ul,.cons ul{font-size:14.5px;}
+
+  .steps{counter-reset:st;list-style:none;padding:0;margin:0 0 20px;}
+  .steps li{
+    counter-increment:st;
+    position:relative;
+    padding-left:38px;
+    margin-bottom:14px;
+  }
+  .steps li::before{
+    content:counter(st);
+    position:absolute;left:0;top:2px;
+    width:24px;height:24px;line-height:24px;
+    text-align:center;border-radius:50%;
+    background:var(--accent);color:#fff;
+    font-size:12px;font-weight:700;
+  }
+
+  .checklist{list-style:none;padding:0;margin:0 0 20px;}
+  .checklist li{padding-left:28px;position:relative;margin-bottom:10px;}
+  .checklist li::before{
+    content:"";position:absolute;left:4px;top:8px;
+    width:9px;height:9px;border:2px solid var(--accent);border-radius:2px;
+  }
+
+  footer{
+    margin-top:72px;padding-top:24px;border-top:1px solid var(--border);
+    color:var(--muted);font-size:13px;
+  }
+  .backtop{
+    display:inline-block;margin-top:12px;color:var(--accent);text-decoration:none;
+  }
+
+  /* ---------- 渲染块样式系统（3.5 节：type → 样式映射） ---------- */
+  .blk-list{display:flex;flex-direction:column;gap:10px;margin:0 0 20px;}
+  .blk{border:1px solid var(--border);border-radius:9px;background:#fff;font-size:14px;line-height:1.7;}
+  .blk__head{display:flex;align-items:center;gap:9px;padding:9px 12px;}
+  .blk__icon{width:21px;height:21px;flex:0 0 21px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:12px;line-height:1;}
+  .blk__title{font-weight:600;flex:1 1 auto;min-width:0;font-size:13.5px;}
+  .blk__aside{font-size:11.5px;color:var(--muted);font-family:var(--mono);white-space:nowrap;}
+  .blk__caret{font-size:9px;color:var(--muted);transition:transform .15s ease;}
+  .blk.is-folded .blk__caret{transform:rotate(-90deg);}
+  .blk.is-folded .blk__body{display:none;}
+  .blk__body{padding:9px 12px 11px;border-top:1px dashed var(--border);font-size:13px;color:#3d444d;}
+  .blk__body pre{margin:0;font-size:12px;background:#fbfcfd;padding:10px 12px;}
+
+  /* tone：决定配色 */
+  .blk--plain{border:none;background:none;padding:0;}
+  .blk--plain .blk__body{border:none;padding:0;}
+  .blk--muted{background:#fafbfc;border-color:#e4e8ed;}
+  .blk--muted .blk__icon{background:#eaeef2;color:#57606a;}
+  .blk--muted .blk__body{color:var(--muted);}
+  .blk--accent{border-color:#b6e3ff;background:#f5fbff;}
+  .blk--accent .blk__icon{background:#ddf4ff;color:#0969da;}
+  .blk--purple{border-color:#d8b9ff;background:#fcf8ff;}
+  .blk--purple .blk__icon{background:#fbefff;color:#8250df;}
+  .blk--warning{border-color:#f0d98a;background:#fffdf5;}
+  .blk--warning .blk__icon{background:#fff8c5;color:var(--orange);}
+  .blk--danger{border-color:#ffcecb;background:#fffbfb;}
+  .blk--danger .blk__icon{background:#ffebe9;color:var(--red);}
+
+  /* layout：决定形态 */
+  .blk--quote{border:none;border-left:3px solid #d0d7de;background:#fafbfc;border-radius:0 8px 8px 0;padding:8px 12px;}
+  .blk--quote .blk__body{border:none;padding:4px 0 0;}
+  .blk--nest{margin-left:0;padding:8px 8px 8px 12px;background:linear-gradient(90deg,#fcf8ff 0 3px,transparent 3px);}
+  .blk--nest > .blk-list{padding-left:10px;border-left:2px solid #e6d5fb;margin-top:8px;}
+  .blk--bar{border-radius:8px;}
+
+  /* status：决定状态样式（与 type 正交） */
+  .blk.is-running .blk__title{color:var(--accent);}
+  .blk.is-success .blk__title{color:var(--green);}
+  .blk.is-error   .blk__title{color:var(--red);}
+  .spin{width:12px;height:12px;flex:0 0 12px;border:2px solid #cfe6ff;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .caret{display:inline-block;width:2px;height:1em;background:var(--accent);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(2,start) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .blk__actions{display:flex;gap:8px;padding:0 12px 11px;}
+  .btn{
+    font:inherit;font-size:12.5px;line-height:1;padding:6px 13px;border-radius:6px;cursor:pointer;
+    border:1px solid var(--border);background:#fff;color:var(--text);
+  }
+  .btn--primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn--ghost{background:transparent;}
+  .badge{font-size:11px;padding:1px 7px;border-radius:999px;font-family:var(--mono);}
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.err{background:var(--red-soft);color:var(--red);}
+  .badge.run{background:var(--accent-soft);color:var(--accent);}
+
+  /* 预览容器 */
+  .demo{
+    border:1px solid var(--border);border-radius:12px;background:var(--bg-soft);
+    padding:16px 18px 18px;margin:0 0 12px;
+  }
+  .demo__bar{
+    display:flex;align-items:center;gap:6px;margin-bottom:14px;
+    padding-bottom:10px;border-bottom:1px solid var(--border);
+  }
+  .demo__dot{width:10px;height:10px;border-radius:50%;background:#d8dee4;}
+  .demo__label{font-size:12px;color:var(--muted);margin-left:6px;font-family:var(--mono);}
+  .demo .blk-list{gap:9px;margin:0;}
+  .demo p{margin:0 0 6px;font-size:14px;}
+  .demo p:last-child{margin-bottom:0;}
+  .demo code{font-size:12px;}
+
+  @media (max-width:1080px){
+    .layout{flex-direction:column;gap:0;padding:0 20px 60px;}
+    .toc{
+      position:static;width:100%;flex:none;max-height:none;
+      border-bottom:1px solid var(--border);
+      margin-bottom:8px;padding:20px 0;
+    }
+    .content{padding-top:24px;}
+    h1{font-size:29px;}
+    .cards,.two-col{grid-template-columns:1fr;}
+  }
+  @media print{
+    .toc{display:none;}
+    .layout{max-width:none;padding:0;}
+    h2{page-break-after:avoid;}
+    pre,figure,table{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ============ 侧边目录 ============ -->
+  <nav class="toc" aria-label="目录">
+    <h4>目录</h4>
+    <ol>
+      <li><a href="#intro">开场：先统一"什么叫 Agent"</a></li>
+      <li><a href="#part1">一、Agent 的两种类型</a></li>
+      <li><a href="#s1-1" class="sub">1.1 工作流式 Agent</a></li>
+      <li><a href="#s1-2" class="sub">1.2 自主 Agent</a></li>
+      <li><a href="#s1-3" class="sub">1.3 优劣对比与适用边界</a></li>
+      <li><a href="#part2">二、两种 Agent 的工作方式</a></li>
+      <li><a href="#s2-1" class="sub">2.1 工作流式：按图施工</a></li>
+      <li><a href="#s2-2" class="sub">2.2 自主式：一个循环</a></li>
+      <li><a href="#s2-3" class="sub">2.3 本质差异一句话</a></li>
+      <li><a href="#part3">三、前端流式输出</a></li>
+      <li><a href="#s3-1" class="sub">3.1 为什么必须流式</a></li>
+      <li><a href="#s3-2" class="sub">3.2 协议约定与时序</a></li>
+      <li><a href="#s3-3" class="sub">3.3 事件类型清单</a></li>
+      <li><a href="#s3-4" class="sub">3.4 前端解析与分发</a></li>
+      <li><a href="#s3-5" class="sub">3.5 按 type 渲染不同样式</a></li>
+      <li><a href="#s3-6" class="sub">3.6 五类事件的渲染要点</a></li>
+      <li><a href="#s3-7" class="sub">3.7 工程化细节</a></li>
+      <li><a href="#outro">四、小结</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ 正文 ============ -->
+  <main class="content">
+
+    <header class="hero">
+      <h1>Agent 的两种形态，与前端如何优雅地流式渲染</h1>
+      <p class="subtitle">从"按图施工"的工作流，到"自己决定下一步"的自主循环，再到 <code>data:{type, content}</code> 每一帧的落地渲染。</p>
+    </header>
+
+    <!-- ---------- 开场 ---------- -->
+    <h2 id="intro">开场：先统一"什么叫 Agent"</h2>
+
+    <p>一个最小可运行的 Agent，只需要三个零件：</p>
+
+    <ul>
+      <li><strong>大脑（LLM）</strong>：负责理解、推理、决定下一步做什么。</li>
+      <li><strong>手脚（Tools）</strong>：函数、API、数据库、命令行，让模型能影响真实世界。</li>
+      <li><strong>记忆（Context / msg[]）</strong>：把"已经发生了什么"攒下来，喂给下一轮决策。</li>
+    </ul>
+
+    <p>三者的组织方式不同，就长出了两种完全不同的 Agent 形态：<strong>工作流式（Workflow Agent）</strong>和<strong>自主式（Autonomous Agent）</strong>。下面一张图先建立直觉：</p>
+
+    <blockquote>
+      <p><strong>工作流式 Agent 像地铁</strong>：线路是提前修好的，站站停靠，到站下车。你大概率知道它下一步去哪。</p>
+      <p style="margin-top:8px"><strong>自主 Agent 像打车</strong>：你只说目的地，司机根据实时路况自己选路，中途可能绕路、可能掉头，你无法预知完整路径——但你能到。</p>
+    </blockquote>
+
+    <p>这个比喻基本贯穿全文。接下来三个部分，我们依次讲：<strong>它们是什么</strong>、<strong>它们怎么跑</strong>、<strong>前端怎么把过程展示出来</strong>。</p>
+
+    <!-- ============ 第一部分 ============ -->
+    <h2 id="part1"><span class="num">1</span>Agent 的两种类型</h2>
+
+    <h3 id="s1-1">1.1 工作流式 Agent（Workflow Agent）</h3>
+
+    <h4>定义</h4>
+    <p><strong>由开发者在设计期把任务拆解成固定的节点与连线（通常是一个 DAG 有向无环图），运行时由编排引擎按图逐步执行。</strong>LLM 在其中只是"某个节点里的一个能力"，它可以做意图识别、信息抽取、文案生成，但<strong>它不决定流程走向</strong>——流程走向由开发者写死的边（edge）和条件表达式决定。</p>
+
+    <p>一句话概括：<strong>人在设计期做决策，机器在运行期做执行。</strong></p>
+
+    <h4>代表产品</h4>
+    <div class="cards">
+      <div class="card">
+        <h4><span class="tag blue">低代码平台</span></h4>
+        <ul>
+          <li><strong>Dify</strong>：Chatflow / Workflow 画布，拖拽式编排，国内落地最广</li>
+          <li><strong>Coze（扣子）</strong>：Bot + 插件 + 工作流，偏 C 端与 Bot 分发</li>
+          <li><strong>n8n / Zapier / Make</strong>：通用自动化，AI 节点只是其中一类节点</li>
+          <li><strong>腾讯云智能体开发平台、阿里云百炼</strong>：企业级工作流编排</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4><span class="tag green">代码框架</span></h4>
+        <ul>
+          <li><strong>LangGraph</strong>：用 StateGraph 显式声明节点与边，可控性最强</li>
+          <li><strong>LlamaIndex Workflows</strong>：事件驱动的显式编排</li>
+          <li><strong>Spring AI Alibaba Graph</strong>：Java 侧的图编排方案</li>
+          <li>各家 RPA（UiPath 等）加个 LLM 节点，本质也是这一类</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>典型应用场景</h4>
+    <table>
+      <thead>
+        <tr><th style="width:150px">场景</th><th>为什么适合工作流</th><th>示例流程</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>企业客服 / FAQ 问答</strong></td>
+          <td>路径可穷举：分类→检索→回答→兜底转人工。SLA 和话术都需要稳定可控</td>
+          <td>意图分类 → 知识库检索 → 相关性判别 → 生成答案 → 命中不了则转人工</td>
+        </tr>
+        <tr>
+          <td><strong>表单/单据处理</strong></td>
+          <td>OCR → 抽取 → 校验 → 入库，每一步都有明确的输入输出与失败重试策略</td>
+          <td>上传发票 → OCR → 字段抽取 → 规则校验 → 写 ERP → 结果通知</td>
+        </tr>
+        <tr>
+          <td><strong>营销文案批量生成</strong></td>
+          <td>模板固定、量大、要求格式一致，成本敏感</td>
+          <td>读取商品表 → 并行调用 LLM → 合规审核 → 落库</td>
+        </tr>
+        <tr>
+          <td><strong>数据报表 / ETL + 解读</strong></td>
+          <td>取数逻辑必须先验证正确性，不能让模型"自由发挥"写 SQL</td>
+          <td>定时触发 → 固定 SQL 取数 → 生成图表 → LLM 写解读</td>
+        </tr>
+        <tr>
+          <td><strong>有合规要求的业务流程</strong></td>
+          <td>需要留痕、可审计、可复现，审批节点必须人工介入</td>
+          <td>材料初审 → 规则引擎 → 人工复核 → 归档</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <span class="label">选型直觉</span>
+      当你能用一张流程图把需求画完整、且这张图半年内不会大改时——用工作流。
+    </div>
+
+    <h3 id="s1-2">1.2 自主 Agent（Autonomous Agent）</h3>
+
+    <h4>定义</h4>
+    <p><strong>开发者只提供目标、可用工具集和约束（系统提示词、最大轮次、权限边界），由 LLM 在运行期自主决定调用什么工具、调用几次、什么时候停。</strong>没有预先画好的图，路径是<strong>推理出来的</strong>，不是设计出来的。</p>
+
+    <p>一句话概括：<strong>人在设计期只定边界，机器在运行期既做决策也做执行。</strong></p>
+
+    <p>它的基本形态就是一个循环（下一节会展开）：维护一个 <code>msg[]</code> → 组装上下文 → 调 LLM → 模型说"我要调工具" → 执行工具 → 结果写回 <code>msg[]</code> → 再调 LLM → …… → 直到模型认为可以收工。</p>
+
+    <h4>代表产品</h4>
+    <div class="cards">
+      <div class="card">
+        <h4><span class="tag purple">编码类</span></h4>
+        <ul>
+          <li><strong>Claude Code / Cursor Agent / CodeBuddy / 通义灵码</strong>：读写文件、跑命令、跑测试，自我纠错</li>
+          <li><strong>Devin、OpenAI Codex</strong>：更彻底的异步自主执行</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4><span class="tag orange">通用类</span></h4>
+        <ul>
+          <li><strong>OpenAI Deep Research / Operator</strong>：自主检索、自主操作浏览器</li>
+          <li><strong>Manus、AutoGPT、OpenHands</strong>：通用任务自主规划</li>
+          <li><strong>各家"深度研究"模式</strong>：多轮检索 + 交叉验证</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>典型应用场景</h4>
+    <table>
+      <thead>
+        <tr><th style="width:150px">场景</th><th>为什么必须自主</th><th>典型表现</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>代码编写与重构</strong></td>
+          <td>改一个 bug 要先读哪些文件、读多少层，事前无法穷举</td>
+          <td>自己 grep、读文件、改代码、跑测试、看报错、再改，循环十几轮</td>
+        </tr>
+        <tr>
+          <td><strong>深度研究与调研</strong></td>
+          <td>搜到什么才知道下一步该搜什么，路径依赖中间结果</td>
+          <td>搜索 → 读页面 → 发现新线索 → 再搜索 → 交叉验证 → 成文</td>
+        </tr>
+        <tr>
+          <td><strong>数据分析探索</strong></td>
+          <td>看到数据分布才知道该清洗什么、该画什么图</td>
+          <td>执行 Python → 看图 → 觉得不对 → 换维度重跑</td>
+        </tr>
+        <tr>
+          <td><strong>运维排障 / 根因定位</strong></td>
+          <td>故障现场千变万化，无法预先编排排查树</td>
+          <td>看日志 → 查监控 → 登机器 → 缩小范围 → 定位</td>
+        </tr>
+        <tr>
+          <td><strong>开放域长任务</strong></td>
+          <td>需求本身模糊，需要在过程中逐步澄清</td>
+          <td>先出计划 → 中途反问用户 → 调整方向 → 继续</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <span class="label">注意代价</span>
+      自主 Agent 的每一次"聪明"，都是用<strong> token 成本、延迟、结果不确定性</strong>换来的。同一个问题跑两次，路径可能完全不同。
+    </div>
+
+    <h3 id="s1-3">1.3 优劣对比与适用边界</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:110px">维度</th>
+          <th>工作流式 Agent</th>
+          <th>自主 Agent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>决策权归属</strong></td>
+          <td>人（设计期写死图与条件）</td>
+          <td>模型（运行期推理下一步）</td>
+        </tr>
+        <tr>
+          <td><strong>可预测性</strong></td>
+          <td>高。路径固定，同样的输入必然同样的路径</td>
+          <td>低。存在随机性，需 temperature=0 等约束</td>
+        </tr>
+        <tr>
+          <td><strong>确定性与可测</strong></td>
+          <td>易测，可对单节点做单测与回归</td>
+          <td>难测，只能做端到端评估与轨迹回放</td>
+        </tr>
+        <tr>
+          <td><strong>成本 / 延迟</strong></td>
+          <td>低且可控，LLM 调用次数是常数级</td>
+          <td>高且不可控，轮次可能爆炸（需 MAX_TURNS 兜底）</td>
+        </tr>
+        <tr>
+          <td><strong>应对未知</strong></td>
+          <td>弱。图没覆盖的情况直接失败或兜底</td>
+          <td>强。可以临场想办法、换工具、换策略</td>
+        </tr>
+        <tr>
+          <td><strong>开发门槛</strong></td>
+          <td>低。产品/运营也能参与编排</td>
+          <td>高。工具设计、上下文工程、容错都很吃经验</td>
+        </tr>
+        <tr>
+          <td><strong>可观测性</strong></td>
+          <td>天然清晰，节点级链路追踪</td>
+          <td>需要额外记录 msg[] 全量轨迹</td>
+        </tr>
+        <tr>
+          <td><strong>失败模式</strong></td>
+          <td>可预期的失败：节点超时、接口报错</td>
+          <td>难预期的失败：死循环、跑偏、幻觉调用、token 爆炸</td>
+        </tr>
+        <tr>
+          <td><strong>典型 SLA</strong></td>
+          <td>秒级、可承诺</td>
+          <td>分钟级，需异步任务形态</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="two-col">
+      <div class="pros">
+        <h4>选工作流的信号 <span class="tag green">稳定优先</span></h4>
+        <ul>
+          <li>业务流程<strong>已经被标准化</strong>，或者有明确的 SOP</li>
+          <li>对<strong>成功率、延迟、成本</strong>有硬指标</li>
+          <li>涉及<strong>合规、审计、责任划分</strong></li>
+          <li>调用量大，成本敏感</li>
+          <li>需要非技术同学参与维护</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>选自主 Agent 的信号 <span class="tag purple">能力优先</span></h4>
+        <ul>
+          <li>任务<strong>无法穷举路径</strong>，边走边看</li>
+          <li>用户是<strong>专业人士</strong>，能容忍过程、能纠偏</li>
+          <li>单次任务价值高，<strong>成本不敏感</strong></li>
+          <li>允许异步、允许人工介入确认</li>
+          <li>环境可回滚（沙箱、容器、版本控制）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="label">别把它当二选一</span>
+      现实里绝大多数产品是<strong>混合的</strong>：外层用工作流保证主干可控（鉴权、分类、审计、兜底），内层在某些节点里嵌一个自主 Agent 去啃硬骨头（写作、检索、编码）。业界常说的 "Agentic Workflow" 指的就是这种<strong>在图的某个节点里跑循环</strong>的形态。判断标准只有一个：<strong>这一步的决策，你敢不敢交给模型。</strong>
+    </div>
+
+    <!-- ============ 第二部分 ============ -->
+    <h2 id="part2"><span class="num">2</span>两种 Agent 的工作方式</h2>
+
+    <h3 id="s2-1">2.1 工作流式：把图画好，按图施工</h3>
+
+    <p>工作流式的执行过程可以理解成：<strong>拓扑排序 + 逐个执行节点 + 沿条件边跳转</strong>。每个节点有明确的输入（上游状态）、处理逻辑和输出（写入共享状态）。引擎不关心节点内部是调 LLM、查库还是跑代码，它只负责"该跑谁了"。</p>
+
+    <figure>
+      <svg viewBox="0 0 1000 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="工作流式 Agent 的 DAG 执行示意图" font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">
+        <defs>
+          <marker id="arrowA" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#656d76"/>
+          </marker>
+        </defs>
+        <!-- 节点 -->
+        <g stroke="#d8dee4" stroke-width="1.5" fill="#f6f8fa">
+          <rect x="14" y="70" width="130" height="46" rx="8"/>
+          <rect x="174" y="70" width="130" height="46" rx="8"/>
+          <rect x="460" y="18" width="150" height="42" rx="8" fill="#ddf4ff" stroke="#b6e3ff"/>
+          <rect x="460" y="72" width="150" height="42" rx="8" fill="#ddf4ff" stroke="#b6e3ff"/>
+          <rect x="460" y="126" width="150" height="42" rx="8" fill="#ddf4ff" stroke="#b6e3ff"/>
+          <rect x="670" y="72" width="130" height="42" rx="8"/>
+          <rect x="840" y="72" width="130" height="42" rx="8" fill="#fbefff" stroke="#d8b9ff"/>
+        </g>
+        <!-- 菱形：条件路由 -->
+        <polygon points="368,68 400,93 368,118 336,93" fill="#fff8c5" stroke="#f0d98a" stroke-width="1.5"/>
+        <!-- 文字 -->
+        <g font-size="13" fill="#1f2328" text-anchor="middle">
+          <text x="79" y="98">用户输入</text>
+          <text x="239" y="98">意图识别（LLM）</text>
+          <text x="368" y="93" font-size="11">条件</text>
+          <text x="368" y="107" font-size="11">路由</text>
+          <text x="535" y="43">知识库检索</text>
+          <text x="535" y="97">订单查询 API</text>
+          <text x="535" y="151">代码执行器</text>
+          <text x="735" y="97">结果聚合</text>
+          <text x="905" y="97">LLM 总结输出</text>
+        </g>
+        <!-- 连线 -->
+        <g stroke="#656d76" stroke-width="1.5" fill="none" marker-end="url(#arrowA)">
+          <path d="M144,93 L174,93"/>
+          <path d="M304,93 L336,93"/>
+          <path d="M400,93 L430,93 L430,39 L460,39"/>
+          <path d="M400,93 L460,93"/>
+          <path d="M400,93 L430,93 L430,147 L460,147"/>
+          <path d="M610,39 L640,39 L640,93 L670,93"/>
+          <path d="M610,93 L670,93"/>
+          <path d="M610,147 L640,147 L640,93 L670,93"/>
+          <path d="M800,93 L840,93"/>
+        </g>
+        <!-- 标注 -->
+        <g font-size="11" fill="#656d76">
+          <text x="20" y="36" text-anchor="start">执行顺序在设计期确定：用户输入 → 意图识别 → 路由 → 订单查询 → 聚合 → 总结</text>
+          <text x="452" y="196" text-anchor="start">分支与合并都由开发者写死的条件决定，模型不参与流程决策</text>
+        </g>
+      </svg>
+      <figcaption>图 1 · 工作流式 Agent 的 DAG 执行示意</figcaption>
+    </figure>
+
+    <p>用伪代码看会更直接——<strong>图是数据，不是控制流</strong>：</p>
+
+<pre><code><span class="cmt">// 工作流式 Agent：图已经画好，引擎只负责"按图施工"</span>
+<span class="kw">const</span> graph = defineGraph({
+  nodes: {
+    classify:   { type: <span class="str">'llm'</span>,  prompt: <span class="str">'判断用户意图'</span>, output: [<span class="str">'faq'</span>, <span class="str">'order'</span>] },
+    retrieve:   { type: <span class="str">'tool'</span>, name: <span class="str">'vector_search'</span> },
+    queryOrder: { type: <span class="str">'tool'</span>, name: <span class="str">'query_order'</span>  },
+    merge:      { type: <span class="str">'code'</span>, fn: (ctx) =&gt; ({ ...ctx.retrieve, ...ctx.queryOrder }) },
+    answer:     { type: <span class="str">'llm'</span>,  prompt: <span class="str">'基于资料回答用户问题'</span> },
+  },
+  edges: [
+    [<span class="str">'__start__'</span>, <span class="str">'classify'</span>],
+    <span class="cmt">// 走哪条分支，是开发者写的函数，不是模型决定的</span>
+    [<span class="str">'classify'</span>,   <span class="str">'retrieve'</span>,   { when: ctx =&gt; ctx.classify === <span class="str">'faq'</span>   }],
+    [<span class="str">'classify'</span>,   <span class="str">'queryOrder'</span>, { when: ctx =&gt; ctx.classify === <span class="str">'order'</span> }],
+    [<span class="str">'retrieve'</span>,   <span class="str">'merge'</span>],
+    [<span class="str">'queryOrder'</span>, <span class="str">'merge'</span>],
+    [<span class="str">'merge'</span>,      <span class="str">'answer'</span>],
+    [<span class="str">'answer'</span>,     <span class="str">'__end__'</span>],
+  ],
+});
+
+<span class="kw">const</span> result = <span class="kw">await</span> graph.run({ question: <span class="str">'我的订单到哪了'</span> });
+<span class="cmt">// 实际路径：classify → queryOrder → merge → answer（retrieve 根本不会执行）</span>
+<span class="cmt">// 整条路径可预测、可追踪、可回放、可对单节点做单测</span></code></pre>
+
+    <div class="callout tip">
+      <span class="label">关键特征</span>
+      <strong>LLM 调用次数是常数级的</strong>（图里有几个 LLM 节点就调几次），所以成本和延迟都算得出来。这是它能进生产、能承诺 SLA 的根本原因。
+    </div>
+
+    <h3 id="s2-2">2.2 自主式：一个循环，模型自己决定何时停</h3>
+
+    <p>自主 Agent 没有图。<strong>它只有一个循环，以及一个不断变长的消息数组 <code>msg[]</code>。</strong>流程如下：</p>
+
+    <ol class="steps">
+      <li><strong>初始化</strong>：把用户输入塞进 <code>msg[]</code>，同时准备好工具清单（每个工具的 name / 参数 JSON Schema / 描述）。</li>
+      <li><strong>组装上下文</strong>：系统提示词 + <code>msg[]</code> 全量历史 + 工具定义 + 可选的长期记忆/RAG 片段，拼成一次 LLM 请求的 payload。</li>
+      <li><strong>调用 LLM API</strong>：注意这里是<strong>让模型输出"下一步动作"</strong>，而不是输出最终答案。模型可以回一段普通文本，也可以回一个 <code>tool_calls</code> 结构。</li>
+      <li><strong>模型判断</strong>：
+        <ul>
+          <li>如果返回 <code>tool_calls</code> → 说明它想调工具，进入第 5 步；</li>
+          <li>如果只返回文本 → 说明它认为可以收工了，<strong>循环结束，输出这段文本</strong>。</li>
+        </ul>
+      </li>
+      <li><strong>执行工具</strong>：解析出工具名和参数，在本地/远端执行（查库、调 API、跑命令、读文件……）。</li>
+      <li><strong>结果写回 <code>msg[]</code></strong>：以 <code>{ role: 'tool', tool_call_id, content }</code> 的身份追加进去。</li>
+      <li><strong>回到第 2 步</strong>，带着更长的上下文再问一次模型。直到模型主动结束，或触发兜底条件（最大轮次 / 超时 / token 上限）。</li>
+    </ol>
+
+    <div class="callout warn">
+      <span class="label">三个容易踩的坑</span>
+      ① <strong>终止条件是模型说了算</strong>，所以必须有 <code>MAX_TURNS</code> 硬兜底，否则可能出现"调工具→结果不满意→再调工具"的死循环烧钱。<br>
+      ② <code>msg[]</code> 只增不减，上下文会线性膨胀，需要<strong>压缩/摘要/裁剪</strong>策略（尤其是工具返回大 JSON 时）。<br>
+      ③ 工具返回的错误也要写回 <code>msg[]</code>——<strong>报错信息是给模型看的</strong>，它往往能自己换个参数重试。
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="自主 Agent 的循环（Agent Loop）示意图" font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">
+        <defs>
+          <marker id="arrowB" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#656d76"/>
+          </marker>
+        </defs>
+
+        <!-- 中心 msg[] -->
+        <rect x="255" y="205" width="190" height="78" rx="10" fill="#f6f8fa" stroke="#d8dee4" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="350" y="238" font-size="14" font-weight="600" text-anchor="middle" fill="#1f2328">msg[]</text>
+        <text x="350" y="258" font-size="11.5" text-anchor="middle" fill="#656d76">上下文 / 消息数组</text>
+        <text x="350" y="273" font-size="11" text-anchor="middle" fill="#656d76">只增不减，全程携带</text>
+
+        <!-- 五个节点 -->
+        <g stroke-width="1.5">
+          <rect x="265" y="26" width="170" height="52" rx="8" fill="#ddf4ff" stroke="#b6e3ff"/>
+          <rect x="515" y="134" width="170" height="52" rx="8" fill="#ddf4ff" stroke="#b6e3ff"/>
+          <rect x="515" y="304" width="170" height="52" rx="8" fill="#fff8c5" stroke="#f0d98a"/>
+          <rect x="265" y="436" width="170" height="52" rx="8" fill="#fbefff" stroke="#d8b9ff"/>
+          <rect x="15" y="304" width="170" height="52" rx="8" fill="#fbefff" stroke="#d8b9ff"/>
+          <rect x="515" y="436" width="170" height="52" rx="8" fill="#dafbe1" stroke="#a7f3d0"/>
+        </g>
+
+        <g font-size="13" text-anchor="middle" fill="#1f2328">
+          <text x="350" y="49">① 组装上下文</text>
+          <text x="350" y="66" font-size="11" fill="#656d76">system + msg[] + tools</text>
+
+          <text x="600" y="157">② 调用 LLM API</text>
+          <text x="600" y="174" font-size="11" fill="#656d76">stream: true</text>
+
+          <text x="600" y="327">③ LLM 决策</text>
+          <text x="600" y="344" font-size="11" fill="#656d76">结束 / 调 tool？</text>
+
+          <text x="350" y="459">④ 执行 tool</text>
+          <text x="350" y="476" font-size="11" fill="#656d76">runTool(name, args)</text>
+
+          <text x="100" y="327">⑤ 结果写回</text>
+          <text x="100" y="344" font-size="11" fill="#656d76">role: 'tool'</text>
+
+          <text x="600" y="459">输出最终结果</text>
+          <text x="600" y="476" font-size="11" fill="#656d76">循环终止</text>
+        </g>
+
+        <!-- 箭头 -->
+        <g stroke="#656d76" stroke-width="1.6" fill="none" marker-end="url(#arrowB)">
+          <path d="M435,52 C 530,52 600,95 600,134"/>
+          <path d="M600,186 L600,304"/>
+          <path d="M600,356 C 600,420 490,462 435,462"/>
+          <path d="M265,462 C 175,462 100,430 100,356"/>
+          <path d="M100,304 C 100,150 190,52 265,52"/>
+          <path d="M600,356 L600,436"/>
+        </g>
+        <g font-size="11.5" fill="#1a7f37">
+          <text x="608" y="400">不再需要工具</text>
+        </g>
+        <g font-size="11.5" fill="#cf222e">
+          <text x="452" y="410">需要工具</text>
+        </g>
+        <text x="360" y="26" font-size="11.5" fill="#656d76" text-anchor="middle">↑ 回到顶部，带着更长的 msg[] 再问一次</text>
+      </svg>
+      <figcaption>图 2 · 自主 Agent 的循环（Agent Loop）</figcaption>
+    </figure>
+
+    <p>对应到代码，核心其实只有十几行：</p>
+
+<pre><code><span class="kw">async function</span> <span class="fn">agentLoop</span>(userInput) {
+  <span class="cmt">// 记忆：整个循环唯一的可变状态</span>
+  <span class="kw">const</span> msg   = [{ role: <span class="str">'user'</span>, content: userInput }];
+  <span class="kw">const</span> tools = <span class="fn">getToolSchemas</span>();   <span class="cmt">// 工具的 name / description / JSON Schema</span>
+
+  <span class="kw">for</span> (<span class="kw">let</span> turn = <span class="num-lit">0</span>; turn &lt; MAX_TURNS; turn++) {
+
+    <span class="cmt">// ① 组装上下文：系统提示 + 历史消息 + 可用工具 + 记忆</span>
+    <span class="kw">const</span> payload = <span class="fn">buildContext</span>({ system: SYSTEM_PROMPT, msg, tools });
+
+    <span class="cmt">// ② 调 LLM：让模型自己决定下一步（而不是给最终答案）</span>
+    <span class="kw">const</span> res = <span class="kw">await</span> llm.<span class="fn">chat</span>(payload, { stream: <span class="kw">true</span> });
+
+    <span class="cmt">// ③ 把"这一轮模型的决定"写回消息数组</span>
+    msg.<span class="fn">push</span>(res.message);   <span class="cmt">// 可能是纯文本，也可能带 tool_calls</span>
+
+    <span class="cmt">// ④ 终止条件：模型不再要调工具 —— 由 LLM 决定结束</span>
+    <span class="kw">if</span> (!res.message.tool_calls) <span class="kw">return</span> res.message.content;
+
+    <span class="cmt">// ⑤ 执行工具，结果以 role:'tool' 写回 —— 然后循环继续</span>
+    <span class="kw">for</span> (<span class="kw">const</span> call <span class="kw">of</span> res.message.tool_calls) {
+      <span class="kw">let</span> output;
+      <span class="kw">try</span> {
+        output = <span class="kw">await</span> <span class="fn">runTool</span>(call.name, call.args);
+      } <span class="kw">catch</span> (e) {
+        output = <span class="str">`执行失败：${e.message}`</span>;  <span class="cmt">// 报错也喂给模型，让它自己重试</span>
+      }
+      msg.<span class="fn">push</span>({ role: <span class="str">'tool'</span>, tool_call_id: call.id, content: output });
+    }
+  }
+  <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'超出最大轮次，强制结束'</span>);
+}</code></pre>
+
+    <p>注意第 ⑤ 步里的注释 <code>报错也喂给模型，让它自己重试</code>——这是自主 Agent 与"传统程序"最大的思维差异：<strong>错误不再是异常，而是给模型的反馈</strong>。模型看到"文件不存在"，会自己换个路径再试；看到"参数格式不对"，会自己修正参数。</p>
+
+    <h3 id="s2-3">2.3 本质差异一句话</h3>
+
+    <table>
+      <thead><tr><th style="width:150px"></th><th>工作流式</th><th>自主式</th></tr></thead>
+      <tbody>
+        <tr><td><strong>谁决定下一步</strong></td><td>开发者写的图与条件</td><td>LLM 的推理结果</td></tr>
+        <tr><td><strong>状态在哪</strong></td><td>图的共享 State（结构化、可序列化）</td><td><code>msg[]</code> 消息数组（半结构化、自然语言）</td></tr>
+        <tr><td><strong>谁决定结束</strong></td><td>走到 <code>__end__</code> 节点</td><td><strong>LLM 不再返回 tool_calls</strong></td></tr>
+        <tr><td><strong>循环次数</strong></td><td>0（DAG 无环）</td><td>不固定，需上限兜底</td></tr>
+        <tr><td><strong>类比</strong></td><td>编译期确定的调用链</td><td><code>while</code> 循环 + 动态派发</td></tr>
+      </tbody>
+    </table>
+
+    <blockquote>
+      <p>如果只用一句话：<strong>工作流式是"人编排流程，LLM 填空"；自主式是"LLM 编排流程，人定边界"。</strong></p>
+    </blockquote>
+
+    <!-- ============ 第三部分 ============ -->
+    <h2 id="part3"><span class="num">3</span>前端流式输出：把 Agent 的"过程"渲染出来</h2>
+
+    <h3 id="s3-1">3.1 为什么必须流式</h3>
+
+    <p>自主 Agent 跑一轮可能要几十秒甚至几分钟：中间要调好几次工具、每次都要等模型推理。如果做成"转圈圈 → 一次性返回全部结果"，体验上是灾难：</p>
+
+    <ul>
+      <li>用户不知道它在干什么，<strong>3 秒没反馈就想刷新页面</strong>；</li>
+      <li>出错时前面的工作全部白费，<strong>没有中间态可看</strong>；</li>
+      <li>自主 Agent 的核心卖点就是"过程透明"（它在读哪个文件、跑了什么命令），<strong>藏起来就失去了意义</strong>。</li>
+    </ul>
+
+    <p>所以业界的共识做法是：<strong>Agent 服务层把 LLM 的输出用 SSE 流式吐给前端，前端按事件类型增量渲染。</strong></p>
+
+    <h3 id="s3-2">3.2 协议约定与时序</h3>
+
+    <p>我们约定响应头为 <code>Content-Type: text/event-stream</code>，每一帧是一个 SSE 事件，<code>data</code> 里是一个 JSON 对象，且<strong>只约定两个顶层字段</strong>：</p>
+
+<pre><code>data:{<span class="str">"type"</span>:<span class="str">"tool_call"</span>,<span class="str">"content"</span>:{<span class="str">"id"</span>:<span class="str">"c1"</span>,<span class="str">"name"</span>:<span class="str">"query_order"</span>,<span class="str">"args"</span>:{<span class="str">"orderId"</span>:<span class="str">"A10086"</span>}}}
+
+<span class="cmt">// 字段约定</span>
+<span class="cmt">// type    : string —— 事件类型，前端据此决定怎么渲染</span>
+<span class="cmt">// content : any    —— 载荷，结构由 type 决定（文本就是字符串，结构化事件就是对象）</span>
+<span class="cmt">// 流结束：服务端发 data:[DONE] 后关闭连接</span></code></pre>
+
+    <div class="callout tip">
+      <span class="label">为什么用 <code>{type, content}</code> 这种极简结构</span>
+      ① 前端只需要一个 <code>switch(type)</code>，新增事件类型时<strong>不改解析层</strong>，符合开闭原则；<br>
+      ② 与后端/模型侧解耦——同一个 <code>tool_result</code> 事件，今天来自 GPT、明天来自自研模型，前端代码不用动；<br>
+      ③ 天然支持扩展：想加"引用来源"、"思维链"、"子 Agent"，只是多一个 type，协议不用升级。
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 940 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SSE 流式输出时序图" font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif">
+        <defs>
+          <marker id="arrowC" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#656d76"/>
+          </marker>
+        </defs>
+
+        <!-- 参与者 -->
+        <g>
+          <rect x="60" y="16" width="150" height="40" rx="8" fill="#ddf4ff" stroke="#b6e3ff" stroke-width="1.5"/>
+          <rect x="395" y="16" width="150" height="40" rx="8" fill="#fbefff" stroke="#d8b9ff" stroke-width="1.5"/>
+          <rect x="730" y="16" width="150" height="40" rx="8" fill="#dafbe1" stroke="#a7f3d0" stroke-width="1.5"/>
+          <text x="135" y="41" font-size="13.5" font-weight="600" text-anchor="middle" fill="#1f2328">前端（浏览器）</text>
+          <text x="470" y="41" font-size="13.5" font-weight="600" text-anchor="middle" fill="#1f2328">Agent 服务层</text>
+          <text x="805" y="41" font-size="13.5" font-weight="600" text-anchor="middle" fill="#1f2328">LLM / Tools</text>
+        </g>
+
+        <!-- 生命线 -->
+        <g stroke="#d8dee4" stroke-width="1.5" stroke-dasharray="5 4">
+          <line x1="135" y1="56" x2="135" y2="500"/>
+          <line x1="470" y1="56" x2="470" y2="500"/>
+          <line x1="805" y1="56" x2="805" y2="500"/>
+        </g>
+
+        <!-- 循环框 -->
+        <rect x="330" y="196" width="560" height="252" rx="8" fill="none" stroke="#1f6feb" stroke-width="1.3" stroke-dasharray="6 4"/>
+        <text x="340" y="190" font-size="11.5" fill="#1f6feb">loop：每一轮 Agent Loop 都重复这一段</text>
+
+        <g stroke="#656d76" stroke-width="1.5" fill="none" marker-end="url(#arrowC)">
+          <path d="M135,88 L470,88"/>
+          <path d="M470,132 L805,132"/>
+          <path d="M805,176 L470,176"/>
+          <path d="M470,220 L135,220"/>
+          <path d="M805,264 L470,264"/>
+          <path d="M470,308 L135,308"/>
+          <path d="M470,396 L135,396"/>
+          <path d="M470,440 L135,440"/>
+        </g>
+
+        <g font-size="12" fill="#1f2328">
+          <text x="302" y="82" text-anchor="middle">① POST /chat { msg[] }</text>
+
+          <text x="637" y="126" text-anchor="middle">② 组装上下文 + tools 定义，stream=true</text>
+
+          <text x="637" y="170" text-anchor="middle">③ 增量 token（delta）</text>
+
+          <text x="302" y="214" text-anchor="middle">④ data:{"type":"text","content":"我查一下…"}</text>
+
+          <text x="637" y="258" text-anchor="middle">⑤ tool_calls: [{ name:"query_order", args:{...} }]</text>
+
+          <text x="302" y="302" text-anchor="middle">⑥ data:{"type":"tool_call","content":{name,args}}</text>
+
+          <text x="302" y="390" text-anchor="middle">⑦ data:{"type":"tool_result","content":{output}}</text>
+
+          <text x="302" y="434" text-anchor="middle">⑧ data:{"type":"final","content":"…"} → [DONE]</text>
+        </g>
+
+        <!-- 自调用：执行工具 -->
+        <g>
+          <rect x="470" y="344" width="180" height="36" rx="6" fill="#fff8c5" stroke="#f0d98a" stroke-width="1.3"/>
+          <text x="560" y="367" font-size="12" text-anchor="middle" fill="#1f2328">执行 tool（本地 / 远程）</text>
+          <path d="M470,362 C 440,362 440,344 470,344" stroke="#656d76" stroke-width="1.4" fill="none" marker-end="url(#arrowC)"/>
+        </g>
+
+        <text x="470" y="486" font-size="11.5" fill="#656d76" text-anchor="middle">一条 HTTP 连接，多次推送；前端每条事件增量渲染，无需轮询</text>
+      </svg>
+      <figcaption>图 3 · SSE 流式输出的时序</figcaption>
+    </figure>
+
+    <h3 id="s3-3">3.3 事件类型清单</h3>
+
+    <p>下面这张表可以直接当作前后端联调的契约。<code>content</code> 的结构按 type 走，前端只认 type。</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:150px">type</th>
+          <th style="width:190px">content 结构</th>
+          <th>前端应该做什么</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>text</code> / <code>delta</code></td>
+          <td><code>string</code></td>
+          <td>正文增量，追加到当前 Markdown 块的尾部，边收边渲染</td>
+        </tr>
+        <tr>
+          <td><code>thinking</code></td>
+          <td><code>string</code></td>
+          <td>思考/推理过程，放进可折叠区块，灰色小字，默认收起</td>
+        </tr>
+        <tr>
+          <td><code>plan</code></td>
+          <td><code>{ steps: string[] }</code></td>
+          <td>渲染任务清单，随进度逐条打勾</td>
+        </tr>
+        <tr>
+          <td><code>tool_call</code></td>
+          <td><code>{ id, name, args }</code></td>
+          <td><strong>工具可视化</strong>：新建一张工具卡片，显示图标+名称+参数，状态 = 执行中（转圈）</td>
+        </tr>
+        <tr>
+          <td><code>tool_result</code></td>
+          <td><code>{ id, name, output }</code></td>
+          <td>用 <code>id</code> 找到那张卡片，卡片状态置为成功，内容区展开渲染 output</td>
+        </tr>
+        <tr>
+          <td><code>tool_error</code></td>
+          <td><code>{ id, name, message }</code></td>
+          <td>卡片置为失败（红色），展示错误信息，可选提供"重试"</td>
+        </tr>
+        <tr>
+          <td><code>sub_agent_start</code></td>
+          <td><code>{ id, parentId, task }</code></td>
+          <td>嵌套缩进一张子 Agent 容器卡片，标题显示任务描述</td>
+        </tr>
+        <tr>
+          <td><code>sub_agent_result</code></td>
+          <td><code>{ id, result }</code></td>
+          <td>子 Agent 容器收起为摘要，可点开查看完整过程</td>
+        </tr>
+        <tr>
+          <td><code>human_in_loop</code></td>
+          <td><code>{ id, title, options[] }</code></td>
+          <td><strong>人类确认</strong>：弹出确认 UI，阻塞当前流，用户选择后回调服务端</td>
+        </tr>
+        <tr>
+          <td><code>error</code></td>
+          <td><code>{ code, message }</code></td>
+          <td>全局错误提示条，停止渲染，保留已生成内容</td>
+        </tr>
+        <tr>
+          <td><code>final</code> / <code>done</code></td>
+          <td><code>{ content, usage }</code></td>
+          <td>收尾：解除 loading，显示 token 消耗，开放复制/重新生成</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 id="s3-4">3.4 前端解析与分发</h3>
+
+    <h4>第一步：把字节流切成事件</h4>
+    <p>注意 <code>EventSource</code> 只支持 GET，Agent 场景一般需要 POST（要传 <code>msg[]</code>、工具开关、会话配置），所以更常用 <code>fetch</code> + <code>ReadableStream</code> 手动解析。<strong>关键点是处理"半包"</strong>——一个 chunk 里可能只有半个 JSON。</p>
+
+<pre><code><span class="cmt">// 把 SSE 字节流解析成一个个 { type, content } 事件</span>
+<span class="kw">async function</span>* <span class="fn">sseIterator</span>(res) {
+  <span class="kw">const</span> reader  = res.body.<span class="fn">getReader</span>();
+  <span class="kw">const</span> decoder = <span class="kw">new</span> <span class="fn">TextDecoder</span>();
+  <span class="kw">let</span> buffer = <span class="str">''</span>;
+
+  <span class="kw">while</span> (<span class="kw">true</span>) {
+    <span class="kw">const</span> { done, value } = <span class="kw">await</span> reader.<span class="fn">read</span>();
+    <span class="kw">if</span> (done) <span class="kw">break</span>;
+
+    buffer += decoder.<span class="fn">decode</span>(value, { stream: <span class="kw">true</span> });
+
+    <span class="cmt">// SSE 以空行分隔事件；pop() 把最后一段可能不完整的留到下一轮</span>
+    <span class="kw">const</span> parts = buffer.<span class="fn">split</span>(<span class="str">'\n\n'</span>);
+    buffer = parts.<span class="fn">pop</span>() ?? <span class="str">''</span>;
+
+    <span class="kw">for</span> (<span class="kw">const</span> part <span class="kw">of</span> parts) {
+      <span class="kw">const</span> line = part.<span class="fn">split</span>(<span class="str">'\n'</span>).<span class="fn">find</span>(l =&gt; l.<span class="fn">startsWith</span>(<span class="str">'data:'</span>));
+      <span class="kw">if</span> (!line) <span class="kw">continue</span>;
+
+      <span class="kw">const</span> raw = line.<span class="fn">slice</span>(<span class="num-lit">5</span>).<span class="fn">trim</span>();
+      <span class="kw">if</span> (raw === <span class="str">'[DONE]'</span>) <span class="kw">return</span>;
+
+      <span class="kw">try</span> {
+        <span class="kw">yield</span> <span class="fn">JSON.parse</span>(raw);   <span class="cmt">// { type, content }</span>
+      } <span class="kw">catch</span> {
+        <span class="cmt">// 单帧解析失败别让整条流挂掉，记日志继续</span>
+        console.<span class="fn">warn</span>(<span class="str">'SSE 帧解析失败'</span>, raw);
+      }
+    }
+  }
+}</code></pre>
+
+    <h4>第二步：按 type 分发到状态机</h4>
+    <p>建议把"收到事件 → 更新 UI"做成一个纯函数 reducer，好处是<strong>可测、可回放、可时间旅行调试</strong>（把事件流存下来就能复现任意一次会话界面）。</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">reducer</span>(state, ev) {
+  <span class="kw">switch</span> (ev.type) {
+    <span class="kw">case</span> <span class="str">'text'</span>:              <span class="kw">return</span> <span class="fn">appendText</span>(state, ev.content);
+    <span class="kw">case</span> <span class="str">'thinking'</span>:          <span class="kw">return</span> <span class="fn">appendThinking</span>(state, ev.content);
+    <span class="kw">case</span> <span class="str">'tool_call'</span>:          <span class="kw">return</span> <span class="fn">upsertTool</span>(state, ev.content, <span class="str">'running'</span>);
+    <span class="kw">case</span> <span class="str">'tool_result'</span>:        <span class="kw">return</span> <span class="fn">upsertTool</span>(state, ev.content, <span class="str">'success'</span>);
+    <span class="kw">case</span> <span class="str">'tool_error'</span>:         <span class="kw">return</span> <span class="fn">upsertTool</span>(state, ev.content, <span class="str">'error'</span>);
+    <span class="kw">case</span> <span class="str">'sub_agent_start'</span>:    <span class="kw">return</span> <span class="fn">openSubAgent</span>(state, ev.content);
+    <span class="kw">case</span> <span class="str">'sub_agent_result'</span>:   <span class="kw">return</span> <span class="fn">closeSubAgent</span>(state, ev.content);
+    <span class="kw">case</span> <span class="str">'human_in_loop'</span>:      <span class="kw">return</span> { ...state, pendingConfirm: ev.content };
+    <span class="kw">case</span> <span class="str">'final'</span>:              <span class="kw">return</span> { ...state, finished: <span class="kw">true</span>, usage: ev.content.usage };
+    <span class="kw">default</span>:                    <span class="kw">return</span> state;   <span class="cmt">// 未知 type 直接忽略，保证向后兼容</span>
+  }
+}
+
+<span class="cmt">// 消费</span>
+<span class="kw">for await</span> (<span class="kw">const</span> ev <span class="kw">of</span> <span class="fn">sseIterator</span>(res)) {
+  setState(s =&gt; <span class="fn">reducer</span>(s, ev));
+  <span class="kw">if</span> (ev.type === <span class="str">'human_in_loop'</span>) <span class="kw">await</span> <span class="fn">handleConfirm</span>(ev.content);
+}</code></pre>
+
+    <div class="callout tip">
+      <span class="label">向后兼容的小技巧</span>
+      <code>default</code> 分支一定要"静默忽略"而不是抛错。这样后端新增事件类型时，老版本前端不会白屏，只是暂时不展示而已。
+    </div>
+
+    <h3 id="s3-5">3.5 按 type 渲染不同样式：从协议到 UI 的映射层</h3>
+
+    <p>上一节解决了"怎么把事件收上来"，这一节解决"<strong>收到的事件到底长什么样</strong>"。很多团队一开始会写成一大坨 <code>if (type === 'tool_call') { ... } else if (...) { ... }</code>，很快就会失控。推荐的做法是<strong>三层解耦</strong>：</p>
+
+    <blockquote>
+      <p><strong>事件流（SSE）→ Block 数据模型（可渲染单元）→ 组件与样式映射表（渲染层）</strong></p>
+      <p style="margin-top:6px">事件协议变了，只改第一层；新增一个视觉类型，只改第三层的一张表。中间的数据模型保持稳定。</p>
+    </blockquote>
+
+    <h4>第一层：把"事件流"折叠成 Block 列表</h4>
+
+    <p>事件是<strong>流式的、零散的、不可寻址的</strong>（一个 token 就是一个事件）；而 UI 需要的是<strong>有序的、可寻址的、可更新的</strong>列表。所以中间必须有归并：</p>
+
+<pre><code><span class="cmt">// Block = 渲染的最小单位。注意：kind 来自 type，但不是一一对应</span>
+<span class="cmt">//（tool_call / tool_result / tool_error 三个 type 归并为同一个 tool Block）</span>
+<span class="kw">type</span> Block =
+  | { kind:<span class="str">'text'</span>,     id, text:<span class="kw">string</span>,  streaming:<span class="kw">boolean</span> }
+  | { kind:<span class="str">'thinking'</span>, id, text:<span class="kw">string</span>,  folded:<span class="kw">boolean</span> }
+  | { kind:<span class="str">'tool'</span>,     id, label, name, args, output?,
+                       status:<span class="str">'running'</span>|<span class="str">'success'</span>|<span class="str">'error'</span> }
+  | { kind:<span class="str">'subAgent'</span>, id, parentId, task, children:Block[],
+                       status:<span class="str">'running'</span>|<span class="str">'success'</span>|<span class="str">'error'</span>, folded:<span class="kw">boolean</span> }
+  | { kind:<span class="str">'confirm'</span>,  id, title, options:<span class="kw">string</span>[], choice? }
+  | { kind:<span class="str">'error'</span>,    id, message, retryable:<span class="kw">boolean</span> };</code></pre>
+
+    <p>归并只有两条核心规则，记住就不会乱：</p>
+    <ul class="checklist">
+      <li><strong>连续的 <code>text</code> 追加到同一个 Block</strong>——否则每个 token 都会变成一个新的 <code>&lt;p&gt;</code>，DOM 节点爆炸。</li>
+      <li><strong><code>tool_call</code> / <code>tool_result</code> / <code>tool_error</code> 按 <code>id</code> upsert 同一个 Block</strong>，只改它的 <code>status</code> 和 <code>output</code>，不新建卡片。</li>
+    </ul>
+
+    <h4>第二层：kind → 组件映射表（Registry）</h4>
+
+    <p>别写 <code>switch...case</code> 输出 JSX，用<strong>注册表</strong>。新增一个类型时只改一行，符合开闭原则：</p>
+
+<pre><code><span class="cmt">// type(kind) → 组件：新增视觉类型，只改这一张表</span>
+<span class="kw">const</span> RENDERERS = {
+  text:     TextBlock,       <span class="cmt">// 正文       —— 无框，Markdown 渲染</span>
+  thinking: ThinkingBlock,   <span class="cmt">// 思考过程   —— 灰底折叠块</span>
+  tool:     ToolCard,        <span class="cmt">// 工具调用   —— 蓝色卡片，三态</span>
+  subAgent: SubAgentBlock,   <span class="cmt">// 子 Agent   —— 紫色嵌套容器</span>
+  confirm:  ConfirmBar,      <span class="cmt">// 人类确认   —— 橙色横条 + 按钮</span>
+  error:    ErrorBar,        <span class="cmt">// 错误       —— 红色横条 + 重试</span>
+};
+
+<span class="kw">function</span> <span class="fn">BlockList</span>({ blocks }) {
+  <span class="kw">return</span> blocks.<span class="fn">map</span>(b =&gt; {
+    <span class="kw">const</span> Comp = RENDERERS[b.kind] ?? FallbackBlock;  <span class="cmt">// 未知类型兜底，绝不白屏</span>
+    <span class="kw">return</span> <span class="kw">&lt;</span>Comp key={b.id} block={b} /&gt;;
+  });
+}</code></pre>
+
+    <h4>第三层：样式映射 —— tone × layout × status 三维正交</h4>
+
+    <p>这是"渲染不同样式"的关键：<strong>不要把样式写死在每个组件里</strong>，而是抽成三个正交维度，用一张表描述：</p>
+
+    <ul>
+      <li><strong>tone（色调）</strong>：由 kind 决定——体现"这是什么性质的信息"（中性 / 次要 / 主操作 / 子任务 / 警告 / 危险）。</li>
+      <li><strong>layout（形态）</strong>：由 kind 决定——体现"信息量大小"（纯文本 / 引用块 / 卡片 / 横条 / 嵌套容器）。</li>
+      <li><strong>status（状态）</strong>：由运行进度决定——体现"现在进行到哪一步"（执行中 / 成功 / 失败），<strong>与 kind 正交</strong>：同一个 ToolCard 会有三种状态。</li>
+    </ul>
+
+<pre><code><span class="cmt">// 一张表决定"长什么样"：kind → { 图标, 色调, 形态 }</span>
+<span class="kw">const</span> VISUAL = {
+  text:     { icon: <span class="kw">null</span>,  tone: <span class="str">'plain'</span>,   layout: <span class="str">'full'</span>  },
+  thinking: { icon: <span class="str">'💭'</span>, tone: <span class="str">'muted'</span>,   layout: <span class="str">'quote'</span> },
+  tool:     { icon: <span class="str">'🔧'</span>, tone: <span class="str">'accent'</span>,  layout: <span class="str">'card'</span>  },
+  subAgent: { icon: <span class="str">'🤖'</span>, tone: <span class="str">'purple'</span>,  layout: <span class="str">'nest'</span>  },
+  confirm:  { icon: <span class="str">'⚠️'</span>, tone: <span class="str">'warning'</span>, layout: <span class="str">'bar'</span>   },
+  error:    { icon: <span class="str">'⛔'</span>, tone: <span class="str">'danger'</span>,  layout: <span class="str">'bar'</span>   },
+};
+
+<span class="cmt">// 组件里只做一件事：把三个维度拼成 className</span>
+<span class="kw">function</span> <span class="fn">cx</span>(kind, status) {
+  <span class="kw">const</span> v = VISUAL[kind];
+  <span class="kw">return</span> [
+    <span class="str">'blk'</span>,
+    <span class="str">`blk--${v.tone}`</span>,          <span class="cmt">// 色调：配色方案</span>
+    <span class="str">`blk--${v.layout}`</span>,        <span class="cmt">// 形态：DOM 结构</span>
+    status &amp;&amp; <span class="str">`is-${status}`</span>,    <span class="cmt">// 状态：running / success / error</span>
+  ].<span class="fn">filter</span>(<span class="fn">Boolean</span>).<span class="fn">join</span>(<span class="str">' '</span>);
+}
+
+<span class="cmt">// 例：cx('tool','running') → "blk blk--accent blk--card is-running"</span></code></pre>
+
+    <div class="callout tip">
+      <span class="label">为什么值得抽这一层</span>
+      ① 设计师改配色时，你只改 CSS 里的 6 个 tone 类，<strong>不用碰任何组件</strong>；<br>
+      ② 想做暗色主题，只需再写一套 tone 变量；<br>
+      ③ 新增事件类型时，<strong>登记表 + 视觉表各加一行</strong>即可，渲染主流程零改动。
+    </div>
+
+    <h4>映射关系总表</h4>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:120px">Block kind</th>
+          <th style="width:70px">tone</th>
+          <th style="width:70px">layout</th>
+          <th style="width:110px">DOM 结构</th>
+          <th>状态与交互</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>text</code></td>
+          <td><span class="badge">plain</span></td>
+          <td>full</td>
+          <td>无框段落，Markdown 渲染</td>
+          <td><code>streaming:true</code> 时在末尾追加闪烁光标 <code>.caret</code></td>
+        </tr>
+        <tr>
+          <td><code>thinking</code></td>
+          <td><span class="badge">muted</span></td>
+          <td>quote</td>
+          <td>左侧灰色竖线 + 标题行 + 折叠体</td>
+          <td>默认折叠；点击标题展开；完成后自动收起并标注耗时</td>
+        </tr>
+        <tr>
+          <td><code>tool</code></td>
+          <td><span class="badge run">accent</span></td>
+          <td>card</td>
+          <td>图标 + 名称 + 参数摘要 + 折叠输出区</td>
+          <td><strong>三态</strong>：<code>is-running</code> 转圈 / <code>is-success</code> 绿勾+展开结果 / <code>is-error</code> 红色+重试</td>
+        </tr>
+        <tr>
+          <td><code>subAgent</code></td>
+          <td><span class="badge" style="background:var(--purple-soft);color:var(--purple)">purple</span></td>
+          <td>nest</td>
+          <td>紫色容器 + 内部嵌套一个 <code>.blk-list</code></td>
+          <td>运行中显示子步骤数；完成后折叠为一行摘要，点击展开轨迹</td>
+        </tr>
+        <tr>
+          <td><code>confirm</code></td>
+          <td><span class="badge" style="background:var(--orange-soft);color:var(--orange)">warning</span></td>
+          <td>bar</td>
+          <td>橙色横条 + 高亮参数 + 按钮组</td>
+          <td>未选：两个可点按钮；已选：选中项高亮、其余置灰禁用</td>
+        </tr>
+        <tr>
+          <td><code>error</code></td>
+          <td><span class="badge err">danger</span></td>
+          <td>bar</td>
+          <td>红色横条 + 错误码 + 重试按钮</td>
+          <td>出现后<strong>保留上方所有已渲染内容</strong>，只追加提示条</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>效果预览：同一段会话里的六种样式</h4>
+
+    <p>下面是上面这套映射规则实际渲染出来的样子（HTML/CSS 均为本文内联样式，可直接对照代码复用）：</p>
+
+    <div class="demo">
+      <div class="demo__bar">
+        <span class="demo__dot"></span><span class="demo__dot"></span><span class="demo__dot"></span>
+        <span class="demo__label">SSE 会话渲染结果预览</span>
+      </div>
+
+      <div class="blk-list">
+
+        <!-- text -->
+        <div class="blk blk--plain">
+          <div class="blk__body">
+            <p>我帮你查一下这笔订单的物流状态。</p>
+          </div>
+        </div>
+
+        <!-- thinking -->
+        <div class="blk blk--quote blk--muted is-folded">
+          <div class="blk__head">
+            <span class="blk__icon">💭</span>
+            <span class="blk__title">思考过程</span>
+            <span class="blk__aside">1.2s</span>
+            <span class="blk__caret">▼</span>
+          </div>
+          <div class="blk__body">
+            <p>用户问的是物流状态，需要先拿到订单号 A10086 的运单信息，再判断是否需要走退款流程。</p>
+          </div>
+        </div>
+
+        <!-- tool running -->
+        <div class="blk blk--accent is-running">
+          <div class="blk__head">
+            <span class="blk__icon">🔧</span>
+            <span class="blk__title">正在查询订单 A10086</span>
+            <span class="spin"></span>
+            <span class="blk__aside">query_order</span>
+          </div>
+        </div>
+
+        <!-- tool success -->
+        <div class="blk blk--accent is-success">
+          <div class="blk__head">
+            <span class="blk__icon">🔧</span>
+            <span class="blk__title">已查询订单 A10086</span>
+            <span class="badge ok">✓ 成功</span>
+            <span class="blk__aside">320ms</span>
+            <span class="blk__caret">▼</span>
+          </div>
+          <div class="blk__body">
+<pre><code>{
+  "orderId": "A10086",
+  "status": "已签收",
+  "carrier": "顺丰速运",
+  "trackingNo": "SF1234567890"
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- subAgent -->
+        <div class="blk blk--purple blk--nest is-success">
+          <div class="blk__head">
+            <span class="blk__icon">🤖</span>
+            <span class="blk__title">子任务：核对退款政策</span>
+            <span class="badge ok">✓ 已完成 · 2 步</span>
+            <span class="blk__caret">▼</span>
+          </div>
+          <div class="blk-list">
+            <div class="blk blk--accent is-success">
+              <div class="blk__head">
+                <span class="blk__icon">🔧</span>
+                <span class="blk__title">读取退款规则文档</span>
+                <span class="badge ok">✓</span>
+                <span class="blk__aside">read_file</span>
+              </div>
+            </div>
+            <div class="blk blk--accent is-success">
+              <div class="blk__head">
+                <span class="blk__icon">🔧</span>
+                <span class="blk__title">校验是否满足退款条件</span>
+                <span class="badge ok">✓ 满足</span>
+                <span class="blk__aside">check_refund</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- confirm -->
+        <div class="blk blk--warning blk--bar">
+          <div class="blk__head">
+            <span class="blk__icon">⚠️</span>
+            <span class="blk__title">需要你确认：发送退款短信至 138****8000</span>
+          </div>
+          <div class="blk__actions">
+            <button type="button" class="btn btn--primary">确认发送</button>
+            <button type="button" class="btn btn--ghost">取消</button>
+          </div>
+        </div>
+
+        <!-- error -->
+        <div class="blk blk--danger blk--bar">
+          <div class="blk__head">
+            <span class="blk__icon">⛔</span>
+            <span class="blk__title">调用短信网关超时（GATEWAY_TIMEOUT）</span>
+            <span class="badge err">失败</span>
+          </div>
+          <div class="blk__actions">
+            <button type="button" class="btn">重试</button>
+            <button type="button" class="btn btn--ghost">查看详情</button>
+          </div>
+        </div>
+
+        <!-- text streaming -->
+        <div class="blk blk--plain">
+          <div class="blk__body">
+            <p>订单已签收，且符合退款条件。短信发送失败，你可以稍后重试，也可以转人工客服<span class="caret"></span></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <p class="fig-note">图 4 · 六种 Block 样式的实际渲染效果（灰=思考，蓝=工具，紫=子 Agent，橙=待确认，红=错误）</p>
+
+    <h4>核心 CSS（可直接抄）</h4>
+
+    <p>样式层的关键在于：<strong>基础类管结构，tone 类管配色，status 类管状态</strong>，三者互不干扰，可自由组合。</p>
+
+<pre><code><span class="cmt">/* 1) 基础类：只管结构和间距 */</span>
+<span class="kw">.blk</span>       { border:1px solid var(--border); border-radius:9px; background:#fff; }
+<span class="kw">.blk__head</span> { display:flex; align-items:center; gap:9px; padding:9px 12px; }
+<span class="kw">.blk__body</span> { padding:9px 12px 11px; border-top:1px dashed var(--border); }
+
+<span class="cmt">/* 2) tone：只管配色，6 个类覆盖全部类型 */</span>
+<span class="kw">.blk--muted</span>   { background:#fafbfc; border-color:#e4e8ed; }
+<span class="kw">.blk--accent</span>  { background:#f5fbff; border-color:#b6e3ff; }
+<span class="kw">.blk--purple</span>  { background:#fcf8ff; border-color:#d8b9ff; }
+<span class="kw">.blk--warning</span> { background:#fffdf5; border-color:#f0d98a; }
+<span class="kw">.blk--danger</span>  { background:#fffbfb; border-color:#ffcecb; }
+
+<span class="cmt">/* 3) layout：只管形态 */</span>
+<span class="kw">.blk--quote</span> { border:none; border-left:3px solid #d0d7de; border-radius:0 8px 8px 0; }
+<span class="kw">.blk--nest</span>  { padding:8px 8px 8px 12px; }
+<span class="kw">.blk--nest</span> &gt; .blk-list { padding-left:10px; border-left:2px solid #e6d5fb; }
+
+<span class="cmt">/* 4) status：与 type 正交，同一张卡片三种状态 */</span>
+<span class="kw">.is-running</span> .blk__title { color:var(--accent); }
+<span class="kw">.is-success</span> .blk__title { color:var(--green);  }
+<span class="kw">.is-error</span>   .blk__title { color:var(--red);    }
+<span class="kw">.is-folded</span>  .blk__body  { display:none; }
+<span class="kw">.spin</span>  { animation:spin .7s linear infinite; }   <span class="cmt">/* 执行中转圈 */</span>
+<span class="kw">.caret</span> { animation:blink 1s steps(2,start) infinite; } <span class="cmt">/* 流式打字光标 */</span></code></pre>
+
+    <h4>一个完整组件：ToolCard 的三态渲染</h4>
+
+    <p>把上面的规则落到具体组件，就是下面这样。注意 <strong>不同 status 下，头部右侧和操作区渲染的东西完全不同</strong>：</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">ToolCard</span>({ block }) {
+  <span class="kw">const</span> meta = TOOL_META[block.name] ?? { icon: <span class="str">'🔧'</span>, label: block.name };
+  <span class="kw">const</span> { status } = block;
+
+  <span class="kw">return</span> (
+    <span class="kw">&lt;</span>div className={<span class="fn">cx</span>(<span class="str">'tool'</span>, status)}&gt;
+      <span class="cmt">{/* 头部：图标 + 人话标题 + 状态指示 */}</span>
+      <span class="kw">&lt;</span>div className=<span class="str">"blk__head"</span>&gt;
+        <span class="kw">&lt;</span>span className=<span class="str">"blk__icon"</span>&gt;{meta.icon}&lt;/span&gt;
+        <span class="kw">&lt;</span>span className=<span class="str">"blk__title"</span>&gt;{meta.<span class="fn">fmt</span>(block.args)}&lt;/span&gt;
+
+        {status === <span class="str">'running'</span> &amp;&amp; <span class="kw">&lt;</span>span className=<span class="str">"spin"</span> /&gt;}
+        {status === <span class="str">'success'</span> &amp;&amp; <span class="kw">&lt;</span>span className=<span class="str">"badge ok"</span>&gt;✓ 成功&lt;/span&gt;}
+        {status === <span class="str">'error'</span>   &amp;&amp; <span class="kw">&lt;</span>span className=<span class="str">"badge err"</span>&gt;失败&lt;/span&gt;}
+
+        <span class="kw">&lt;</span>span className=<span class="str">"blk__aside"</span>&gt;{block.name}&lt;/span&gt;
+        {status !== <span class="str">'running'</span> &amp;&amp; <span class="kw">&lt;</span>span className=<span class="str">"blk__caret"</span>&gt;▼&lt;/span&gt;}
+      &lt;/div&gt;
+
+      <span class="cmt">{/* 主体：只有拿到结果后才出现，且默认截断 */}</span>
+      {status !== <span class="str">'running'</span> &amp;&amp; (
+        <span class="kw">&lt;</span>div className=<span class="str">"blk__body"</span>&gt;
+          {status === <span class="str">'success'</span>
+            ? <span class="kw">&lt;</span>TruncatedCode text={block.output} maxLines={<span class="num-lit">12</span>} /&gt;
+            : <span class="kw">&lt;</span>div&gt;{block.error}&lt;/div&gt;}
+        &lt;/div&gt;
+      )}
+
+      <span class="cmt">{/* 操作区：仅失败态出现 */}</span>
+      {status === <span class="str">'error'</span> &amp;&amp; (
+        <span class="kw">&lt;</span>div className=<span class="str">"blk__actions"</span>&gt;
+          <span class="kw">&lt;</span>button className=<span class="str">"btn"</span>&gt;重试&lt;/button&gt;
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <span class="label">配套的工具元数据表</span>
+      参数"人话化"靠的是这张表，它和样式表一样是<strong>配置驱动</strong>的：<br>
+      <code>const TOOL_META = { query_order: { icon:'📦', label:'订单查询', fmt: a =&gt; `正在查询订单 ${a.orderId}` }, read_file: { icon:'📄', label:'读取文件', fmt: a =&gt; `读取 ${basename(a.path)}` } }</code><br>
+      新增工具时后端不用改，前端加一行即可；未登记的工具走默认 <code>🔧 + 工具名</code>，永不崩。
+    </div>
+
+    <h3 id="s3-6">3.6 五类事件的渲染要点</h3>
+
+    <h4>① 工具可视化（tool_call / tool_result / tool_error）</h4>
+    <p>结构和状态怎么映射在 3.5 已经讲过（三个 type 归并成一张卡片，用 <code>id</code> upsert、<code>status</code> 驱动三态）。这里补充<strong>交互层面</strong>最容易翻车的几点：</p>
+    <ul>
+      <li><strong>输出必须截断</strong>：工具返回的 JSON 动辄几万字符，卡片默认只显示前 12 行 + "查看完整输出"。否则一次查询能把页面撑到几万像素高。</li>
+      <li><strong>同类型工具连续调用要合并</strong>：连读 10 个文件时，折叠成"已读取 10 个文件"，点击才展开。否则界面被刷屏，用户找不到重点。</li>
+      <li><strong>耗时工具要显示计时器</strong>：超过 3 秒还在转圈，用户会以为卡死。在 <code>blk__aside</code> 里放一个实时秒表。</li>
+      <li><strong>重试必须"原地重试"</strong>：点击重试后更新<strong>原卡片的 status</strong>，不要新建一张卡片，否则会话里堆满同名的失败记录。</li>
+      <li><strong>参数要"人话化"</strong>：不要直接把 <code>{"path":"/src/a.ts"}</code> 甩给用户，用 3.5 那张 <code>TOOL_META</code> 表映射成"正在读取文件 a.ts"。</li>
+    </ul>
+
+    <h4>② 正文文本（text）</h4>
+    <ul>
+      <li>增量追加，配合 <code>markdown-it</code> / <code>marked</code> 流式渲染；注意<strong>未闭合的代码块</strong>要在收尾时补上 ```。</li>
+      <li>高频 token 会导致每帧重排卡顿，见下一节的节流方案。</li>
+    </ul>
+
+    <h4>③ 子 Agent 结果（sub_agent_*）</h4>
+    <ul>
+      <li>用 <code>parentId</code> 维护树形结构（对应 3.5 里的 <code>subAgent</code> 嵌套块），并<strong>限制嵌套最多 2~3 层</strong>——再深缩进就没地方了，改成"点击展开新面板"。</li>
+      <li>子 Agent 内部会有自己的 <code>tool_call</code>，需要<strong>按 <code>parentId</code> 归属</strong>，否则会和主 Agent 的工具卡片混在一起。</li>
+      <li>子 Agent 结束后<strong>默认折叠成一行摘要</strong>，点击才展开完整轨迹——否则长任务界面会崩溃。</li>
+    </ul>
+
+    <h4>④ 人类确认（human_in_loop）</h4>
+    <p>这是最容易被做错的一块，因为它是<strong>唯一需要前端"反向写回"的事件</strong>。</p>
+    <ul>
+      <li>服务端推 <code>human_in_loop</code> 后，<strong>保持 SSE 连接打开但不再推业务事件</strong>（或明确暂停），前端渲染确认 UI。</li>
+      <li>用户点击后，前端调 <code>POST /api/session/:id/resume</code>，带上 <code>{ callId, decision }</code>，服务端据此把结果写回 <code>msg[]</code>，<strong>从断点继续循环</strong>。</li>
+      <li>要有<strong>超时策略</strong>：用户一直不点，服务端不能无限等，超时按默认选项（通常是"取消"）继续或直接终止。</li>
+      <li>敏感操作（删文件、发邮件、付款）必须走这条链路，并在 UI 上<strong>高亮参数</strong>，让用户看清到底要执行什么。</li>
+    </ul>
+
+<pre><code><span class="kw">async function</span> <span class="fn">handleConfirm</span>({ id, title, options = [<span class="str">'确认'</span>, <span class="str">'取消'</span>] }) {
+  <span class="kw">const</span> choice = <span class="kw">await</span> <span class="fn">confirmDialog</span>({ title, options });   <span class="cmt">// 返回用户选择</span>
+
+  <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`/api/session/${sessionId}/resume`</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    body: <span class="fn">JSON.stringify</span>({ callId: id, decision: choice }),
+  });
+  <span class="cmt">// 之后服务端会继续在同一个流里往下推事件</span>
+}</code></pre>
+
+    <h4>⑤ 结束与错误（final / error）</h4>
+    <ul>
+      <li><code>final</code>：解除 loading、显示 token 消耗和耗时、开放"复制 / 重新生成 / 点赞点踩"。</li>
+      <li><code>error</code>：<strong>保留已生成的内容</strong>，只在顶部加错误条。用户最痛恨"跑了 2 分钟一行字都没了"。</li>
+      <li>无论哪种，都要在 <code>finally</code> 里 <code>reader.cancel()</code> / <code>controller.abort()</code>，避免连接泄漏。</li>
+    </ul>
+
+    <h3 id="s3-7">3.7 工程化细节（这些才是真正花时间的地方）</h3>
+
+    <h4>渲染节流：别让每帧都触发重排</h4>
+    <p>流式场景下每秒可能来几十个 token，每个都 setState 会让 React 疯狂重渲染。用 <code>requestAnimationFrame</code> 合并：</p>
+
+<pre><code><span class="kw">let</span> pending = <span class="kw">false</span>;
+<span class="kw">function</span> <span class="fn">scheduleRender</span>() {
+  <span class="kw">if</span> (pending) <span class="kw">return</span>;
+  pending = <span class="kw">true</span>;
+  <span class="fn">requestAnimationFrame</span>(() =&gt; { pending = <span class="kw">false</span>; <span class="fn">flushToDOM</span>(); });
+}
+<span class="cmt">// 每帧最多渲染一次，60fps 下人眼照样觉得是"实时打字"</span></code></pre>
+
+    <h4>断线重连：Last-Event-ID</h4>
+    <ul>
+      <li>服务端给每个事件带 <code>id:</code> 字段，客户端断线后用 <code>Last-Event-ID</code> 请求头续传。</li>
+      <li>或者让 <code>final</code> 事件里带完整内容，重连时先拉全量快照再增量追加——实现更简单，推荐小团队这么做。</li>
+    </ul>
+
+    <h4>其他 checklist</h4>
+    <ul class="checklist">
+      <li><strong>心跳保活</strong>：每 15s 推一帧 SSE 注释（<code>: ping</code>）或空业务事件，防止代理层（Nginx、网关）掐断空闲连接。</li>
+      <li><strong>Nginx 配置</strong>：<code>proxy_buffering off;</code> <code>proxy_read_timeout 600s;</code> <code>chunked_transfer_encoding on;</code>——这三个漏一个就会出现"本地流式正常，上线后一次性返回"。</li>
+      <li><strong>禁用压缩</strong>：部分网关开了 gzip 会缓冲整个响应，SSE 需要对该路由关闭（或设置 <code>X-Accel-Buffering: no</code>）。</li>
+      <li><strong>主动中断</strong>：用 <code>AbortController</code> 实现"停止生成"，同时通知服务端及时停掉 LLM 调用，省 token。</li>
+      <li><strong>XSS 防护</strong>：工具输出和 LLM 内容都不可信，Markdown 渲染必须走 <code>DOMPurify</code>  sanitize，尤其是 <code>tool_result</code> 里的 HTML。</li>
+      <li><strong>自动滚动</strong>：仅当用户处于底部时才自动滚，用户手动上滑后要停住（很多产品在这里体验翻车）。</li>
+      <li><strong>移动端</strong>：SSE 在部分移动端浏览器后台会被挂起，需要 visibilitychange 时做状态校验与重连。</li>
+      <li><strong>可观测性</strong>：前端把收到的事件流打点上报（type、时间戳、content 长度），出问题时能还原"用户到底看到了什么"。</li>
+    </ul>
+
+    <!-- ============ 收尾 ============ -->
+    <h2 id="outro"><span class="num">4</span>小结</h2>
+
+    <h3>三句话总结</h3>
+    <ol class="steps">
+      <li><strong>两种形态</strong>：工作流式是"人编排流程，LLM 填空"，可控省钱但怕变化；自主式是"LLM 编排流程，人定边界"，能啃硬骨头但成本高、结果不确定。<strong>生产环境多是混合形态。</strong></li>
+      <li><strong>两种工作方式</strong>：工作流是<strong>按 DAG 逐步执行、走到终点节点结束</strong>；自主 Agent 是<strong>一个循环</strong>——组装上下文 → 调 LLM → LLM 决定是否调 tool → 执行 → 结果写回 <code>msg[]</code> → 再问 LLM，<strong>直到 LLM 自己决定结束</strong>。</li>
+      <li><strong>前端流式</strong>：服务层把过程拆成 <code>data:{type, content}</code> 的 SSE 帧，前端只做一件事——<strong>按 type 分发到对应的渲染逻辑</strong>，工具卡片用 <code>id</code> 做 upsert、人类确认要反向写回、高频更新用 rAF 节流。</li>
+    </ol>
+
+    <blockquote>
+      <p>最后留一个问题给大家思考：<strong>当 Agent 的决策路径不再由人类编写，"前端展示过程"这件事就从"锦上添花"变成了"信任基础设施"</strong>——用户只有看得见它在干什么，才敢把重要的事交给它。这也是为什么流式渲染在 Agent 时代不再是优化项，而是必选项。</p>
+    </blockquote>
+
+    <footer>
+      <p>本文为团队内部技术分享材料，示例代码为伪代码/示意实现，落地时需结合具体框架调整。</p>
+      <a class="backtop" href="#intro">↑ 回到开头</a>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  // 目录高亮：滚动时标记当前章节
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+    var targets = links
+      .map(function (a) {
+        var el = document.querySelector(a.getAttribute('href'));
+        return el ? { link: a, el: el } : null;
+      })
+      .filter(Boolean);
+
+    var current = null;
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var active = targets[0];
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i].el.offsetTop <= pos) active = targets[i];
+      }
+      if (active !== current) {
+        if (current) current.link.classList.remove('active');
+        active.link.classList.add('active');
+        current = active;
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
