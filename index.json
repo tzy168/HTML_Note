@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T08:00:30.375Z",
+  "generatedAt": "2026-09-09T08:30:39.426Z",
   "tree": [
     {
       "name": "AI",
@@ -42,6 +42,11 @@
       "name": "codeGraph",
       "type": "file",
       "path": "codeGraph.html"
+    },
+    {
+      "name": "jenkins-gitlab-cicd-guide",
+      "type": "file",
+      "path": "jenkins-gitlab-cicd-guide.html"
     },
     {
       "name": "langchainjs-quickstart",
