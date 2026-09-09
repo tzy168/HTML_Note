@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="GCzu5TjtndSV5rvXBkrjQ2">
+<head data-page-node-id="MU0q9VqFkw3elfiFIaIzRe">
+<meta charset="UTF-8" data-page-node-id="PdIFXHf2D38mcVbBP55BXq">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="O4UNKCytSSlp5TbGjKaAWi">
+<title>Jenkins 与 GitLab CI/CD 完全指南 · 概念介绍 + 操作手册</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --surface:#ffffff;
+    --border:#e3e8ef;
+    --text:#1f2937;
+    --text-soft:#5b6779;
+    --text-mute:#8a94a6;
+    --primary:#2563eb;
+    --primary-soft:#eef4ff;
+    --jenkins:#d33833;
+    --jenkins-soft:#fdeceb;
+    --gitlab:#fc6d26;
+    --gitlab-soft:#fff1e8;
+    --green:#16a34a;
+    --green-soft:#e9f7ef;
+    --amber:#b45309;
+    --amber-soft:#fff7e6;
+    --code-bg:#0f172a;
+    --code-text:#e2e8f0;
+    --radius:12px;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--primary);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---------- Layout ---------- */
+  .layout{display:flex;max-width:1400px;margin:0 auto;gap:28px;padding:0 24px}
+  .sidebar{
+    width:248px;flex:0 0 248px;
+    position:sticky;top:0;align-self:flex-start;
+    height:100vh;overflow-y:auto;
+    padding:28px 8px 60px 0;
+  }
+  .sidebar::-webkit-scrollbar{width:6px}
+  .sidebar::-webkit-scrollbar-thumb{background:#d7dde8;border-radius:3px}
+  .side-title{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--text-mute);text-transform:uppercase;padding:0 12px;margin-bottom:10px}
+  .side-nav a{
+    display:block;padding:7px 12px;margin:1px 0;border-radius:8px;
+    color:var(--text-soft);font-size:13.5px;line-height:1.5;
+    border-left:2px solid transparent;transition:.15s;
+  }
+  .side-nav a:hover{background:#eaeff6;color:var(--text);text-decoration:none}
+  .side-nav a.sub{padding-left:26px;font-size:13px;color:var(--text-mute)}
+  .side-nav a.active{background:var(--primary-soft);color:var(--primary);font-weight:600;border-left-color:var(--primary)}
+  .main{flex:1;min-width:0;padding:28px 0 100px}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    background:linear-gradient(135deg,#ffffff 0%,#f0f5ff 55%,#fff4ec 100%);
+    border:1px solid var(--border);border-radius:16px;
+    padding:40px 40px 34px;margin-bottom:32px;position:relative;overflow:hidden;
+  }
+  .hero:after{
+    content:"";position:absolute;right:-70px;top:-70px;width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle,#2563eb14,transparent 70%);
+  }
+  .hero h1{font-size:31px;line-height:1.3;margin:0 0 12px;letter-spacing:-.4px}
+  .hero p{margin:0;color:var(--text-soft);max-width:760px;font-size:15.5px}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .tag{
+    background:#fff;border:1px solid var(--border);border-radius:999px;
+    padding:4px 13px;font-size:12.5px;color:var(--text-soft);font-weight:500;
+  }
+  .tag.j{color:var(--jenkins);border-color:#f3c9c7;background:var(--jenkins-soft)}
+  .tag.g{color:var(--gitlab);border-color:#fbd5b8;background:var(--gitlab-soft)}
+
+  /* ---------- Section ---------- */
+  section{margin-bottom:44px;scroll-margin-top:20px}
+  h2{
+    font-size:22px;margin:0 0 6px;padding-bottom:12px;border-bottom:2px solid var(--border);
+    display:flex;align-items:center;gap:10px;letter-spacing:-.2px;
+  }
+  h2 .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:8px;background:var(--primary);color:#fff;
+    font-size:13px;font-weight:700;flex:0 0 28px;
+  }
+  h3{font-size:17px;margin:28px 0 10px;padding-left:11px;border-left:3px solid var(--primary)}
+  h3.j{border-left-color:var(--jenkins)}
+  h3.g{border-left-color:var(--gitlab)}
+  h4{font-size:15px;margin:20px 0 8px;color:var(--text)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:5px 0}
+  .lead{color:var(--text-soft);margin:14px 0 4px}
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px 22px;margin:16px 0;
+  }
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:980px){
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .sidebar{display:none}
+  }
+
+  .pill{
+    display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:600;
+    background:var(--primary-soft);color:var(--primary);vertical-align:middle;
+  }
+  .pill.j{background:var(--jenkins-soft);color:var(--jenkins)}
+  .pill.g{background:var(--gitlab-soft);color:#c2410c}
+  .pill.ok{background:var(--green-soft);color:var(--green)}
+  .pill.warn{background:var(--amber-soft);color:var(--amber)}
+
+  /* concept cards */
+  .concept{border:1px solid var(--border);border-radius:10px;padding:14px 16px;background:#fff}
+  .concept h5{margin:0 0 4px;font-size:14.5px}
+  .concept p{margin:0;font-size:13.5px;color:var(--text-soft);line-height:1.65}
+
+  /* table */
+  .table-wrap{overflow-x:auto;margin:16px 0;border:1px solid var(--border);border-radius:var(--radius);background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:13.8px;min-width:640px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid #eef1f6;vertical-align:top}
+  th{background:#f8fafc;font-weight:600;color:var(--text);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fafcff}
+  td code,li code,p code{background:#f1f4f9;padding:1.5px 5px;border-radius:4px;font-family:var(--mono);font-size:12.5px;color:#334155}
+
+  /* code */
+  .code-block{position:relative;margin:14px 0;border-radius:10px;overflow:hidden;background:var(--code-bg)}
+  .code-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 14px;background:#16213b;border-bottom:1px solid #24304d;
+  }
+  .code-head span{font-size:12px;color:#94a3b8;font-family:var(--mono);letter-spacing:.03em}
+  .copy-btn{
+    background:#24304d;color:#cbd5e1;border:none;border-radius:6px;
+    padding:3px 11px;font-size:12px;cursor:pointer;transition:.15s;font-family:inherit;
+  }
+  .copy-btn:hover{background:#334155;color:#fff}
+  pre{margin:0;padding:14px 16px;overflow-x:auto;background:transparent}
+  pre code{font-family:var(--mono);font-size:12.8px;line-height:1.7;color:var(--code-text);white-space:pre}
+  .tk-key{color:#7dd3fc}.tk-str{color:#a5f3a0}.tk-com{color:#64748b;font-style:italic}
+  .tk-kw{color:#f0a3c0}.tk-num{color:#fdba74}.tk-cmd{color:#93c5fd}
+
+  .note,.warn-note,.tip{
+    border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px;border:1px solid;
+  }
+  .note{background:var(--primary-soft);border-color:#c7dbff;color:#1e40af}
+  .warn-note{background:var(--amber-soft);border-color:#fbe3b3;color:#92400e}
+  .tip{background:var(--green-soft);border-color:#bfe8cd;color:#166534}
+  .note b,.warn-note b,.tip b{font-weight:700}
+
+  /* pipeline diagram */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:18px 0}
+  .flow-step{
+    flex:1;min-width:130px;background:#fff;border:1px solid var(--border);
+    border-radius:10px;padding:14px;margin:0 10px 10px 0;position:relative;
+  }
+  .flow-step .idx{
+    display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--primary);
+    color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:700;margin-bottom:8px;
+  }
+  .flow-step h5{margin:0 0 4px;font-size:14px}
+  .flow-step p{margin:0;font-size:12.8px;color:var(--text-soft);line-height:1.6}
+
+  .steps{counter-reset:s;list-style:none;padding-left:0}
+  .steps>li{position:relative;padding-left:34px;margin:14px 0}
+  .steps>li:before{
+    counter-increment:s;content:counter(s);
+    position:absolute;left:0;top:2px;width:23px;height:23px;border-radius:50%;
+    background:var(--primary-soft);color:var(--primary);font-size:12.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;border:1px solid #c7dbff;
+  }
+
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:14px;margin:10px 0}
+  .kv dt{color:var(--text-mute);font-weight:500}
+  .kv dd{margin:0;color:var(--text)}
+
+  footer{border-top:1px solid var(--border);margin-top:50px;padding:22px 0 0;color:var(--text-mute);font-size:13px}
+  .top-btn{
+    position:fixed;right:22px;bottom:22px;width:42px;height:42px;border-radius:50%;
+    background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:18px;
+    box-shadow:0 6px 18px #2563eb45;display:none;
+  }
+</style>
+</head>
+<body data-page-node-id="xqr6txX1EpowGYOHua1mhe">
+
+<div class="layout" data-page-node-id="y4Co1CSY2jEgy4ivgkZoNX">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" data-page-node-id="0HLdO3GwQxXYGdJZFUV5dq">
+    <div class="side-title" data-page-node-id="b6jlnFWWtHBr8ww8CvGNrB">目录导航</div>
+    <nav class="side-nav" id="nav" data-page-node-id="IVuol1dY7OP8wCqHzbtgK7">
+      <a href="#overview" data-page-node-id="uXipZdBFZFbBEWjYgUicFN">1. CI/CD 基础概览</a>
+      <a href="#what-is" data-page-node-id="CfUDW39piSmL84h89qz6rX">2. 什么是 CI/CD</a>
+      <a href="#jenkins" data-page-node-id="JIKpjp49xtNpxGUl5xpAD9">3. Jenkins 介绍</a>
+      <a href="#jenkins-core" class="sub" data-page-node-id="kAuNuBFr9iBxEMb4dHAt5F">核心概念</a>
+      <a href="#jenkins-arch" class="sub" data-page-node-id="IQZLbsCkcl2iLZNhI14W5M">架构与工作原理</a>
+      <a href="#jenkins-pros" class="sub" data-page-node-id="Kz2yZMKz8tBxCmQNTD8JlD">优势与局限</a>
+      <a href="#gitlab" data-page-node-id="TdLacGnPpCdHsHFxLkW6gA">4. GitLab CI/CD 介绍</a>
+      <a href="#gitlab-core" class="sub" data-page-node-id="SvyOYxhHlqD7jGR4rlxD5n">核心概念</a>
+      <a href="#gitlab-arch" class="sub" data-page-node-id="8xJxl8kXhfO7blvwIgPmNQ">架构与工作原理</a>
+      <a href="#gitlab-pros" class="sub" data-page-node-id="byMxyzrSfNnwYVvcPdFB22">优势与局限</a>
+      <a href="#compare" data-page-node-id="9syygu8qKEHepL8uX63fci">5. 两者对比与选型</a>
+      <a href="#ops-jenkins" data-page-node-id="ZQaUp0Qq8aHTenOeU6hqcC">6. Jenkins 操作手册</a>
+      <a href="#j-install" class="sub" data-page-node-id="v1zDuECx6QWyJMe36JOHjP">安装与初始化</a>
+      <a href="#j-cred" class="sub" data-page-node-id="GEySOUWTqTBqNhMOx8qXpw">凭据与工具配置</a>
+      <a href="#j-pipeline" class="sub" data-page-node-id="HCxehjZWEdlrRH0KRKzzF2">第一个 Pipeline</a>
+      <a href="#j-jenkinsfile" class="sub" data-page-node-id="x9epnDyBtjSAodXXWEuvZK">Jenkinsfile 实战</a>
+      <a href="#j-trigger" class="sub" data-page-node-id="WYqKDmTsbpqGStD9P35dBO">触发与通知</a>
+      <a href="#j-ops" class="sub" data-page-node-id="mvtqYIVvB0ctaBPdHXRlrW">运维与备份</a>
+      <a href="#ops-gitlab" data-page-node-id="gZNgGyfkOceUQz3I0zFB9S">7. GitLab CI/CD 操作手册</a>
+      <a href="#g-runner" class="sub" data-page-node-id="pdu980rst7O0V07T85PHc5">Runner 安装注册</a>
+      <a href="#g-yml" class="sub" data-page-node-id="P98M0UnRgAIBA4MaRQhJXM">.gitlab-ci.yml 实战</a>
+      <a href="#g-var" class="sub" data-page-node-id="W9bThCjMMkr9CG8Po2f63T">变量与密钥管理</a>
+      <a href="#g-env" class="sub" data-page-node-id="zb4qdZoRotW2EfV2S1AVuY">环境与发布</a>
+      <a href="#g-adv" class="sub" data-page-node-id="3GsTBbnjGNcCGxprAhJJTL">模板复用与进阶</a>
+      <a href="#best" data-page-node-id="trHkKrXUQZsXn5H2H65Oix">8. 最佳实践清单</a>
+      <a href="#trouble" data-page-node-id="8YEuu4arF2B6WbGZAbscYH">9. 常见问题排查</a>
+      <a href="#cheatsheet" data-page-node-id="hLSE1Yhbg97bXmN3Lj2k5d">10. 命令速查表</a>
+    </nav>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" data-page-node-id="svmmSnf6G7Q4pb0PAtL8z5">
+
+    <div class="hero" data-page-node-id="CsPGECuWuDUvpkpF1Gw1a7">
+      <h1 data-page-node-id="kc3JX7coHkqH18M8zT0vSZ">Jenkins 与 GitLab CI/CD 完全指南</h1>
+      <p data-page-node-id="136kHF8W0yZDA6AaWVHcAI">从概念、架构、差异对比，到可照着敲的安装部署与流水线配置操作手册。两份工具、一套方法论，帮团队把「提交代码」到「上线发布」的每一步都自动化。</p>
+      <div class="hero-tags" data-page-node-id="qCuP0F8DF9jghK4XygYtbV">
+        <span class="tag j" data-page-node-id="zS9YalFR5kvZTwY5GKs6j5">Jenkins 2.x · Declarative Pipeline</span>
+        <span class="tag g" data-page-node-id="EjO6WvEi9ZDVFLmCwkvB6m">GitLab CI · Runner · .gitlab-ci.yml</span>
+        <span class="tag" data-page-node-id="XvAlkwxEq8RQPqKXB9mamJ">Docker / Kubernetes</span>
+        <span class="tag" data-page-node-id="aAyDJybGOPwcezeE32D5qD">前端 / 后端 / 移动端通用</span>
+        <span class="tag" data-page-node-id="jHmcMEte6xwhE8CaVsZM2H">含 YAML &amp; Groovy 示例</span>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <section id="overview" data-page-node-id="a3iWSYYVUl5AjmxouStBxk">
+      <h2 data-page-node-id="JmJXNbMZ20zSAePPe1yI0p"><span class="num" data-page-node-id="yuxPnWqXUWEYNoHTf99GN7">1</span>CI/CD 基础概览</h2>
+      <p class="lead" data-page-node-id="0zCchE9svT9tO1MDpPzSI5">CI/CD 是一种软件工程实践：通过自动化流水线，把代码从「开发者本机」安全、快速、可重复地送到「生产环境」。</p>
+
+      <div class="flow" data-page-node-id="ulngCzhesuS9mf6CVfYyaF">
+        <div class="flow-step" data-page-node-id="Y1ec3pL7JB9vQ8eWTdDKbs"><span class="idx" data-page-node-id="fG8WaQ0D5EOT2B7WQ9rCoO">1</span><h5 data-page-node-id="R3o2vtQYCBOAiodtMWoYRX">Commit</h5><p data-page-node-id="vUDOFpNcE4ne3wIxbY8D9g">开发者提交代码到 Git 仓库（GitLab / GitHub / Gitee）。</p></div>
+        <div class="flow-step" data-page-node-id="R7Xrjf39NC2aOAEcrgIL3C"><span class="idx" data-page-node-id="BIK5e2S4HBMYA5rLR5EZxH">2</span><h5 data-page-node-id="SIo86v1UBn2absLPrrE089">Trigger</h5><p data-page-node-id="fc9FnS8SQtRYk8ou5nUL3x">推送事件触发流水线（Webhook / 定时 / 手动）。</p></div>
+        <div class="flow-step" data-page-node-id="lw3ej4B2ekulmAXOkIDGZV"><span class="idx" data-page-node-id="PMEhqFowD2zUEWVTLOiBWb">3</span><h5 data-page-node-id="n0dUKEX6eKPUs3zl31CPfx">Build</h5><p data-page-node-id="NYNjQt3kBlSlsuUs2se5xZ">拉取依赖、编译打包，产出可部署产物（jar / dist / 镜像）。</p></div>
+        <div class="flow-step" data-page-node-id="ZGEUewCub9uHeidM4ByjGo"><span class="idx" data-page-node-id="stnoN0BSDaVtrUoNlA6T6A">4</span><h5 data-page-node-id="TfSzXNKVsmUCt3Re0mHSeo">Test</h5><p data-page-node-id="8PrVrti55Dun3zKJO61i4H">单元测试、代码扫描、安全检测，质量门禁拦截问题。</p></div>
+        <div class="flow-step" data-page-node-id="Uf7b23BngW5Xm3NogDlNLC"><span class="idx" data-page-node-id="whXDBkYTIg6xst0SBGamjK">5</span><h5 data-page-node-id="EvaTnvHdEHlp9eCDcWLzpC">Deploy</h5><p data-page-node-id="mrxe8XYEu1TDE6h1HYpv9D">部署到测试 / 预发 / 生产环境，支持灰度与回滚。</p></div>
+      </div>
+
+      <div class="grid grid-3" data-page-node-id="ytc9DxNegoQAMOdaOG8nN5">
+        <div class="concept" data-page-node-id="yEnBq3EcEPmHinDVWgWfSN">
+          <h5 data-page-node-id="NcohevvYwy8HIqR7kX5pbJ">持续集成 <span class="pill" data-page-node-id="SfrV2pcT375gEOVxDV15sn">CI</span></h5>
+          <p data-page-node-id="qJjaXq19UM4tFLJK8BpGsg">频繁（每天多次）将代码集成到主干，每次集成都自动构建 + 自动测试，尽早发现集成错误。</p>
+        </div>
+        <div class="concept" data-page-node-id="Cj6xqFdpbgrN4ITiomQIsS">
+          <h5 data-page-node-id="1DuHCgcrWqlvDY3twjViUU">持续交付 <span class="pill" data-page-node-id="xht92xDj37I7QPZFJHjsZA">CD</span></h5>
+          <p data-page-node-id="PH3PO8HWcCRgfV4SnCmGU6">保证代码随时处于「可发布」状态，产物已构建待命，上线由人工一键触发。</p>
+        </div>
+        <div class="concept" data-page-node-id="0O1byu7hY4b2DcBmqFqsJA">
+          <h5 data-page-node-id="Wxu7fxZHf1EMGjN8FnDQnm">持续部署 <span class="pill" data-page-node-id="91fro1zmxSYj3cAubxxEDo">CD</span></h5>
+          <p data-page-node-id="fIaDEXwXqwBNOTqbLvG69o">在持续交付基础上更进一步：通过全部质量门禁后，自动发布到生产环境，无人工介入。</p>
+        </div>
+      </div>
+
+      <div class="note" data-page-node-id="k95WiFMuD2zfGcx2ZTlwGQ">
+        <b data-page-node-id="JFrVolOHss7ZkFzmFfb1ii">为什么需要它？</b> 手工打包部署的典型痛点：环境不一致（"我这里能跑"）、漏测漏步骤、发布窗口长、出问题无法快速回滚。CI/CD 用「流水线即代码」把发布过程固化下来，让发布从"仪式"变成"日常"。
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="what-is" data-page-node-id="35QhGt6PjGNnyXZf8ylHZU">
+      <h2 data-page-node-id="gvED17TGorY4xSTeHCyYao"><span class="num" data-page-node-id="Hc7nYo5nEKwtEDxoW6kQQ4">2</span>什么是 Jenkins / GitLab CI/CD</h2>
+      <div class="grid grid-2" data-page-node-id="FUFqACzomjOWtuGohOW5Ll">
+        <div class="card" data-page-node-id="EQwE4mvTVPLin9FwjqGUM8">
+          <h4 data-page-node-id="O2gqFKwBjATWDGIqI5flV3"><span class="pill j" data-page-node-id="WrcUsheDFRGUGMVJlG72Pd">Jenkins</span></h4>
+          <p data-page-node-id="X3McVdUJTbB4kmBo0K7xb8">开源、自托管的自动化服务器，2011 年从 Hudson 分叉而来，是目前生态最庞大的 CI/CD 工具。核心特点是<b data-page-node-id="HDc3I8P80WSK3Pc3dCeszA">插件化</b>（1800+ 插件）与<b data-page-node-id="9EwOuG85dT1Z0dg5QglAaz">Pipeline as Code</b>（Jenkinsfile）。它不绑定任何代码托管平台，可以和 GitLab、GitHub、SVN、Bitbucket 任意组合。</p>
+        </div>
+        <div class="card" data-page-node-id="39qzjg9sTdbg2Jp8KO9JDH">
+          <h4 data-page-node-id="v382ebhHcLvY6kwpjVFvAO"><span class="pill g" data-page-node-id="7117HFJCOC1z8Lts73NPcX">GitLab CI/CD</span></h4>
+          <p data-page-node-id="knu2kPGubYpQc2EWtbkQP6">GitLab 平台内置的 CI/CD 引擎，与代码仓库、Merge Request、镜像仓库、Issue 深度集成。只需在仓库根目录放一个 <code data-page-node-id="saYekp7H69TrYa9g3Jpvw2">.gitlab-ci.yml</code>，由 <b data-page-node-id="DjTxYE5UExj0j25PDzyCqq">GitLab Runner</b> 负责执行任务。开箱即用，配置成本极低。</p>
+        </div>
+      </div>
+      <p class="lead" data-page-node-id="cUvxy44HuwllGPBE5WBMjC">一句话区分：<b data-page-node-id="m489JdX5YcgOJ0SkfH0FwI">Jenkins 是"通用自动化引擎"</b>，什么都能做、什么都要自己配；<b data-page-node-id="N4OdOEPvKUdmRxpRkxCe3F">GitLab CI/CD 是"仓库原生流水线"</b>，专注、简洁，但强依赖 GitLab 生态。</p>
+    </section>
+
+    <!-- 3 Jenkins -->
+    <section id="jenkins" data-page-node-id="LrAoUuv5h7VBJhjRd2qzTb">
+      <h2 data-page-node-id="SOQGbsfRowbV3uHe7ojfo8"><span class="num" data-page-node-id="U2yElqa5CfGEyEoWGrb1hM">3</span>Jenkins 介绍</h2>
+      <p class="lead" data-page-node-id="HZgvKFiY6EH78MJekWDpj9">Jenkins 用 Java 编写，以 Controller（主控）+ Agent（执行节点）的分布式架构运行，通过插件连接几乎一切工具链。</p>
+
+      <h3 id="jenkins-core" data-page-node-id="i6cCSkGoencD3YBVg9ELNI">核心概念</h3>
+      <div class="grid grid-3" data-page-node-id="OadejL0qvoer6ceFOwUfWf">
+        <div class="concept" data-page-node-id="0axBdh8YRzhkzl7oeAADnu"><h5 data-page-node-id="gwt5CZkVgGFBPKD7KNwFj9">Job / Item</h5><p data-page-node-id="5LBkwRIz97wbTTH2ACEBKI">一次可执行的任务定义。Freestyle（界面配置）或 Pipeline（代码定义）是最常见的两种类型。</p></div>
+        <div class="concept" data-page-node-id="HnywpmtbhBFeSUHyTi1p5Z"><h5 data-page-node-id="rCRiG6gDwAIjSqjEibBjVh">Pipeline</h5><p data-page-node-id="GQDLQUdD5qOfPiKBZi9ckS">由多个 Stage 组成的流水线。Declarative（声明式，推荐）与 Scripted（脚本式 Groovy）两种语法。</p></div>
+        <div class="concept" data-page-node-id="hCwD1kdV9xXSdqw1jAAIej"><h5 data-page-node-id="pIbjwjPYMdUyQskUfgyFfq">Stage / Step</h5><p data-page-node-id="B7rL8qOBC01QZWeBbKMICe">Stage 是逻辑阶段（构建、测试、部署）；Step 是最小执行单元（sh、checkout、archiveArtifacts）。</p></div>
+        <div class="concept" data-page-node-id="MoW19gcZZf0ahdCMBbXxe6"><h5 data-page-node-id="8cv0VeAOXrxorMqEUxQGAO">Node / Agent</h5><p data-page-node-id="OqTK7oQHFPNJurDBNsjOzy">Agent 指定任务在哪台机器或容器里跑（any / label / docker / kubernetes）。</p></div>
+        <div class="concept" data-page-node-id="iTgJEPJ8BUtqsFejQkYtKv"><h5 data-page-node-id="JBnizAQLzkWhdUJRBL7heK">Executor</h5><p data-page-node-id="8RMEu0QV3fzEXRD10lU47l">每个节点可并行执行的任务槽位数量，决定了并发能力。</p></div>
+        <div class="concept" data-page-node-id="knnPpNchSuJpmgRAzgb284"><h5 data-page-node-id="fwnsl5zuU6FU343Bm0QxJ5">Workspace</h5><p data-page-node-id="6SX4PEtMQS3sBz9ZHdOLLf">单次构建在节点上的工作目录，存放检出的源码与中间产物。</p></div>
+        <div class="concept" data-page-node-id="W76KV3tqlmvX2EF69RPOxO"><h5 data-page-node-id="kRIk2yCNNfshvF1kA1CTsg">Plugin</h5><p data-page-node-id="uDgHU23b1YzAzA8yKd6pkj">能力的来源：Git、Credentials、Docker、Kubernetes、Blue Ocean、SonarQube 等。</p></div>
+        <div class="concept" data-page-node-id="FyL3c4DRFAVFgNOufUrBC9"><h5 data-page-node-id="iGrZs0OgPVnNd3gxL1iaPh">Credentials</h5><p data-page-node-id="RVha745wcLjB2Hxw8uLEqu">集中管理 SSH 私钥、用户名密码、Token、Kubeconfig，流水线通过 ID 引用，不落明文。</p></div>
+        <div class="concept" data-page-node-id="YbM84glxKCxYyUhSUqVfl5"><h5 data-page-node-id="UPupjnCtxvwO0wW0mWzuXz">Artifact / Fingerprint</h5><p data-page-node-id="jFUKtpJ3h6FDC8uQy0EPr0">归档构建产物（jar、dist 包）并记录指纹，便于追溯与下游引用。</p></div>
+      </div>
+
+      <h3 id="jenkins-arch" data-page-node-id="fYs8C6qM6W06zgSJmyptA0">架构与工作原理</h3>
+      <div class="card" data-page-node-id="5tusAVvinynTbes6GRFCn3">
+        <dl class="kv" data-page-node-id="dTZDFmByT8Q5sJO4oHbDBC">
+          <dt data-page-node-id="86d0vFvlYCvGOF5s0QMFJz">Controller</dt><dd data-page-node-id="cc50KH5tBFBtswu74TF4js">负责调度构建、保存配置与历史、提供 Web UI 和 API。本身<b data-page-node-id="4FfjEGrTmiG9N0q9NoWQdO">不推荐</b>直接跑构建任务。</dd>
+          <dt data-page-node-id="6yCf48KdmWAHwyYjOgamUE">Agent</dt><dd data-page-node-id="SnN9BlJA5cMfvxeUy9yX0r">通过 SSH、JNLP 或 Kubernetes Pod 接入，真正执行构建。可按标签（label）分组，如 linux、docker、macos。</dd>
+          <dt data-page-node-id="sdpfXMgfGzoS7mZ0n90yje">Jenkinsfile</dt><dd data-page-node-id="z4HzhdhXu8TiCFJ4CfBWHP">声明式流水线脚本，随代码一起版本管理（Pipeline as Code），支持 Code Review。</dd>
+          <dt data-page-node-id="Fyk9rW4BBvBX4QWPN7MjjX">触发链路</dt><dd data-page-node-id="xlk975LzrexhNqRsz4b5Gp">Git push → Webhook（或 SCM 轮询）→ Controller 排队 → 分配空闲 Agent → 执行 Stage → 归档产物 / 通知。</dd>
+        </dl>
+      </div>
+
+      <h3 id="jenkins-pros" data-page-node-id="NZCYzEHSymFDzrNC8ZNB2w">优势与局限</h3>
+      <div class="grid grid-2" data-page-node-id="7d5SWNyZWoGFkVHyvxqmVm">
+        <div class="card" data-page-node-id="kgdBkSBcnCHhsl7gqKVeax">
+          <h4 data-page-node-id="RFV3lloSLHevoBVyeD0DkR"><span class="pill ok" data-page-node-id="0tXnjBKN3AHiqmNDxaPfKO">优势</span></h4>
+          <ul data-page-node-id="uUr9DUdrbL84hc3Wv3ovvN">
+            <li data-page-node-id="n5CyWcmeOorCOPWXrrHZVU">生态最全：1800+ 插件，几乎能接入任何系统。</li>
+            <li data-page-node-id="wDnKDG9d9XMAiQUbaUHCxl">与代码平台解耦，GitLab / GitHub / SVN 通吃。</li>
+            <li data-page-node-id="mWhhAbJiGDC0J4yHJ9u4IU">分布式扩展成熟，支持动态 Kubernetes Agent，弹性伸缩。</li>
+            <li data-page-node-id="PtN00GGG4o1EcUF7sgWT1G">完全自托管，数据与网络全在内网，合规友好。</li>
+            <li data-page-node-id="P3Tz3H9qWDBYjgYvHVbgMh">社区资料丰富，遇到问题基本都能搜到答案。</li>
+          </ul>
+        </div>
+        <div class="card" data-page-node-id="yEyqukaAx5GJfJ0jJ6Wngd">
+          <h4 data-page-node-id="yRefv6JZNP5LMVhuGQV1dY"><span class="pill warn" data-page-node-id="XkvlR1LgCgeyg3fjXOvYyC">局限</span></h4>
+          <ul data-page-node-id="o6D4SRz2kQyEAJKCOzA6ix">
+            <li data-page-node-id="4CQqSfYoSFjADewPcOI3sg">插件质量参差，升级易踩兼容性坑，需谨慎管理。</li>
+            <li data-page-node-id="KuuDyQR1igIVwTAfU7zr80">UI 偏传统，学习曲线对新人略陡。</li>
+            <li data-page-node-id="vHXsFCjAbjoYvy8sB8WVv8">需要自行维护服务器、备份、权限体系与高可用。</li>
+            <li data-page-node-id="OOVPGzxLLDi3jJUvOWz7C5">Groovy 沙箱与脚本审批增加一定运维负担。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 GitLab -->
+    <section id="gitlab" data-page-node-id="O3G1O62wvZTlcPK0HQGquA">
+      <h2 data-page-node-id="ArBYe3WdaCEWfeeMyyUDAG"><span class="num" data-page-node-id="EQ7bOzqDtOoexsvjNhbOWn">4</span>GitLab CI/CD 介绍</h2>
+      <p class="lead" data-page-node-id="gi66vCdXky37HPDDZI5vAK">GitLab CI/CD 由 GitLab 实例（负责编排）+ GitLab Runner（负责执行）两部分组成，配置全部集中在仓库根目录的 <code data-page-node-id="KSkJytCH80kQaKnt4YPrKn">.gitlab-ci.yml</code>。</p>
+
+      <h3 id="gitlab-core" data-page-node-id="sQyn9IscfyyPTNBO7F1AP0">核心概念</h3>
+      <div class="grid grid-3" data-page-node-id="X7ZHbQDPydnRHGv99hDBJG">
+        <div class="concept" data-page-node-id="2jMerLsKbHPEVC8SI8cUal"><h5 data-page-node-id="7YBhs7oR2rm0togHjxIxvB">Pipeline</h5><p data-page-node-id="rqXzvTBJFB1grWGTKkPd87">一次 CI 运行的顶层容器，由 Stages 组成。每次 push / MR 会生成一条流水线。</p></div>
+        <div class="concept" data-page-node-id="JcFj46xrZZkJYYxqd3vY6g"><h5 data-page-node-id="DHUWe9Uc2DqBLhlxy9csgC">Stage</h5><p data-page-node-id="ToEfFdejZNlFudOrkRQYPr">阶段（build / test / deploy）。同一 Stage 内的 Job <b data-page-node-id="Ug7gPEDwGLc9c0Ex9eExGd">并行</b>，Stage 之间<b data-page-node-id="OlZAQlyYdB9ldqKaAPPeww">串行</b>。</p></div>
+        <div class="concept" data-page-node-id="A2clkRkAlfjynxQzUNFzAE"><h5 data-page-node-id="m0AgBdBuccRaQFWitNJ0Cy">Job</h5><p data-page-node-id="nQGqAAvQ5hPl3lob7dSgGD">最小执行单元，包含 script 命令、运行环境（image）、产物与规则。</p></div>
+        <div class="concept" data-page-node-id="7S9nhQo6ol3CUAeZXKKYd0"><h5 data-page-node-id="UfGUY795qgXM0iKMItOPA3">Runner</h5><p data-page-node-id="IioIXEwSZKPNF7lUVvgKT2">执行 Job 的代理程序，支持 Shell、Docker、Kubernetes 等 executor，可打 Tag 分组调度。</p></div>
+        <div class="concept" data-page-node-id="YmWWZus6zoSjkVdg3XIDoZ"><h5 data-page-node-id="Ig3WY3LvOJFHt5jK47fwi4">.gitlab-ci.yml</h5><p data-page-node-id="1UFsxMYh2DZy1Gg0ZNP3cw">流水线定义文件，YAML 语法，随代码版本管理，支持 include 模板复用。</p></div>
+        <div class="concept" data-page-node-id="2toROOh3wtvDsNGGCg7lgE"><h5 data-page-node-id="yZx3eGdGpMTKCTY3jKymcf">Artifacts / Cache</h5><p data-page-node-id="I0Nw182OCFHLw4GsmsCUvb">Artifacts 在 Job 之间传递产物并支持下载；Cache 用于缓存依赖（node_modules、.m2）加速构建。</p></div>
+        <div class="concept" data-page-node-id="O0i83ZFZAYpBXZeT8eC4rJ"><h5 data-page-node-id="y76VIC5PrkcFyuSEvMQRSP">Variables</h5><p data-page-node-id="YR4XWgndthu4W9oDgZ5MKW">预定义变量（CI_COMMIT_SHA 等）与自定义变量，支持 masked（脱敏）与 protected（仅保护分支）。</p></div>
+        <div class="concept" data-page-node-id="2GP7fhvzXhbDlIHzk4rras"><h5 data-page-node-id="6ytG3SVimXeE9w9arjBjU7">Environment</h5><p data-page-node-id="874gh7iCt0DkCcnFvylntG">记录部署目标（staging / production），支持查看部署历史与一键回滚。</p></div>
+        <div class="concept" data-page-node-id="XO5Pblvt7ipA3lJYYtvw2g"><h5 data-page-node-id="CwwxgHF5brp3ihwCLZKqaE">rules / only</h5><p data-page-node-id="Ds3aDFRNY3qKym1rZMxC6Y">控制 Job 何时运行，如仅在 main 分支、仅在 MR、仅当文件变更时。</p></div>
+      </div>
+
+      <h3 id="gitlab-arch" data-page-node-id="c21wV5wo0kAKThe26CdG6c">架构与工作原理</h3>
+      <div class="card" data-page-node-id="Zcl0kqOoq5dy3RwIqvJFDo">
+        <dl class="kv" data-page-node-id="LvbQFFZvlnozwETcDWCOFI">
+          <dt data-page-node-id="3qae1Ad26qtwxWXOekVg0R">调度流程</dt><dd data-page-node-id="EYzJjwjUFTjz5MuRdspWH5">git push → GitLab 解析 .gitlab-ci.yml → 生成 Pipeline → 按 Tag 匹配在线 Runner → Runner 领取 Job → 上报日志与产物 → 更新 MR 里的结果徽标。</dd>
+          <dt data-page-node-id="uYxaFGtLuF63tyhlo67Gb1">Executor</dt><dd data-page-node-id="EIPXsz4f2yPWbmCYJBGfCR">Shell（直接跑在宿主机，简单但隔离差）、Docker（每个 Job 独立容器，推荐）、Kubernetes（弹性 Pod，适合大规模）。</dd>
+          <dt data-page-node-id="K1B6VwqWFaPflbzDqCV8J7">内置集成</dt><dd data-page-node-id="89SdR2sMnT0R3e2ZoEuzMh">Container Registry、Package Registry、Release、Review Apps、Merge Request 质量报告、SAST/DAST 安全扫描。</dd>
+        </dl>
+      </div>
+
+      <h3 id="gitlab-pros" data-page-node-id="JuPA4EzLjumHVExz41fIeX">优势与局限</h3>
+      <div class="grid grid-2" data-page-node-id="7cPKKENnCxz1flCeZetLVO">
+        <div class="card" data-page-node-id="v3CGtMrpTwECnXres8j5SU">
+          <h4 data-page-node-id="IdD3HSy98bRC0C1c5CxwTs"><span class="pill ok" data-page-node-id="11KStwnDJfyhwg5Li7y0M2">优势</span></h4>
+          <ul data-page-node-id="9kppxa2OwHiAbzXnKP26jS">
+            <li data-page-node-id="hkaTMQuVELIs9yOG9U4XaC">与 GitLab 仓库、MR、Issue 天然打通，无需额外插件。</li>
+            <li data-page-node-id="UBICq8Qio9HfU2Aq8XFcym">一个 YAML 文件搞定全部，学习成本极低，新人 30 分钟上手。</li>
+            <li data-page-node-id="CO7qZApljDMJyhgVX0dzoq">内置镜像仓库与制品仓库，DevOps 闭环完整。</li>
+            <li data-page-node-id="62Dv9cAro7I0wFA4hU00gw">MR 页面直接看流水线结果、测试报告、覆盖率。</li>
+            <li data-page-node-id="lPrzLyMZtqZqAbYcwX8fx1">托管版（gitlab.com）零运维，自托管版也有官方 Runner。</li>
+          </ul>
+        </div>
+        <div class="card" data-page-node-id="0BGsEZpy7jSpo1AVNkyJDh">
+          <h4 data-page-node-id="lBRTLCNs4SFk9mv8GDFHmH"><span class="pill warn" data-page-node-id="w4h6jGhiFH8nVc6U3KAJYm">局限</span></h4>
+          <ul data-page-node-id="cK98u2NJamqsG94MoMkdTf">
+            <li data-page-node-id="X858t0ywZ69ZF1pOmOig1T">强绑定 GitLab，跨平台（GitHub / 多平台混合）场景不适用。</li>
+            <li data-page-node-id="bkS7BI0lgQOUScQ3oX0vU9">复杂编排能力弱于 Jenkins（如跨项目复杂人工审批流）。</li>
+            <li data-page-node-id="cAb8Trg86lyE1kITvh5Faw">UI 配置能力弱，重度依赖写 YAML。</li>
+            <li data-page-node-id="9vIH4AwsY47CU7s0YmXKTN">Runner 的机器资源与网络安全需自行规划。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="compare" data-page-node-id="CBXCPFHCQH8jFdMi44YPnI">
+      <h2 data-page-node-id="FlPPe3UXuRoX5nJlaSPjfA"><span class="num" data-page-node-id="9phx6LSvMhg0iYKHiVCAQD">5</span>两者对比与选型建议</h2>
+      <div class="table-wrap" data-page-node-id="Tb5z4VpDWknTHk1FiFAmEd">
+        <table data-page-node-id="WKJp8aTOklgEYMdUgGONjf">
+          <thead data-page-node-id="f8RtB80G0HXTmuksM6JCqz">
+            <tr data-page-node-id="YPAhwcO25CchqXpmVueMqz"><th data-page-node-id="v8wuXU66JHE17l1O446US8">维度</th><th data-page-node-id="BbF7Sxn2MfHa1Yy26yG6Bm"><span class="pill j" data-page-node-id="SJkW4GIy6S4ZzeryAcPPp3">Jenkins</span></th><th data-page-node-id="DPMefXfwOJw2lwJe0Ta71P"><span class="pill g" data-page-node-id="nAMYhYH1n59OYtCYIcgazB">GitLab CI/CD</span></th></tr>
+          </thead>
+          <tbody data-page-node-id="u2eokEqlW6oErJS45Y6x3D">
+            <tr data-page-node-id="U9BuSfCag17a0qpJGtUMWO"><td data-page-node-id="HI7EzpeCQVpUIhJIWvBchE">定位</td><td data-page-node-id="WptZE3QQoJAZFiv5wFE5rB">通用自动化引擎</td><td data-page-node-id="14EtAkeQVl7EE0OxQGRGLy">仓库原生 CI/CD</td></tr>
+            <tr data-page-node-id="19HWXDAeO9ligJKW34KqrC"><td data-page-node-id="iz8zpqycYqud5gPJC2ZLq7">配置方式</td><td data-page-node-id="14YPGgBK41LOt8nIhqJyRt">Jenkinsfile（Groovy）+ Web UI</td><td data-page-node-id="PH0mqtmuDkB5JoFyvpNf6E">.gitlab-ci.yml（YAML）</td></tr>
+            <tr data-page-node-id="2SFyEVxfKyuNwhvE3If7qd"><td data-page-node-id="6ImkEUdNUTQCwArhCGnmiY">安装运维</td><td data-page-node-id="892ULk3WiDwyDslKLpSFNy">需自部署、管插件、做备份与高可用</td><td data-page-node-id="LnEwDQJTpJ22x1LizGRy6B">GitLab 自带，只需部署 Runner</td></tr>
+            <tr data-page-node-id="2q0tdPIjcJTrxwVynRyHUK"><td data-page-node-id="xHOhY6QlM06Nm7p4bSCno4">生态插件</td><td data-page-node-id="SbZrmHFLoC3itUrO7y1DHO">1800+，几乎无所不能</td><td data-page-node-id="16FHYpjcuvjFwCrLzVqntH">依赖官方能力 + 少量集成</td></tr>
+            <tr data-page-node-id="x2dSsTSxKaEDx6hQpiHGfi"><td data-page-node-id="slMeuHfmSXaYZOIAyhS4zu">学习成本</td><td data-page-node-id="3blMoRB2ECU3sX2H75uxpC">较高</td><td data-page-node-id="TEHiQ9f8THBFuQosxYpIJE">较低</td></tr>
+            <tr data-page-node-id="4CiihMyZpF9daxBmC3j3T9"><td data-page-node-id="zUOKD9bus5ePVJWtE4ZuFQ">代码平台耦合</td><td data-page-node-id="lNouP3wnXXFXbyX8IMi4j3">无耦合，任意 Git / SVN</td><td data-page-node-id="xkoC3LSSxOqLR3SFZXz3wG">绑定 GitLab</td></tr>
+            <tr data-page-node-id="WRjlL9dZbSZsBOVsvA4byj"><td data-page-node-id="OKEaZPAaoIrVfqaOHPQy5K">可视化</td><td data-page-node-id="sa670eH172nwq6BcDuRnqt">Blue Ocean、各类 Dashboard 插件</td><td data-page-node-id="Eo8jnayBJqIkvQWBb4LSnH">内置流水线图、MR 集成视图</td></tr>
+            <tr data-page-node-id="F0G19jykvvAn3oLuGaRoIr"><td data-page-node-id="C2cGy8esonNW7wHvjeGIbn">权限体系</td><td data-page-node-id="T0sQFMdqFb8j8kaSIDiEye">需配置 Matrix / Role Strategy</td><td data-page-node-id="PRVKwujkmMEaT6vguNS0dz">复用 GitLab 项目角色</td></tr>
+            <tr data-page-node-id="1aLJiTEjFWsHRKFnbNawzv"><td data-page-node-id="xRsfQM2qPwtYcVeRjbhUUV">适用规模</td><td data-page-node-id="ydIgVkQRrNp3z8p4gEzzBW">中大型、多技术栈、复杂流程</td><td data-page-node-id="HXOmKmjfbqj2pC3r6Jiyz9">小中型、追求快速落地</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip" data-page-node-id="0rWj6p9ymngdgUrD3wJp5X">
+        <b data-page-node-id="E4i53QvCUC7KWemzgxjUi3">选型建议：</b>
+        ① 代码就托管在 GitLab、团队规模不大、希望尽快跑起来 → 选 <b data-page-node-id="AjskH4vvexGlkq59xGHOgm">GitLab CI/CD</b>；
+        ② 多代码平台并存、有复杂的跨系统编排与人工审批、已有大量 Jenkins 资产 → 选 <b data-page-node-id="JwTJVGY1z2ESyjjKWU83bi">Jenkins</b>；
+        ③ 现实中两者也常共存：GitLab CI 负责构建测试与镜像，Jenkins 负责跨环境发布编排。
+      </div>
+    </section>
+
+    <!-- 6 Jenkins 操作手册 -->
+    <section id="ops-jenkins" data-page-node-id="C1SvYjMyPR8lEGb2zdh1Pm">
+      <h2 data-page-node-id="aiquqQSbzXCCtTZLp4VjHt"><span class="num" data-page-node-id="XahPpPWmVEa0VmtTC3cJwO">6</span>Jenkins 操作手册</h2>
+      <p class="lead" data-page-node-id="WGhLLfatR5b1AkqwtDNB3b">下面以 Linux + Docker 部署为例，从零搭建一套可跑 Java / Node 项目的流水线。</p>
+
+      <h3 id="j-install" class="j" data-page-node-id="G17ZhSz4hiUJQAZJ1prH0X">6.1 安装与初始化</h3>
+      <h4 data-page-node-id="zgh7Onu2VGLTd9DzEcKcxZ">方式 A：Docker 部署（推荐）</h4>
+      <div class="code-block" data-page-node-id="Klnn7e8Xz904GLc40xsnlX">
+        <div class="code-head" data-page-node-id="dLUojhSZbqI05NosqlwLl3"><span data-page-node-id="iSwoMwzEPa8BqHcS1u8nak">bash · docker 部署 Jenkins LTS</span><button class="copy-btn" data-page-node-id="dMyZjxdCsC9oHV3lMkvBjI">复制</button></div>
+        <pre data-page-node-id="edmsuWIffdXjo2Ekvksbmg"><code data-lang="bash" data-page-node-id="qjyFD4EHO96AVKygBVdbGX"># 1. 创建持久化目录
+mkdir -p /opt/jenkins/home &amp;&amp; chown -R 1000:1000 /opt/jenkins/home
+
+# 2. 启动容器（映射 8080 控制台 / 50000 Agent 通信端口）
+docker run -d --name jenkins --restart=unless-stopped \
+  -p 8080:8080 -p 50000:50000 \
+  -v /opt/jenkins/home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /usr/bin/docker:/usr/bin/docker \
+  jenkins/jenkins:lts-jdk17
+
+# 3. 查看初始管理员密码
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></pre>
+      </div>
+
+      <h4 data-page-node-id="XBViXjWCKhYdFMnZ7Ad522">方式 B：裸机 war 包部署</h4>
+      <div class="code-block" data-page-node-id="UOyI7LqOw27ZqYh7lCtyrq">
+        <div class="code-head" data-page-node-id="xKKbwq2yCBqhnrPp4WUBTE"><span data-page-node-id="v0qyLjJXTRdLcxUkK1kvdt">bash · 直接运行 war 包</span><button class="copy-btn" data-page-node-id="cfBnDGeH0o1H9QQfL6xnQz">复制</button></div>
+        <pre data-page-node-id="LGULaPqWOcgdQsFKYZIqgM"><code data-lang="bash" data-page-node-id="x0dXrrSA3eWnSoGPMHsjfN"># 需先安装 JDK 17
+java -jar jenkins.war --httpPort=8080
+# 生产建议配置为 systemd 服务，设置 JENKINS_HOME 与堆内存参数</code></pre>
+      </div>
+
+      <ol class="steps" data-page-node-id="hPhtR3YIlfH49907fU4M8f">
+        <li data-page-node-id="HUOqtkUsdwnSMnI8B6WyZ4">浏览器访问 <code data-page-node-id="8AoguQzUpC41e0W9ltGD6m">http://&lt;服务器IP&gt;:8080</code>，输入上一步获取的初始密码。</li>
+        <li data-page-node-id="PynVUKosy0VANpHIHvlhsk">插件安装页选择 <b data-page-node-id="EqNXJCaE5fw6MkDh4HgIJh">「安装推荐的插件」</b>（Git、Pipeline、Credentials、Workspace Cleanup 等）。</li>
+        <li data-page-node-id="TdZmnwRRYQeQIbRjDlYuWy">创建管理员账号，确认 Jenkins URL（后续 Git Webhook 会用到，务必填对）。</li>
+        <li data-page-node-id="BXqmr96wfyU1fFwrOxA04H">进入 <b data-page-node-id="Zt66T4H83eDdo1HvyS7mCq">Manage Jenkins → System</b>，核对 Jenkins Location 中的 URL；进入 <b data-page-node-id="VoW3CVjQmT02z6aV22w2M8">Tools</b> 配置 JDK / Git / Maven / NodeJS 路径。</li>
+      </ol>
+      <div class="note" data-page-node-id="DGeQ4N17vOoBDN90VDjznV"><b data-page-node-id="yINs8UXvSV7epBZy5tDdRm">常用插件清单：</b>Pipeline、Git、Credentials Binding、SSH Agent、Docker Pipeline、Kubernetes、Blue Ocean、Generic Webhook Trigger、DingTalk / 企业微信通知、SonarQube Scanner。</div>
+
+      <h3 id="j-cred" class="j" data-page-node-id="yMrHvxs79HCYTLAYzE231u">6.2 凭据与工具配置</h3>
+      <ol class="steps" data-page-node-id="KgWho1BNuSPX4ndnBd0LHp">
+        <li data-page-node-id="MwwkNO1oAI3OY7rBYVcanb"><b data-page-node-id="4Mh3Fn2LIcR1k03H2rruHZ">Manage Jenkins → Credentials → System → Global credentials → Add Credentials</b>。</li>
+        <li data-page-node-id="5VdmpmLcNAODqtLrqBZVxx">拉 Git 代码：类型选 <code data-page-node-id="79c5CxErG5yB65orfIrsWK">SSH Username with private key</code>，粘贴私钥；或 <code data-page-node-id="KGiHMj0xrFD91o2YpAqhev">Username with password</code>（GitLab 可用 Access Token 作为密码）。</li>
+        <li data-page-node-id="Yy1rTG1f7a9OZmfx6T4dru">推镜像 / 部署：类型选 <code data-page-node-id="PUeJCukypZXFRCIzOjpyNb">Secret text</code> 存 Token，或 <code data-page-node-id="1rFdeZWDvRpKcMBY5uLv9Q">Secret file</code> 上传 Kubeconfig。</li>
+        <li data-page-node-id="4EHuHDCyLPGDsjbbMANObu">记住填写的 <b data-page-node-id="BtN5GBUSfdxE0WqDT3GoyK">ID</b>（如 <code data-page-node-id="3F0mWjdVQIrPW49uJ2Fi0V">gitlab-ssh-key</code>），Jenkinsfile 中通过 <code data-page-node-id="4aQky7jWhHmTGnZG49hiZC">credentialsId</code> 引用。</li>
+      </ol>
+      <div class="code-block" data-page-node-id="DAwIfXBmg4Hx9z2RUAeSDi">
+        <div class="code-head" data-page-node-id="wgjKCEjW4KBFWFBWbLiISQ"><span data-page-node-id="8drdhegLIg144wbEOzyn1o">groovy · 在流水线中使用凭据（不落明文）</span><button class="copy-btn" data-page-node-id="IUBqs7OhECEWfcWLp3eLqF">复制</button></div>
+        <pre data-page-node-id="3OL9CDe94pmmDoGDW2nnkj"><code data-lang="groovy" data-page-node-id="eXYthUthw60rMueyDp3DII">environment {
+  REGISTRY_CRED = credentials('harbor-robot-account')   // 自动拆分为 _USR / _PSW
+  KUBECONFIG    = credentials('prod-kubeconfig')         // Secret file，映射为临时文件路径
+}
+steps {
+  sh 'echo $REGISTRY_CRED_PSW | docker login registry.example.com -u $REGISTRY_CRED_USR --password-stdin'
+}</code></pre>
+      </div>
+
+      <h3 id="j-pipeline" class="j" data-page-node-id="30UGBAgiAOfr5oVFuu817i">6.3 创建第一个 Pipeline</h3>
+      <ol class="steps" data-page-node-id="jC3O4E59AvYq09LyRo05Cx">
+        <li data-page-node-id="e61BBx7hXM7CQHUEAQRIcb">首页 → <b data-page-node-id="fhaAVmYLoPSAUaRXV7nXt1">新建任务（New Item）</b> → 输入名称 → 选择 <b data-page-node-id="wfan18QFpuDXYYwTRa1665">流水线（Pipeline）</b> → 确定。</li>
+        <li data-page-node-id="eCWUN7CUIX19C22H6Ivm8P">在 <b data-page-node-id="tbE5MJEVYzAvk0mVdwCZPB">Pipeline</b> 区块，Definition 选择 <b data-page-node-id="vGwiFf8GuiZJHlIQrotas4">Pipeline script from SCM</b>，SCM 选 Git。</li>
+        <li data-page-node-id="Z3VRJd5MWp0K68PLPWfG03">填写仓库 URL、选择上一步创建的凭据、指定分支（如 <code data-page-node-id="j0pDQUhCssTZRgvSMdRZWP">*/main</code>）。</li>
+        <li data-page-node-id="gTk7ImxDShgC2Pt3etLbHy">Script Path 填 <code data-page-node-id="wNfXJpPhBbQsEtvCkd2uPd">Jenkinsfile</code>（默认即可，即读取仓库根目录的 Jenkinsfile）。</li>
+        <li data-page-node-id="GV1nGe8jW5eZvI8GbsrXAD">保存后点击 <b data-page-node-id="Na50fPxL9rnYGydcpqhZ26">立即构建（Build Now）</b>，在 Stage View / Blue Ocean 中查看执行过程与日志。</li>
+      </ol>
+      <div class="tip" data-page-node-id="gKDoqRDvUFKJTjPjxXGK5Q"><b data-page-node-id="bmiGjuplfkgPkHPXaXNWcF">为什么要用 Jenkinsfile？</b>把流水线定义写进代码仓库后，它就能被 Code Review、被版本回滚、随分支走（不同分支可有不同的发布逻辑），这是 Jenkins 使用方式的核心最佳实践。</div>
+
+      <h3 id="j-jenkinsfile" class="j" data-page-node-id="ca619BafhZqTacw6P4WEAD">6.4 Jenkinsfile 实战（可直接改造使用）</h3>
+      <div class="code-block" data-page-node-id="FBTD0CDdSJ0FDnXHp48Gzr">
+        <div class="code-head" data-page-node-id="DNsC3yUHT254nQhBuvfB6e"><span data-page-node-id="vG9LR3XjKb1YWmEG5qDXlT">Jenkinsfile · Declarative Pipeline 完整示例</span><button class="copy-btn" data-page-node-id="1IyUEa7FR6AqzpDPAN7Lml">复制</button></div>
+        <pre data-page-node-id="TKDLRb2Jd5zoHzN9o4oZlN"><code data-lang="groovy" data-page-node-id="EazEDNLKq9mm4ixkTFWS8R">pipeline {
+    agent any                                  // 也可：agent { label 'docker' }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '30'))   // 只保留最近 30 次构建
+        disableConcurrentBuilds()                          // 禁止并发，避免部署冲突
+    }
+
+    environment {
+        REGISTRY   = 'registry.example.com'
+        IMAGE      = 'demo/web-app'
+        IMAGE_TAG  = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7)}"
+    }
+
+    stages {
+        stage('1. 检出代码') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'git@gitlab.example.com:demo/web-app.git',
+                        credentialsId: 'gitlab-ssh-key'
+                    ]]])
+            }
+        }
+
+        stage('2. 依赖安装与构建') {
+            steps {
+                sh 'node -v &amp;&amp; npm -v'
+                sh 'npm ci --prefer-offline --no-audit'
+                sh 'npm run build'
+            }
+        }
+
+        stage('3. 单元测试与质量门禁') {
+            steps {
+                sh 'npm test -- --coverage'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'reports/junit.xml'
+                    archiveArtifacts artifacts: 'dist/**', fingerprint: true
+                }
+            }
+        }
+
+        stage('4. 构建并推送镜像') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                    docker build -t $REGISTRY/$IMAGE:$IMAGE_TAG .
+                    docker push  $REGISTRY/$IMAGE:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('5. 部署到生产') {
+            when { branch 'main' }
+            steps {
+                input message: '确认发布到生产环境？', ok: '发布'   // 人工审批卡点
+                sh 'kubectl -n prod set image deploy/web-app web-app=$REGISTRY/$IMAGE:$IMAGE_TAG'
+                sh 'kubectl -n prod rollout status deploy/web-app --timeout=180s'
+            }
+        }
+    }
+
+    post {
+        success { echo '✅ 流水线执行成功' }
+        failure { echo '❌ 流水线失败，请查看 Console Output' }
+        always  { cleanWs() }                  // 清理工作区，防止磁盘膨胀
+    }
+}</code></pre>
+      </div>
+      <div class="warn-note" data-page-node-id="7ZnKOg4OSML5CMfncKCHTB"><b data-page-node-id="c3mDAL7Gvlvzw8d6CJVyLR">注意：</b><code data-page-node-id="AHDrgbk3sB2XnBnx7RCuaB">input</code> 会阻塞构建并占用 executor，长时间等待建议改用 <code data-page-node-id="aTkszQoenyMkTrHV12mZXS">timeout</code> 包裹，或放到独立的部署 Job 中。</div>
+
+      <h3 id="j-trigger" class="j" data-page-node-id="qT4EWGd45eN8IOc525oHts">6.5 触发方式与通知</h3>
+      <div class="table-wrap" data-page-node-id="iWdBrBBLg3tijfUeqRdljM">
+        <table data-page-node-id="XKaP2xFFkRZwIAICzAIEWy">
+          <thead data-page-node-id="r8r30JqlpuIpruBWcXIG8u"><tr data-page-node-id="Uz1cEi6JiZg3losvFoEmmN"><th data-page-node-id="vmukyPEYbR6km5CqQUjojj">触发方式</th><th data-page-node-id="htetEDdT8lxDqkrZ4dTGGB">配置位置</th><th data-page-node-id="aUYT0kpVn7jzJcRItBXpZj">说明</th></tr></thead>
+          <tbody data-page-node-id="Gpub6L9j5rYDvAd1CQDP0z">
+            <tr data-page-node-id="zE58w4OM0XfUuacADjj8ZD"><td data-page-node-id="f9GWbojFgC7268i7HSO7Cq">GitLab Webhook</td><td data-page-node-id="BZzt8DWV1W2Yo6j7CCFqo2">Job → 构建触发器 → Build when a change is pushed to GitLab</td><td data-page-node-id="HfvO8PtcmeVyJN3SxoVFXW">最常用。GitLab 项目 Settings → Webhooks 填 <code data-page-node-id="7iPiJhEzXiu5nHQiNFf6Bo">http://jenkins/project/&lt;JobName&gt;</code> 并生成 Secret Token。</td></tr>
+            <tr data-page-node-id="YK1pXwr9BbjkUgeELJ9xmW"><td data-page-node-id="oqCGtWvUqPdQQN39Cl6X0z">定时构建</td><td data-page-node-id="XAE6v6vIvooUI17rmdngkq">Build periodically</td><td data-page-node-id="QHY9efPy7vijbXthHZUEgE">Cron 语法，如 <code data-page-node-id="sOiZxR9hWchrmuzrzlJOPP">H 2 * * *</code> 表示每天凌晨 2 点左右（H 为散列，避免惊群）。</td></tr>
+            <tr data-page-node-id="uLHJGD7vznCnMui5PbGVz0"><td data-page-node-id="TY5AZraGTLoEfMaTgZQs5I">SCM 轮询</td><td data-page-node-id="atvj69qAxf3jy6XNDDah67">Poll SCM</td><td data-page-node-id="9tnBTDPTh9InMMJwiUNnUl"><code data-page-node-id="cKVz3MSZnmAVso6TlEZXEt">H/5 * * * *</code> 每 5 分钟检查一次；无公网 IP 时的兜底方案。</td></tr>
+            <tr data-page-node-id="8AdfTMA4bdGrpZTI07IRiK"><td data-page-node-id="Pdh6zKFzB3JErklozDnO4d">远程 API 触发</td><td data-page-node-id="mdMBd64bdc7SwDXqYFmNJy">Trigger builds remotely</td><td data-page-node-id="xP9ju02l3kvrQcvRcum0Hi">带 Token 访问 URL，便于被外部系统（如发布平台）调用。</td></tr>
+            <tr data-page-node-id="SCEGCntmfZnohqITIljjSx"><td data-page-node-id="N49YVSR9My1koimBBFUr8V">上游下游联动</td><td data-page-node-id="ECscy2T4dAF1zNyGCXX78I">build job: 'xxx'</td><td data-page-node-id="XuNTdV5owDB9UlmO5I7yGW">在 Jenkinsfile 中触发另一个 Job，实现跨项目编排。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="j-ops" class="j" data-page-node-id="4MdSRAdvf7enO13dqB2Lv1">6.6 日常运维</h3>
+      <div class="code-block" data-page-node-id="DvSRcSiO3wcesm08THA2M1">
+        <div class="code-head" data-page-node-id="ht1bm0a5UsbCIPnpiYElLb"><span data-page-node-id="GaRsixv6dfTCklIPUx3nHn">bash · 备份 / 升级 / 排障常用命令</span><button class="copy-btn" data-page-node-id="Y5PMaOVyHwtxlBWJAWC3TJ">复制</button></div>
+        <pre data-page-node-id="7uIjk0kaKekyoRt26Wra8Q"><code data-lang="bash" data-page-node-id="3nHqrqVUFnWjaVdVCmkzBu"># 备份（JENKINS_HOME 是全部配置与历史的所在）
+tar -czf jenkins-backup-$(date +%F).tar.gz -C /opt/jenkins home
+
+# 升级：替换 war 包或拉取新镜像后重启
+docker pull jenkins/jenkins:lts-jdk17 &amp;&amp; docker restart jenkins
+
+# 查看实时日志
+docker logs -f jenkins | tail -100
+
+# 磁盘清理（构建历史过大时）
+# Manage Jenkins → System → 丢弃旧的构建（或 Job 内 buildDiscarder）</code></pre>
+      </div>
+      <ul data-page-node-id="V23YKj5jGZBJqL0u2Sm2Ja">
+        <li data-page-node-id="hMJT44lKUXM6X8BtC9VxYk"><b data-page-node-id="VtfZlp4tGZk5R48LA8JmMe">权限：</b>安装 Role-based Authorization Strategy 插件，按项目前缀给开发只读、给运维发布权限。</li>
+        <li data-page-node-id="dF23bmt1vApJhCiwPFEPpH"><b data-page-node-id="s4TjhN4ETfMgXA3ZmzC2Od">安全：</b>关闭匿名访问；Agent 通过独立账号接入；不要在 Jenkinsfile 里写明文密码。</li>
+        <li data-page-node-id="FqohZtAHsckidSmlEp1y2I"><b data-page-node-id="30mvglCGxJSWgJ3lh4WKsu">性能：</b>Controller 只做调度，构建全部交给 Agent；Kubernetes 插件可让 Agent 按需创建、用完即毁。</li>
+      </ul>
+    </section>
+
+    <!-- 7 GitLab 操作手册 -->
+    <section id="ops-gitlab" data-page-node-id="8RJv6T3xlMz4Hhc8efEYkT">
+      <h2 data-page-node-id="qPDHjAX7wqAhoF3EdTyRqF"><span class="num" data-page-node-id="BRyXaQHdNOBW2OjwgJFRKv">7</span>GitLab CI/CD 操作手册</h2>
+      <p class="lead" data-page-node-id="sRC5yZPVTK9ShGKnlWj9we">核心只需两步：装好 Runner，写好 <code data-page-node-id="PwCCL3c1GHE0RRZEF6d1lL">.gitlab-ci.yml</code>。</p>
+
+      <h3 id="g-runner" class="g" data-page-node-id="LchC0TArjrjgHeIFOS9h9D">7.1 Runner 安装与注册</h3>
+      <div class="code-block" data-page-node-id="P4fgb5xffbFDE9jIUSEHlO">
+        <div class="code-head" data-page-node-id="BrYn8G3j8XpekQ26CH2OWx"><span data-page-node-id="LBrTzfEe1KvSeX1ib3QYAM">bash · Docker 方式部署 GitLab Runner</span><button class="copy-btn" data-page-node-id="ESO14c84eFeIFn68DXNm3b">复制</button></div>
+        <pre data-page-node-id="X7s1yW1pYHJALkHdB2wLjs"><code data-lang="bash" data-page-node-id="qn4vzSZEJhdltkAc1D3VXU"># 1. 启动 Runner 容器
+docker run -d --name gitlab-runner --restart always \
+  -v /srv/gitlab-runner/config:/etc/gitlab-runner \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  gitlab/gitlab-runner:latest
+
+# 2. 注册 Runner（token 从 GitLab 项目 → Settings → CI/CD → Runners 获取）
+docker exec -it gitlab-runner gitlab-runner register \
+  --non-interactive \
+  --url "https://gitlab.example.com/" \
+  --token "glrt-xxxxxxxxxxxxxxxxxxxx" \
+  --executor "docker" \
+  --docker-image "node:20-alpine" \
+  --description "docker-runner-01" \
+  --tag-list "docker,node" \
+  --run-untagged="false" \
+  --locked="false"
+
+# 3. 检查状态
+docker exec -it gitlab-runner gitlab-runner list
+docker exec -it gitlab-runner gitlab-runner verify</code></pre>
+      </div>
+      <div class="note" data-page-node-id="rWeyv2tUTr226kC9bMN6Qe">
+        <b data-page-node-id="wy3acAjnc3JSN7xMrhBE3k">executor 怎么选：</b>
+        <code data-page-node-id="TmVqlV7jzIVeq7cUWFUgvJ">shell</code> 直接跑在宿主机，简单但要自己管环境依赖；
+        <code data-page-node-id="e9EFQkUembyhSRIAMXDGKp">docker</code> 每个 Job 独立容器，隔离性好，最常用；
+        <code data-page-node-id="SI7kjItjfRLqvxyXGlFAh8">kubernetes</code> 动态创建 Pod，适合大规模并发。
+        <br data-page-node-id="zWFgmoUarGEiv53FX1yK3H"><b data-page-node-id="NfWj9836DJZbdu6bOc3kNG">关键参数：</b><code data-page-node-id="B5EoHQ9nCxJmRFmTB7IxHU">--tag-list</code> 给 Runner 打标签，Job 用 <code data-page-node-id="y0cOok9ECBdsNBdCErkzOG">tags:</code> 匹配；<code data-page-node-id="vNgU1097kNh36TBh9A0VHg">--run-untagged=false</code> 表示只接带标签的 Job。
+      </div>
+
+      <h3 id="g-yml" class="g" data-page-node-id="iliJotRhLrQgMGv0IqExWg">7.2 .gitlab-ci.yml 实战</h3>
+      <div class="code-block" data-page-node-id="GDo4wp8nDkmzB7AYvgiica">
+        <div class="code-head" data-page-node-id="lMZTHk1qkVA1BxNk2yBoGA"><span data-page-node-id="0nwCwcXGb3XRzawgn9ulDV">.gitlab-ci.yml · 完整示例（Node 项目）</span><button class="copy-btn" data-page-node-id="uNbYkoiFLNapyJCGsPy6f1">复制</button></div>
+        <pre data-page-node-id="FIlJM8ZNUa7pVOKk5VgGJN"><code data-lang="yaml" data-page-node-id="LvyA4XN7Qaf1mwPGUEg9HS"># 定义阶段执行顺序：build → test → package → deploy
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+# 全局变量
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  LATEST:    $CI_REGISTRY_IMAGE:latest
+
+# 所有 Job 的默认配置
+default:
+  image: node:20-alpine
+  tags:
+    - docker
+  before_script:
+    - npm ci --prefer-offline --no-audit
+  cache:
+    key:
+      files:
+        - package-lock.json        # 锁文件变化才重建缓存
+    paths:
+      - node_modules/
+    policy: pull
+
+# ---------- 构建 ----------
+build:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week              # 产物保留 1 周
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+    policy: pull-push              # 首个 Job 负责写缓存
+
+# ---------- 测试 ----------
+unit-test:
+  stage: test
+  script:
+    - npm test -- --coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    when: always
+    reports:
+      junit: reports/junit.xml     # MR 页面直接展示测试结果
+
+lint:
+  stage: test
+  script:
+    - npm run lint
+  allow_failure: true              # 暂不阻断流水线
+
+# ---------- 打包镜像 ----------
+package:image:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind               # Docker in Docker
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG -t $LATEST .
+    - docker push $IMAGE_TAG
+    - docker push $LATEST
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'
+
+# ---------- 部署预发 ----------
+deploy:staging:
+  stage: deploy
+  image: alpine:3.19
+  before_script: []
+  script:
+    - apk add --no-cache openssh-client
+    - ssh -o StrictHostKeyChecking=no $SSH_USER@$STAGING_HOST "docker pull $IMAGE_TAG &amp;&amp; docker restart web-app"
+  environment:
+    name: staging
+    url: https://staging.example.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ---------- 部署生产（手动 + 仅打标签） ----------
+deploy:production:
+  stage: deploy
+  image: alpine:3.19
+  before_script: []
+  script:
+    - echo "部署 $IMAGE_TAG 到生产环境"
+  environment:
+    name: production
+    url: https://www.example.com
+  when: manual                      # 需人工点击触发
+  rules:
+    - if: '$CI_COMMIT_TAG'          # 仅在打 tag 时可用</code></pre>
+      </div>
+      <div class="tip" data-page-node-id="PH5re3N1o07qcMnES23JoD"><b data-page-node-id="SeQw2s4a3kFpN7YW2kUPbs">常用预定义变量：</b><code data-page-node-id="BBVsdGPek529q5JLLnBnyg">CI_COMMIT_SHA</code>（完整 commit）、<code data-page-node-id="omOXJxfozKcc8Co4RDDH58">CI_COMMIT_SHORT_SHA</code>（短 SHA）、<code data-page-node-id="qVNfSfO1IY0DR6Wae4fFPB">CI_COMMIT_BRANCH</code>、<code data-page-node-id="a8g9pZbbRmx8QVDikLtfh3">CI_COMMIT_TAG</code>、<code data-page-node-id="uYpIkUkQEOvXd5U08YNg5T">CI_PIPELINE_ID</code>、<code data-page-node-id="d4UqNgbBRPF9BfL140QNJW">CI_PROJECT_DIR</code>、<code data-page-node-id="DjXnrGbqEGr9rh0griAJPB">CI_REGISTRY_IMAGE</code>、<code data-page-node-id="mVdoouOyymyB3j9pfmWoBa">CI_JOB_TOKEN</code>。</div>
+
+      <h3 id="g-var" class="g" data-page-node-id="70aVapwJiVzI0nWU7UTR6r">7.3 变量与密钥管理</h3>
+      <ol class="steps" data-page-node-id="ZFgpYorLoAAXQsR7T3lyW1">
+        <li data-page-node-id="aCkMdNZoUexvphaVge0oyT">进入项目 <b data-page-node-id="DCWPmhs5R65MxGMyJmJsPz">Settings → CI/CD → Variables → Add variable</b>。</li>
+        <li data-page-node-id="i5siSDH4gHBf4zGE99Xnbq">填写 Key / Value（如 <code data-page-node-id="Fpzq60iErDs8ZAgyFJ9ZZQ">SSH_PRIVATE_KEY</code>、<code data-page-node-id="HcIIK4ah0hHIfpP92OmG0h">STAGING_HOST</code>、<code data-page-node-id="veGmIBs8XDc1nQxkaegtge">KUBE_CONFIG</code>）。</li>
+        <li data-page-node-id="ntsl9UKZx19Ilqwcgi64X9">类型选 <code data-page-node-id="cL4YDtQSdaAuh0GeUHgUug">Variable</code>（普通）或 <code data-page-node-id="DwTGbd9dg6HEAHHTNJ0u11">File</code>（内容是文件，如 kubeconfig，会落成临时文件路径）。</li>
+        <li data-page-node-id="lsRQoDldjuNjRPeHZPixio">勾选 <b data-page-node-id="N7MM13JXjTZS7lYx9ReZsU">Protect variable</b>：仅受保护分支 / 标签可见；勾选 <b data-page-node-id="t8IPvwAYdNBSNsSsMGtG6k">Mask variable</b>：日志中自动打码。</li>
+        <li data-page-node-id="jJN4zTh25Etz8zumWf1q9j">环境变量建议 <b data-page-node-id="35oD9lCd8pilDU4zkJWF61">Environment scope</b> 按环境隔离（如 <code data-page-node-id="3OACW9HIF7ES1dLw2QnESd">production</code> 单独一套密钥）。</li>
+      </ol>
+      <div class="warn-note" data-page-node-id="FlofaMA4pn5irh6EeVIiKi"><b data-page-node-id="plQEdVOqjtpIcGPubsQNjg">安全提醒：</b>Masked 变量需满足格式要求（单行、无空格、至少 8 位）才能真正脱敏；含换行或特殊字符的密钥（如私钥）建议用 <b data-page-node-id="nHxKBqA5WMCzbnMryzCeO0">File 类型</b>，避免被日志打印。</div>
+
+      <h3 id="g-env" class="g" data-page-node-id="owI9W1PA6sE7HcyrHdD1mt">7.4 环境、发布与回滚</h3>
+      <ul data-page-node-id="p4Tp0QRl862FJKrJvCsg5c">
+        <li data-page-node-id="TFYC8Mo5RvJJkktsPyNj6s"><b data-page-node-id="llD3eWqQcVCJXyhEPUNv0X">查看部署记录：</b>项目 → <b data-page-node-id="XvVlCng6a7Ay6Iqo2cquF7">Operate → Environments</b>，能看到每次部署的 commit、job 与耗时。</li>
+        <li data-page-node-id="MjmNRCjDhxJEVqEbYbYB8G"><b data-page-node-id="QDbTZxQIBTC6xEBofe4iUN">一键回滚：</b>在 Environments 页面找到历史部署记录，点击 <b data-page-node-id="uNR9jVx7jD3VGSkCd9RhzP">Re-deploy</b> 即可重跑当时的 Job。</li>
+        <li data-page-node-id="hfzGN3hqbdmP5T9epwSEmP"><b data-page-node-id="LDggNTzSvSZEKtU43rhyOd">停止环境：</b>配置 <code data-page-node-id="EFV7NRxjrtZTwa8fgqoZA9">environment: on_stop:</code> 指向一个 stop job，实现环境下线自动化。</li>
+        <li data-page-node-id="hwBwEpS3ZCeAATN6ERfBxs"><b data-page-node-id="sfqyXCZNmNwHwdw7Rc0OqG">发布版本：</b>配合 <code data-page-node-id="z5GcguTrICpK3EDjfD8xNu">release:</code> 关键字可自动创建 GitLab Release 与变更日志。</li>
+      </ul>
+      <div class="code-block" data-page-node-id="nLCvIVp6HKFceD0ZBR2hvD">
+        <div class="code-head" data-page-node-id="VCGNwz5Tkt1aERlrEmpsSG"><span data-page-node-id="GI19tYqP29DHLxx3LeeLOM">yaml · 带停止（回滚/下线）动作的环境</span><button class="copy-btn" data-page-node-id="OKqlBItafKzqG4WbDv052n">复制</button></div>
+        <pre data-page-node-id="E7fI0b2EbpztX1xalNGDCD"><code data-lang="yaml" data-page-node-id="Q7YMyHJeQrKZalTLSF05GN">deploy:review:
+  stage: deploy
+  script: ./deploy.sh review
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG
+    url: https://review-$CI_COMMIT_REF_SLUG.example.com
+    on_stop: stop:review
+  rules:
+    - if: '$CI_MERGE_REQUEST_ID'
+
+stop:review:
+  stage: deploy
+  script: ./deploy.sh stop
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG
+    action: stop
+  when: manual
+  rules:
+    - if: '$CI_MERGE_REQUEST_ID'
+      when: manual</code></pre>
+      </div>
+
+      <h3 id="g-adv" class="g" data-page-node-id="ED98a0dbfSOKro2emYTHd9">7.5 模板复用与进阶</h3>
+      <div class="code-block" data-page-node-id="Rd2Mt3PvMx0famIPHSrnV4">
+        <div class="code-head" data-page-node-id="Tfl3YrywG5qY3QQXkHK1Ek"><span data-page-node-id="0pFE2ZIrr3qRoB5Uim1AQJ">yaml · include 复用 + extends 继承 + 父子流水线</span><button class="copy-btn" data-page-node-id="lzUGkBiJht8hwOVHlLOsdc">复制</button></div>
+        <pre data-page-node-id="sj9FAwTWFU8TdqMKbVDOU9"><code data-lang="yaml" data-page-node-id="zrGYE81nFauxj3XIfV2GGq"># 1) 引用模板（本地文件 / 其他项目 / 远程 URL）
+include:
+  - project: 'devops/ci-templates'
+    ref: main
+    file:
+      - '/templates/node.yml'
+      - '/templates/docker.yml'
+
+# 2) 用 extends 继承公共配置，隐藏以 . 开头的模板 Job
+.node_base:
+  image: node:20-alpine
+  tags: [docker]
+  cache:
+    key: node-modules
+    paths: [node_modules/]
+
+test:
+  extends: .node_base
+  stage: test
+  script: npm test
+
+# 3) 触发下游（父子）流水线 / 多项目编排
+trigger:downstream:
+  stage: deploy
+  trigger:
+    project: devops/infra
+    branch: main
+    strategy: depend      # depend 表示等待下游完成并继承其状态
+
+# 4) 动态生成子流水线
+generate:jobs:
+  stage: build
+  script: node ./ci/generate-pipeline.js &gt; child-pipeline.yml
+  artifacts:
+    paths: [child-pipeline.yml]
+
+run:child:
+  stage: test
+  trigger:
+    include:
+      - artifact: child-pipeline.yml
+        job: generate:jobs</code></pre>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="best" data-page-node-id="4htdP2Sy4Av7g9JXl1pnvz">
+      <h2 data-page-node-id="9eLyQPoLhDyys7FgkZXYMr"><span class="num" data-page-node-id="2v5xgeFhM3OBlgA8SJxTFD">8</span>最佳实践清单</h2>
+      <div class="grid grid-2" data-page-node-id="X4wC1RT8ybwtbuKiD3leoj">
+        <div class="card" data-page-node-id="h6EI9nQRsjk6MBDpvBCCsp">
+          <h4 data-page-node-id="hIkUqSms8O5ULB157rIdnK">流水线设计</h4>
+          <ul data-page-node-id="irC5p7vS8N3IFA44DxtriJ">
+            <li data-page-node-id="7YSLrb6D6XbCdmsR8x85Es">配置即代码：Jenkinsfile / .gitlab-ci.yml 必须入库并参与 Review。</li>
+            <li data-page-node-id="d8BZNxJqXKAF6Th6Flw66G">先快后慢：lint、单测放前面快速失败，重活（E2E、打包）放后面。</li>
+            <li data-page-node-id="nKG6fxGgqZpSjDKWMIYBCF">构建产物只构建一次，测试与部署复用同一份产物/镜像，避免"每个环境重新编译"。</li>
+            <li data-page-node-id="fpDy8zEUqjZ4eGorwRj59Q">镜像标签用 commit SHA，禁止用 <code data-page-node-id="KXgLqZvJdDF9kaw8km3jfA">latest</code> 作为部署依据。</li>
+            <li data-page-node-id="AOB1BbWONI1Dsv8hLY7f7D">所有部署都要能回滚，并在流水线里验证 <code data-page-node-id="bqBosGyxlCVMBwgjtMGK3e">rollout status</code>。</li>
+          </ul>
+        </div>
+        <div class="card" data-page-node-id="zaydh1YFCMWzfI6grBLprl">
+          <h4 data-page-node-id="eRf3oFFkhqEzPiJUSzOLxO">性能与稳定</h4>
+          <ul data-page-node-id="fJxleAvbZ9Dw8PKNYbruQD">
+            <li data-page-node-id="frqUGVAksFevmXSSUqFIM1">缓存依赖（node_modules、.m2、Gradle），缓存 key 绑定锁文件。</li>
+            <li data-page-node-id="IsTBqNJ7Lh1jg8mVhpPhtk">设置超时与丢弃策略，避免僵尸任务占满 executor。</li>
+            <li data-page-node-id="P6EEI5NPsqT0HFwiWxykLv">生产部署禁止并发（Jenkins <code data-page-node-id="hM8OyqFW69rX2RB3Dop8LK">disableConcurrentBuilds</code> / GitLab <code data-page-node-id="usTir0mTa9KWBHnAEN62XS">resource_group</code>）。</li>
+            <li data-page-node-id="lDSbok1jF6EafitCBljWhu">敏感信息一律走凭据管理，禁止写进仓库或日志。</li>
+            <li data-page-node-id="F8rDtimSuw8HJ9W8CjQlsM">固定工具镜像版本，避免上游镜像变更导致"昨天还好好的"。</li>
+          </ul>
+        </div>
+        <div class="card" data-page-node-id="HU4rjL3QIFKmWZZblihUeK">
+          <h4 data-page-node-id="QDC6tqYwmN6KhVCS6IwMGY">质量门禁</h4>
+          <ul data-page-node-id="IHwoHdgiGhAtxEMGhrYnFw">
+            <li data-page-node-id="B3l89ZnYwjSnZVmm5o4f8s">覆盖率、lint、安全扫描结果回传到 MR，作为合并前置条件。</li>
+            <li data-page-node-id="gapFKZXW1wrmWzyma5MUBU">主干分支设为保护分支，禁止直接 push，必须走 MR + 流水线通过。</li>
+            <li data-page-node-id="FsY6fHxkNVxjSmMzzvap1J">分批灰度：pre → 小流量 → 全量，每步都有可观测指标。</li>
+          </ul>
+        </div>
+        <div class="card" data-page-node-id="XzXaUduTEV2SORF69SRdlg">
+          <h4 data-page-node-id="hJtuTfh06ZIzgiLUrRbWFj">可观测与协作</h4>
+          <ul data-page-node-id="3HaRsZ0uaEAV1vMs4Viev0">
+            <li data-page-node-id="3ssq1DdsiJywsIwR9wsy0z">失败通知直达责任人（企业微信 / 钉钉 / 邮件），附失败 Stage 与日志链接。</li>
+            <li data-page-node-id="DcMP6EHSoUdTnXhmG58lBf">关键指标：流水线成功率、平均时长、平均恢复时间（MTTR）。</li>
+            <li data-page-node-id="YTknVrbscYEpdQrgtvzcMD">定期清理构建历史与旧镜像，控制存储成本。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="trouble" data-page-node-id="YlJSPREyAs9AUhY58W47CT">
+      <h2 data-page-node-id="XkDFfKO3i8JgfxWUlxXrWv"><span class="num" data-page-node-id="IPzlYtlXCn5mjWqLQASVQz">9</span>常见问题排查</h2>
+      <div class="table-wrap" data-page-node-id="mMj9OHLhDgH0OXi6Q64F7D">
+        <table data-page-node-id="poAseLksRBgwJh3c3bKxzx">
+          <thead data-page-node-id="V1lMAHiYlDDsLDV46eHbut"><tr data-page-node-id="KUNonysA4aAS22EZSf61S2"><th data-page-node-id="duIyY6yVqNzvkg7Blpomix">现象</th><th data-page-node-id="6zRZZt6Da6za0HjRyXq0wQ">可能原因</th><th data-page-node-id="EA819vwFsGnni3wuJndEfD">处理方式</th></tr></thead>
+          <tbody data-page-node-id="dPOplRovf3UkbbXbZW4ceU">
+            <tr data-page-node-id="CtQ1L6HqYjM20TY8bas9r6"><td data-page-node-id="5SZ574LEi9JxDY70fH0DxT">Jenkins 拉不到代码</td><td data-page-node-id="DhHDko8S4A0zshClFlZMWe">凭据错误 / 公钥未加到 GitLab / 网络不通</td><td data-page-node-id="XwBFBCyEg1KMBdFLc4vsC7">在 Agent 上手动 <code data-page-node-id="pbru349K2QyuA2Y60Z8G70">git ls-remote</code> 验证；检查 credentialsId 是否匹配</td></tr>
+            <tr data-page-node-id="dttnv5O1nRN0s9vauezRyX"><td data-page-node-id="nlnTrjitFO3UlTV2egrZ7t">GitLab Webhook 401 / 403</td><td data-page-node-id="orlW33BPfXg1KKML4WkbNT">Secret Token 不一致或 Jenkins 未开启匿名读</td><td data-page-node-id="FWqpP4xxN5jkUOtALurN1S">重新生成 Token 并回填；或用 API Token 方式触发</td></tr>
+            <tr data-page-node-id="cahhLB7ugpA1SFUZ6cEEKB"><td data-page-node-id="nyR44FfrFrsKaeCifsrR9B">GitLab Job 一直 Pending</td><td data-page-node-id="jy8YL4j4lyBIvB2JyX5DkE">没有匹配的 Runner（tag 不匹配）或 Runner 离线</td><td data-page-node-id="5ZvsVJJENffrGqwzi5DBz5">检查 Job 的 tags 与 Runner 的 tag-list；执行 <code data-page-node-id="EizoeDthKWXvKdAYRPMpWb">gitlab-runner verify</code></td></tr>
+            <tr data-page-node-id="r9RFo81dU5wfz5863ki4WP"><td data-page-node-id="QJEnhmP8umCdHz1gc5N93B">docker: command not found</td><td data-page-node-id="y44r96jjkwxtKkkANXs1Dh">Agent / Runner 未挂载 docker 或没装客户端</td><td data-page-node-id="HLg6xd4DUQzzV0NfyMdJMl">挂载 <code data-page-node-id="AEhJHVVL9cUYEGoGqGrpwL">/var/run/docker.sock</code>；或使用 dind service</td></tr>
+            <tr data-page-node-id="fUbTQKARZZldQJGWPqjFXR"><td data-page-node-id="EeKBcre7xH9gmSd9LWbhMp">节点磁盘被撑爆</td><td data-page-node-id="iMHvtUUj9kCZbbiKtqWWbl">构建历史与 workspace 未清理</td><td data-page-node-id="rpdYCCgCq3Q56OBp87Yu95">Jenkins <code data-page-node-id="u95swIj8F1VAJS6UvNeZck">cleanWs()</code> + 丢弃旧构建；定期 <code data-page-node-id="XsCEHNcQDi8o89bVIyUQDJ">docker system prune</code></td></tr>
+            <tr data-page-node-id="2r2PHlZsCAGYcOXINYSmfk"><td data-page-node-id="0JBuSa9TrYJsHqXvrSl3Ax">部署后镜像未更新</td><td data-page-node-id="cCNnmahNpoHoYw9ZBCkYUA">用了 latest 标签、K8s 未触发拉取</td><td data-page-node-id="wmOiAQAdrOgBcsIODXD00O">改用 SHA 标签；配置 <code data-page-node-id="E2Y3gRSTHYpj4OLhhSbNje">imagePullPolicy: Always</code></td></tr>
+            <tr data-page-node-id="dhbJgHchVBqaN3Hyrh3yVW"><td data-page-node-id="XjcpfHxsPPHR0oUbElj8Vf">Groovy 脚本被沙箱拦截</td><td data-page-node-id="prg16EcC8KxzblmOC142bB">脚本审批未通过</td><td data-page-node-id="SOHBE9b5ng1pdxxmsGYJ0t">Manage Jenkins → In-process Script Approval 审批，或改用声明式语法</td></tr>
+            <tr data-page-node-id="dDeE9vGsBpyNsp3DPfT1MC"><td data-page-node-id="iCH7A0AO8qnurzZTEL6yit">流水线变量为空</td><td data-page-node-id="P9Nkpo9CAP93U7KHtWDnhM">作用域写错（environment vs. 脚本内变量）</td><td data-page-node-id="kWkHcGFjLrPBWGoLv9Cv63">Jenkins 用 <code data-page-node-id="gx7GNhMshr3uQxeu8jSQLJ">${env.XXX}</code>；GitLab 确认变量未被 Protect 限制</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="cheatsheet" data-page-node-id="393PFpo7P7KI7adks5augQ">
+      <h2 data-page-node-id="GGWrdxpxF32VFeQzlIoOss"><span class="num" data-page-node-id="cg3whAQYngOHeuWYgIikCG">10</span>命令速查表</h2>
+      <div class="grid grid-2" data-page-node-id="nuH0zCBjrFqDN9626iEo2s">
+        <div class="code-block" data-page-node-id="AQRGG6NWV9AmUitWWLmSrn">
+          <div class="code-head" data-page-node-id="hkfBjb7cYmIitHRzMM2wP3"><span data-page-node-id="mjGbHQFFNfeAZYnuzCCZCK">Jenkins 常用</span><button class="copy-btn" data-page-node-id="1SomXGqRVQ4XaVS6k4M5Sv">复制</button></div>
+          <pre data-page-node-id="tf0wBTmNANOzKEJgkTaoXU"><code data-lang="bash" data-page-node-id="0hsG00tLJZhbLIJrC46Ew8"># 初始密码
+cat /var/jenkins_home/secrets/initialAdminPassword
+# 重启（需登录后可加 safeRestart）
+docker restart jenkins
+# 离线安装插件：Manage Jenkins → Plugins → Advanced → Upload Plugin
+# 脚本命令行（批量运维）：Manage Jenkins → Script Console
+# 备份 = 打包 JENKINS_HOME</code></pre>
+        </div>
+        <div class="code-block" data-page-node-id="VAsHhHi8dbyfIJufwU9cJZ">
+          <div class="code-head" data-page-node-id="TFVCYvBkEpAGRsTKHONM6V"><span data-page-node-id="kEYB33rN4nMSJkSbqN1Kku">GitLab Runner 常用</span><button class="copy-btn" data-page-node-id="FrzWQi5NqmsOEwUuilCTi5">复制</button></div>
+          <pre data-page-node-id="nrLvegyPmyxmqFO6rAIayH"><code data-lang="bash" data-page-node-id="hFco5x5z0YIj9EYjf6TiQL">gitlab-runner list          # 列出已注册 Runner
+gitlab-runner verify        # 校验 Runner 连通性
+gitlab-runner unregister --token TOKEN
+gitlab-runner run --debug   # 前台调试模式运行
+# 校验 CI 配置语法：项目 → Build → Pipeline editor → Validate
+# 本地调试 .gitlab-ci.yml：gitlab-ci-local（社区工具）</code></pre>
+        </div>
+      </div>
+      <div class="note" data-page-node-id="pFdfMjZh4GURJ2r2KaXBVA">
+        <b data-page-node-id="6GDDp5s4IEK0erPm03wj88">落地路线建议：</b>第 1 周先用 GitLab CI（或 Jenkins 单 Job）跑通「提交即构建 + 单测」；第 2 周加镜像打包与预发自动部署；第 3 周补生产手动卡点、回滚与通知；第 4 周沉淀模板，让新项目 <code data-page-node-id="iCWwKZRvUdhHKUv7KiHFEw">include</code> 一行接入。
+      </div>
+    </section>
+
+    <footer data-page-node-id="2z74Er6ZbKZtBQ4AuXZT09">
+      本文档为 Jenkins 与 GitLab CI/CD 的入门介绍与实操手册。示例中的域名、镜像地址、凭据 ID 均为占位符，请替换为团队真实环境配置。
+    </footer>
+
+  </main>
+</div>
+
+<button class="top-btn" id="topBtn" data-page-node-id="CQHyq24oddL013BtDI2XPA">↑</button>
+
+<script>
+// ---------- 简易代码高亮 ----------
+(function () {
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function hl(code, lang) {
+    code = esc(code);
+    const spans = [];
+    const hide = s => { spans.push(s); return '\u0000' + (spans.length - 1) + '\u0000'; };
+    // 注释：仅匹配 # 开头 或 空白后的 // （避免误伤 http:// ）
+    code = code.replace(/(^|\s)(#[^\n]*)/gm, (m, a, b) => a + '<span class="tk-com">' + b + '</span>');
+    code = code.replace(/(^|\s)(\/\/[^\n]*)/gm, (m, a, b) => a + '<span class="tk-com">' + b + '</span>');
+    if (lang === 'yaml') {
+      code = code.replace(/^(\s*-?\s*)([\w.\/-]+)(?=:)/gm, (m, a, b) => a + '<span class="tk-key">' + b + '</span>');
+      code = code.replace(/(:\s*)([^\n#]+)/g, (m, a, b) => a + '<span class="tk-str">' + b + '</span>');
+    } else if (lang === 'groovy') {
+      const kw = ['pipeline','agent','options','environment','stages','stage','steps','post','when','branch','input','sh','echo','timeout','checkout','script','def','if','else','return'];
+      kw.forEach(k => { code = code.replace(new RegExp('\\b' + k + '\\b', 'g'), '<span class="tk-kw">' + k + '</span>'); });
+      code = code.replace(/('[^']*')/g, '<span class="tk-str">$1</span>');
+      code = code.replace(/\b(\d+)\b/g, '<span class="tk-num">$1</span>');
+    } else if (lang === 'bash') {
+      code = code.replace(/^\s*([a-z][\w-]*)/gm, (m, a) => '<span class="tk-cmd">' + a + '</span>');
+      code = code.replace(/('[^']*'|"[^"]*")/g, '<span class="tk-str">$1</span>');
+    }
+    return code;
+  }
+  document.querySelectorAll('pre code[data-lang]').forEach(el => {
+    const lang = el.getAttribute('data-lang');
+    el.innerHTML = hl(el.textContent, lang);
+  });
+})();
+
+// ---------- 复制按钮 ----------
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const code = btn.closest('.code-block').querySelector('code');
+    const text = code.textContent;
+    const done = () => { const o = btn.textContent; btn.textContent = '已复制'; setTimeout(() => btn.textContent = o, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
+    else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); done();
+    }
+  });
+});
+
+// ---------- 目录高亮 ----------
+(function () {
+  const links = [...document.querySelectorAll('.side-nav a')];
+  const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = links.find(l => l.getAttribute('href') === '#' + e.target.id);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+})();
+
+// ---------- 回到顶部 ----------
+const topBtn = document.getElementById('topBtn');
+window.addEventListener('scroll', () => {
+  topBtn.style.display = window.scrollY > 500 ? 'block' : 'none';
+});
+topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+</script>
+</body>
+</html>
