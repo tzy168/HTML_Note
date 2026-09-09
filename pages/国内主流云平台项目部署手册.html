@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="gO86sMoE7bO2Wf6NVuubJF">
+<head data-page-node-id="q4pS5qKycZrZbAaJhbtpUM">
+<meta charset="UTF-8" data-page-node-id="4RNc1NPKJcxvI2TU0vxaLJ">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="JXr5jKaqRUQ4kj4TxRSg95">
+<title>国内主流云平台项目部署手册</title>
+<style>
+:root{
+  --bg:#ffffff;
+  --bg-soft:#f7f8fa;
+  --panel:#ffffff;
+  --border:#e5e7eb;
+  --border-soft:#eef0f3;
+  --text:#1f2328;
+  --text-soft:#57606a;
+  --text-mute:#8b949e;
+  --brand:#1a56db;
+  --brand-2:#0e3fa8;
+  --brand-soft:#eef4ff;
+  --warn:#b45309;
+  --warn-bg:#fffbeb;
+  --warn-bd:#fcd34d;
+  --tip-bg:#eef4ff;
+  --tip-bd:#bfd4ff;
+  --ok:#047857;
+  --ok-bg:#ecfdf5;
+  --ok-bd:#6ee7b7;
+  --danger:#b91c1c;
+  --danger-bg:#fef2f2;
+  --danger-bd:#fecaca;
+  --code-bg:#f6f8fa;
+  --code-text:#24292f;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,"Courier New",monospace;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;
+  height:58px;padding:0 20px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:saturate(180%) blur(8px);
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;white-space:nowrap;}
+.brand .logo{
+  width:26px;height:26px;border-radius:7px;background:var(--brand);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;
+}
+.brand small{font-weight:500;color:var(--text-mute);font-size:12px;margin-left:2px;}
+.searchbox{flex:1;max-width:360px;position:relative;}
+.searchbox input{
+  width:100%;height:34px;padding:0 12px 0 32px;
+  border:1px solid var(--border);border-radius:8px;background:var(--bg-soft);
+  color:var(--text);font-size:13.5px;outline:none;font-family:inherit;
+}
+.searchbox input:focus{border-color:var(--brand);background:#fff;}
+.searchbox .si{position:absolute;left:10px;top:8px;color:var(--text-mute);font-size:14px;}
+.sugg{
+  position:absolute;top:38px;left:0;right:0;background:#fff;border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.10);max-height:320px;overflow:auto;display:none;
+}
+.sugg a{display:block;padding:8px 12px;color:var(--text);text-decoration:none;font-size:13.5px;border-bottom:1px solid var(--border-soft);}
+.sugg a:last-child{border-bottom:none;}
+.sugg a:hover{background:var(--brand-soft);color:var(--brand-2);}
+.topbar .actions{margin-left:auto;display:flex;gap:8px;}
+.btn{
+  border:1px solid var(--border);background:#fff;color:var(--text);
+  height:32px;padding:0 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+.btn:hover{border-color:var(--brand);color:var(--brand);}
+.menu-btn{display:none;}
+
+/* ---------- 布局 ---------- */
+.layout{display:flex;align-items:flex-start;}
+.sidebar{
+  position:sticky;top:58px;
+  width:258px;flex:0 0 258px;height:calc(100vh - 58px);overflow-y:auto;
+  border-right:1px solid var(--border);padding:18px 12px 60px;background:#fcfcfd;
+}
+.sidebar .grp{font-size:11.5px;letter-spacing:.08em;color:var(--text-mute);padding:14px 10px 6px;font-weight:700;}
+.sidebar a{
+  display:block;padding:6px 10px;border-radius:7px;color:var(--text-soft);
+  text-decoration:none;font-size:13.5px;line-height:1.5;
+}
+.sidebar a:hover{background:var(--bg-soft);color:var(--text);}
+.sidebar a.active{background:var(--brand-soft);color:var(--brand-2);font-weight:600;}
+.main{flex:1;min-width:0;padding:36px 44px 120px;max-width:1080px;}
+
+/* ---------- 排版 ---------- */
+h1.doc-title{font-size:30px;line-height:1.35;margin:0 0 10px;letter-spacing:-.01em;}
+.doc-sub{color:var(--text-soft);font-size:15px;margin:0 0 8px;}
+.doc-meta{color:var(--text-mute);font-size:12.5px;margin:0 0 26px;}
+h2{
+  font-size:22px;margin:52px 0 14px;padding-top:22px;border-top:1px solid var(--border-soft);
+  scroll-margin-top:78px;letter-spacing:-.01em;
+}
+h2 .num{color:var(--brand);font-weight:800;margin-right:8px;}
+h3{font-size:17px;margin:30px 0 10px;scroll-margin-top:78px;}
+h4{font-size:15px;margin:20px 0 8px;color:var(--text);}
+p{margin:10px 0;}
+ul,ol{margin:10px 0;padding-left:22px;}
+li{margin:5px 0;}
+a{color:var(--brand);}
+code:not(pre code){
+  background:var(--code-bg);border:1px solid var(--border-soft);border-radius:5px;
+  padding:1px 5px;font-family:var(--mono);font-size:.88em;color:#0550ae;
+}
+hr{border:none;border-top:1px solid var(--border-soft);margin:32px 0;}
+
+/* ---------- 卡片 / 提示 ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:16px 0;}
+.card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--panel);}
+.card h4{margin:0 0 6px;font-size:14.5px;}
+.card p{margin:0;font-size:13.5px;color:var(--text-soft);line-height:1.65;}
+
+.note{
+  border:1px solid var(--tip-bd);background:var(--tip-bg);border-radius:var(--radius);
+  padding:12px 14px;margin:14px 0;font-size:13.5px;
+}
+.note .t{font-weight:700;color:var(--brand-2);display:block;margin-bottom:3px;}
+.note.warn{border-color:var(--warn-bd);background:var(--warn-bg);}
+.note.warn .t{color:var(--warn);}
+.note.danger{border-color:var(--danger-bd);background:var(--danger-bg);}
+.note.danger .t{color:var(--danger);}
+.note.ok{border-color:var(--ok-bd);background:var(--ok-bg);}
+.note.ok .t{color:var(--ok);}
+.note p:first-of-type{margin-top:0;}
+.note p:last-child{margin-bottom:0;}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px;display:block;overflow-x:auto;}
+th,td{border:1px solid var(--border);padding:9px 11px;text-align:left;vertical-align:top;}
+th{background:var(--bg-soft);font-weight:700;white-space:nowrap;}
+tbody tr:nth-child(even){background:#fcfcfd;}
+
+/* ---------- 代码块 ---------- */
+.code-wrap{position:relative;margin:14px 0;}
+.code-wrap .bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg-soft);border:1px solid var(--border);border-bottom:none;
+  border-radius:var(--radius) var(--radius) 0 0;padding:6px 12px;
+  font-size:12px;color:var(--text-soft);font-family:var(--mono);
+}
+.code-wrap .bar .copy{
+  border:1px solid var(--border);background:#fff;border-radius:6px;
+  padding:2px 9px;font-size:11.5px;cursor:pointer;color:var(--text-soft);font-family:inherit;
+}
+.code-wrap .bar .copy:hover{border-color:var(--brand);color:var(--brand);}
+pre{
+  margin:0;background:var(--code-bg);border:1px solid var(--border);
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:13px 14px;overflow-x:auto;font-size:13px;line-height:1.65;
+}
+pre code{font-family:var(--mono);color:var(--code-text);white-space:pre;}
+.code-wrap:not(.hasbar) pre{border-radius:var(--radius);}
+.c{color:#6e7781;font-style:italic;}
+.s{color:#0a3069;}
+.k{color:#cf222e;font-weight:600;}
+.p{color:#953800;}
+.n{color:#0550ae;}
+
+/* ---------- 步骤 ---------- */
+.steps{counter-reset:st;list-style:none;padding:0;margin:16px 0;}
+.steps>li{
+  counter-increment:st;position:relative;padding:0 0 18px 40px;
+  border-left:2px solid var(--border);margin:0;
+}
+.steps>li:last-child{border-left-color:transparent;padding-bottom:0;}
+.steps>li::before{
+  content:counter(st);position:absolute;left:-14px;top:0;
+  width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;
+}
+.steps>li strong{display:block;margin-bottom:2px;}
+.steps>li .d{color:var(--text-soft);font-size:13.5px;}
+
+.checklist{list-style:none;padding:0;margin:12px 0;}
+.checklist li{padding-left:26px;position:relative;}
+.checklist li::before{
+  content:"";position:absolute;left:4px;top:9px;width:11px;height:11px;
+  border:1.5px solid var(--brand);border-radius:3px;
+}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 0;border-bottom:1px solid var(--border);}
+.tabs button{
+  border:1px solid var(--border);border-bottom:none;background:var(--bg-soft);
+  border-radius:8px 8px 0 0;padding:6px 14px;cursor:pointer;font-size:13.5px;
+  color:var(--text-soft);font-family:inherit;margin-bottom:-1px;
+}
+.tabs button.on{background:#fff;color:var(--brand-2);font-weight:600;border-color:var(--border);}
+.panel{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:4px 16px 14px;}
+.panel[hidden]{display:none;}
+
+.figure{border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:18px 0;background:#fcfcfd;overflow-x:auto;}
+.figure svg{display:block;max-width:100%;height:auto;}
+
+.tag{
+  display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:20px;
+  background:var(--brand-soft);color:var(--brand-2);border:1px solid #d6e3ff;margin-right:6px;
+}
+.tag.g{background:var(--ok-bg);color:var(--ok);border-color:#a7f3d0;}
+.tag.o{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-bd);}
+
+.footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);color:var(--text-mute);font-size:12.5px;}
+
+@media (max-width:900px){
+  .sidebar{
+    position:fixed;left:0;top:58px;z-index:40;background:#fff;
+    transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 8px 24px rgba(0,0,0,.08);
+  }
+  .sidebar.open{transform:none;}
+  .main{padding:24px 18px 100px;}
+  .menu-btn{display:inline-block;}
+  .searchbox{max-width:none;}
+  h1.doc-title{font-size:24px;}
+}
+</style>
+</head>
+<body data-page-node-id="6tUCYhlMRNR9CvHY1V4fSl">
+
+<header class="topbar" data-page-node-id="UxfiKEi9pTHfBY2Gotl6yK">
+  <button class="btn menu-btn" id="menuBtn" aria-label="目录" data-page-node-id="Ti2VaBfVJmdPRrnGBaGVS5">☰</button>
+  <div class="brand" data-page-node-id="oBzynjTgzQYcbvPm5js75I">
+    <span class="logo" data-page-node-id="DdENlxfFJQcdTk1DDje2br">云</span>
+    <span data-page-node-id="AcaJcPL6Xel4SRJcuSaiJZ">项目部署手册 <small data-page-node-id="CY15u48ddRPeuiuFohplfs">国内主流云平台</small></span>
+  </div>
+  <div class="searchbox" data-page-node-id="EG3D2KdwhIEDekPDddxssx">
+    <span class="si" data-page-node-id="Rh5DNnUnrQtfqpqNa8DgPJ">🔍</span>
+    <input id="q" type="search" placeholder="搜索章节，例如：备案 / 镜像 / 502" autocomplete="off" data-page-node-id="PCh8aZEHslLcIqCgzoJFhH">
+    <div class="sugg" id="sugg" data-page-node-id="XmtViCpHkCxMvUNn7SwYS4"></div>
+  </div>
+  <div class="actions" data-page-node-id="CGGqKyrhInxQNdkP6WKOfp">
+    <button class="btn" id="printBtn" data-page-node-id="YdIkW9oxpjL1Y70jWHCwqn">打印 / 存为 PDF</button>
+  </div>
+</header>
+
+<div class="layout" data-page-node-id="9q1HqSN9pUYQMGPp1uPeHD">
+  <nav class="sidebar" id="sidebar" data-page-node-id="Lx9aBnRxLfXIk4C0YEUD6O">
+    <div class="grp" data-page-node-id="NlW2sDnJOns6CUbQ4TYaaN">开始</div>
+    <a href="#overview" data-page-node-id="Y7HkeMMGtTfVE2x3g3igcR">手册总览</a>
+    <a href="#compare" data-page-node-id="q9mbM46eP0SkgJEEbpbTxK">平台能力对照</a>
+    <a href="#flow" data-page-node-id="NQiXFyYKb6tHmFOhTedE4y">标准部署流程</a>
+
+    <div class="grp" data-page-node-id="h8AzpWH9jRBfNrMituihdc">准备</div>
+    <a href="#prep" data-page-node-id="YbrY5AVCoQyGQQHn8GvVsl">部署前置清单</a>
+    <a href="#account" data-page-node-id="tCgUXnfY85a27qc65RHnrL">账号与权限</a>
+    <a href="#network" data-page-node-id="yEKpBc28vdpQUKHj5BaZSY">网络与安全组</a>
+    <a href="#domain-prep" data-page-node-id="AHYKygc35IncRRqMvuqA6t">域名与 ICP 备案</a>
+    <a href="#tools" data-page-node-id="5oVXqCsLJLRrFVZIhihUhs">本地工具链</a>
+
+    <div class="grp" data-page-node-id="r2CnPFIWSw3IE7dhpzd6Ew">部署</div>
+    <a href="#vm" data-page-node-id="FMRLw9AqF2HquwXxC0tJcW">一、云服务器部署</a>
+    <a href="#init" data-page-node-id="eTflcStPiwDLDHpm1Y3nsi">系统初始化</a>
+    <a href="#runtime" data-page-node-id="y6BEfxSFynIhdPO7NsQAlc">运行时安装</a>
+    <a href="#release" data-page-node-id="uxkwZ3vW4rsCref7ZUzvuL">代码发布</a>
+    <a href="#daemon" data-page-node-id="L7GJH6wuE82t75RPMEQCf5">进程守护 systemd</a>
+    <a href="#nginx" data-page-node-id="aBsOvF9euakGt4SX6XCSFS">Nginx 与反向代理</a>
+    <a href="#https" data-page-node-id="GLVC86qNsitjmAPtRrF8PO">HTTPS 证书</a>
+    <a href="#platforms" data-page-node-id="2IzDtXoEdVL4tsrVWvYCjP">二、分平台实操</a>
+    <a href="#aliyun" data-page-node-id="oZ7hmouC8UWGadBWIp0i1T">阿里云</a>
+    <a href="#tencent" data-page-node-id="4i7kkjiME5nOvTMswunhFG">腾讯云</a>
+    <a href="#huawei" data-page-node-id="ywsaRYhgWPtWEv2srcRrB7">华为云</a>
+    <a href="#baidu" data-page-node-id="H3Q84LdwVsOVgkltAYqq1v">百度智能云</a>
+    <a href="#volc" data-page-node-id="nFVvMkEA4Zfg1PpSXH1GSE">火山引擎</a>
+    <a href="#container" data-page-node-id="cVjhQVGsZWKzZAcd98VjBw">三、容器化与 K8s</a>
+    <a href="#serverless" data-page-node-id="6r1qTZBSLnBZC4WOZmAty3">四、Serverless 与静态托管</a>
+    <a href="#cicd" data-page-node-id="3fSQHhsYDwiPCM1W3HLK9i">五、CI/CD 流水线</a>
+
+    <div class="grp" data-page-node-id="GGGyPQnEbGJSAFAYOHkvVC">上线后</div>
+    <a href="#access" data-page-node-id="OWGpBPhmIGUbq53Q7iwPm7">接入层：DNS / CDN</a>
+    <a href="#ops" data-page-node-id="K4Y0YxvIoG9zVLXgLUMuxW">监控、日志与告警</a>
+    <a href="#security" data-page-node-id="gN0Z1JNXCO7rwwFKQBmqkw">安全加固</a>
+    <a href="#cost" data-page-node-id="i0HlDOP27avUZHqjn8xIpF">成本优化</a>
+    <a href="#troubleshoot" data-page-node-id="TTat091KCsQJbnTI83gphF">故障排查速查</a>
+
+    <div class="grp" data-page-node-id="FM98FFTgcopBNuR89KkPLw">附录</div>
+    <a href="#appendix" data-page-node-id="RmIrf2s9LiIGTASbKXDfBm">命令速查表</a>
+    <a href="#glossary" data-page-node-id="1vKp2iVPaYZpfAnq73SFGi">名词对照</a>
+  </nav>
+
+  <main class="main" data-page-node-id="5GWaCNP2aotDgkX0C3sgK5">
+
+    <h1 class="doc-title" data-page-node-id="jCuKPkk7kRVUBNaN0OEZXc">国内主流云平台项目部署手册</h1>
+    <p class="doc-sub" data-page-node-id="fnpBHIH82q2qRxhYzpGfaC">覆盖 阿里云 · 腾讯云 · 华为云 · 百度智能云 · 火山引擎，从零资源到稳定上线的完整操作路径。</p>
+    <p class="doc-meta" data-page-node-id="CyVa1LLurHvQEFqSJs3crt">适用对象：后端 / 前端 / 运维工程师 · 内容以“可直接照做”为准则 · 控制台界面可能随版本更新微调，菜单名以实际为准</p>
+
+    <div class="note" data-page-node-id="vR2qLn3D28dgT9z5AmGY7o">
+      <span class="t" data-page-node-id="VrbbC1oRTZZR97tzjoV3iH">如何使用本手册</span>
+      <p data-page-node-id="MBIVJHTG5UCExhSVRdiiH5">第 1 章给出<b data-page-node-id="v03hETna3ltBwfJkpeUEVh">通用做法</b>（在任何一家云上都成立），第 2 章给出<b data-page-node-id="YfhbHKybLKfGA8CB2THZcj">各平台差异点</b>（控制台入口、CLI、镜像仓库地址等）。如果你只部署一台机器上的 Web 服务，读完第 1 章即可开工；如果要上容器、流水线、多地域，再按目录跳读。</p>
+      <p style="margin-top:6px" data-page-node-id="OML7fn04nTlDNduOammd1g">本手册<b data-page-node-id="F5wFc9SZjGFCoPErTqFU0e">不写具体价格</b>：云产品价格随规格、地域、活动频繁变化，请以各平台官网价格计算器为准。</p>
+    </div>
+
+    <!-- ============ 总览 ============ -->
+    <h2 id="overview" data-page-node-id="fxqIz9olmgNHFm4Y9XOaUX"><span class="num" data-page-node-id="Fh2XP88AHaeMrsqut9VTCo">00</span>手册总览</h2>
+    <p data-page-node-id="FeGCdaoMBVR283P5AeOFAr">一次完整的部署，本质是七件事：把<b data-page-node-id="pUEBIarO0NeFzPFBEpCoo3">计算资源</b>准备好、把<b data-page-node-id="U9g9BYBjNywWDcuA4pJgOO">网络通路</b>打开、把<b data-page-node-id="X0rH6VSTHMJiMYezlw0P5m">运行时</b>装好、把<b data-page-node-id="RZ7pUdtb3FAzfgZoxPEkxe">代码</b>放上去、让<b data-page-node-id="Bk7XUGG17R4OTpCFsguF4d">进程稳定</b>地跑、把<b data-page-node-id="ZYgyvlnQQCpML3PowprfDG">流量</b>接进来、然后<b data-page-node-id="K5Nep2WrAgv4EDtFCbPEFL">看得见</b>它的状态。国内五家主流平台在这七件事上的能力是同构的，差异主要体现在命名、控制台路径和周边生态。</p>
+
+    <div class="figure" data-page-node-id="oAvCuelIiPzQVwDgmj6lMz">
+      <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="标准部署流程图" data-page-node-id="O1FxSKvxapFXGriwdin0ow">
+        <defs data-page-node-id="rg1bPE9vAg2s2Hw0uGwrXL">
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto" data-page-node-id="lq7MUWQY2gEs6ZP0IjgmiD">
+            <path d="M0,0 L7,3.2 L0,6.4 z" fill="#1a56db" data-page-node-id="Dv15HEGAcKPXt1AUAJEsvW"/>
+          </marker>
+        </defs>
+        <g font-family="-apple-system,PingFang SC,Microsoft YaHei,sans-serif" data-page-node-id="it1LXezjVCM4B3sCQ4vpgt">
+          <!-- row 1 -->
+          <rect x="10" y="60" width="150" height="62" rx="9" fill="#eef4ff" stroke="#bfd4ff" data-page-node-id="GL7YNLZTD5ynF3eRodjf03"/>
+          <text x="85" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#0e3fa8" data-page-node-id="ArDQARy2VzDrSECt1vF3iZ">1 资源准备</text>
+          <text x="85" y="106" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="TuQIQCce4HOsEsQLr1y0bA">选型 / 购买 / 密钥</text>
+
+          <line x1="162" y1="91" x2="196" y2="91" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="xIuM2n1mEwryK01WkLN02H"/>
+
+          <rect x="198" y="60" width="150" height="62" rx="9" fill="#eef4ff" stroke="#bfd4ff" data-page-node-id="csa9TY4F22hGjlfKC8sVcw"/>
+          <text x="273" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#0e3fa8" data-page-node-id="348ucCD8Z0Z0SVJuwFSSIJ">2 网络开通</text>
+          <text x="273" y="106" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="8dlwRkF3gbdtTKdSsOOE38">VPC / 安全组 / EIP</text>
+
+          <line x1="350" y1="91" x2="384" y2="91" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="X4lgEt40yeGkBPgBn6P0MO"/>
+
+          <rect x="386" y="60" width="150" height="62" rx="9" fill="#eef4ff" stroke="#bfd4ff" data-page-node-id="aMBocETtHDtMBtyKfSbgOv"/>
+          <text x="461" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#0e3fa8" data-page-node-id="thPx6Ie7kuGE4FXPB9hMV9">3 环境初始化</text>
+          <text x="461" y="106" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="fAAMml8syghofZS0Erxi6F">系统 / 运行时 / 用户</text>
+
+          <line x1="538" y1="91" x2="572" y2="91" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="LS1uCRlWHVqhFUphAFYWgc"/>
+
+          <rect x="574" y="60" width="150" height="62" rx="9" fill="#eef4ff" stroke="#bfd4ff" data-page-node-id="IyOWCvM2b0SZIplDHvLyDg"/>
+          <text x="649" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#0e3fa8" data-page-node-id="SGmWTqy6dZx9JnpVco3QBY">4 代码交付</text>
+          <text x="649" y="106" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="FkfIrHGUMtBjST7by9JNN3">构建 / 上传 / 解压</text>
+
+          <line x1="726" y1="91" x2="760" y2="91" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="z3eDQ7teaWBGk5V1V8BWa2"/>
+
+          <rect x="762" y="60" width="128" height="62" rx="9" fill="#eef4ff" stroke="#bfd4ff" data-page-node-id="EDFncdWBzrsqGz5DmMTS7P"/>
+          <text x="826" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="#0e3fa8" data-page-node-id="CUB6xB8GD3h7DfUXm9FXoW">5 服务编排</text>
+          <text x="826" y="106" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="DHQpnGpB29kpbXYIT4W1cl">systemd / K8s</text>
+
+          <!-- connector down -->
+          <path d="M826,124 L826,146 L90,146 L90,126" fill="none" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="b0lBngWVpeBQ4EtrhzcuiG"/>
+
+          <!-- row 2 -->
+          <rect x="10" y="158" width="160" height="62" rx="9" fill="#ecfdf5" stroke="#6ee7b7" data-page-node-id="YQBdoq0qmmhUGoVFSUD4fJ"/>
+          <text x="90" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#047857" data-page-node-id="10zMTRB7UaSDfuKFI4GYH1">6 接入层</text>
+          <text x="90" y="204" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="hdxjR5smYWh5oJhJfqmLpt">DNS / CDN / HTTPS</text>
+
+          <line x1="172" y1="189" x2="206" y2="189" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="VmgnTOV9uY7zn61YhWlQMX"/>
+
+          <rect x="208" y="158" width="160" height="62" rx="9" fill="#ecfdf5" stroke="#6ee7b7" data-page-node-id="mWfzxGvqKFOnhhcdPNosLp"/>
+          <text x="288" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#047857" data-page-node-id="pCBBAcot2sjzr8A2tWmuu4">7 可观测</text>
+          <text x="288" y="204" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="mbtLkNVLvmOWdwDHtoYmJy">监控 / 日志 / 告警</text>
+
+          <line x1="370" y1="189" x2="404" y2="189" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="78ADVEHRwCkEL0kKpzK7U4"/>
+
+          <rect x="406" y="158" width="160" height="62" rx="9" fill="#fffbeb" stroke="#fcd34d" data-page-node-id="Y7oipaRipdiYCEX4ez6geu"/>
+          <text x="486" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309" data-page-node-id="rA8Oe8NTQKaQ49tLPl8PQC">8 安全加固</text>
+          <text x="486" y="204" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="UYdESXHvJKOJVxcI84ik2G">最小权限 / WAF / 备份</text>
+
+          <line x1="568" y1="189" x2="602" y2="189" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="CHWeVfJua6bceP8V1QJN5p"/>
+
+          <rect x="604" y="158" width="160" height="62" rx="9" fill="#fffbeb" stroke="#fcd34d" data-page-node-id="jpyoiDfuDNH9yWWkt6J4Tu"/>
+          <text x="684" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309" data-page-node-id="qniQKF92PILH7wPc9pfVpv">9 持续优化</text>
+          <text x="684" y="204" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="EeJcDPKT1tFjnwCLRVAsPz">弹性 / 成本 / 演练</text>
+
+          <rect x="776" y="158" width="114" height="62" rx="9" fill="#ffffff" stroke="#1a56db" stroke-width="1.6" data-page-node-id="BJSC31cyCnOjf54rdCxOm7"/>
+          <text x="833" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="#1a56db" data-page-node-id="kz7dt1kRbU5NvGv2Hx19K5">稳定上线</text>
+          <text x="833" y="204" text-anchor="middle" font-size="11.5" fill="#57606a" data-page-node-id="LgAcO7H9BYZAbaj2ZonRzy">可回滚 / 可复制</text>
+          <line x1="766" y1="189" x2="770" y2="189" stroke="#1a56db" stroke-width="1.6" marker-end="url(#ar)" data-page-node-id="rn8ZzvZ83wlvmHO7PjmHwv"/>
+        </g>
+      </svg>
+    </div>
+
+    <h3 data-page-node-id="sl7EGf9vVXrnzXEYd5Gy24">三条常见路线，先选一条</h3>
+    <div class="cards" data-page-node-id="t3iAuTCqNjLwj0sjOZ725f">
+      <div class="card" data-page-node-id="U454Rb4I7v1ZHI3g6mQoCQ">
+        <h4 data-page-node-id="IBDULTUdaL0f3pTADxI9yL">A. 单机部署 <span class="tag g" data-page-node-id="vYMRYYdC70HM8R1F8D1bTW">最快</span></h4>
+        <p data-page-node-id="pp7Uv467ojnkBzw6aO0wxo">一台云服务器 + Nginx + systemd。适合管理后台、内部系统、日均万级以内访问、单体应用。上线最快，成本最低，运维心智负担小。</p>
+      </div>
+      <div class="card" data-page-node-id="YXMGTJ10zIG2XrBq0trnd7">
+        <h4 data-page-node-id="dQ3GGpKA4zH46wCCcfXZSy">B. 容器化 / K8s <span class="tag" data-page-node-id="IhEyvS04Tq2E3wfIkkfZkq">主流</span></h4>
+        <p data-page-node-id="Lfz6i7HsE9sWGHGSf2LRKZ">镜像构建 → 推送到云上镜像仓库 → 部署到容器服务（ACK / TKE / CCE / VKE）。适合微服务、多实例、需要滚动更新与自动扩缩容。</p>
+      </div>
+      <div class="card" data-page-node-id="NlNbA51PZZGwDGqxIQpjlj">
+        <h4 data-page-node-id="aWlh36ZAJR1A9Vn76ehgEC">C. Serverless / 托管 <span class="tag o" data-page-node-id="CvyyMv8URDKBdGkFvOpUOl">最省心</span></h4>
+        <p data-page-node-id="SFKdtm4GFKVK3aoA1Fx3fe">函数计算 + 对象存储静态托管 + API 网关。适合前端站点、轻量接口、定时任务、流量波峰波谷明显的场景。几乎不用管服务器。</p>
+      </div>
+    </div>
+
+    <!-- ============ 平台对照 ============ -->
+    <h2 id="compare" data-page-node-id="ITilbsdb1U09AxxoDJdDAw"><span class="num" data-page-node-id="vpamn3XICFAvYrmuZ9gV3y">01</span>平台能力对照</h2>
+    <p data-page-node-id="Po1lhcdc4Ds2ZAQAStiBjP">五家平台的同类产品命名不同，但一一对应。下表是部署时最常用的映射关系。</p>
+    <table data-page-node-id="pv7zoMlXc7XFC1X6o12Acq">
+      <thead data-page-node-id="sqEmIlECl6h2myLbZWxEsQ">
+        <tr data-page-node-id="6XTBNxPpGx17AUPcKCLAgi"><th data-page-node-id="b6K2FEl1P35BLfhW8k5KIr">能力</th><th data-page-node-id="GVlU3Jy20XgJ278oesJabZ">阿里云</th><th data-page-node-id="10NhbgHBrWYQxoMak3tszG">腾讯云</th><th data-page-node-id="swcnlfvfVGXLUqX7JAQerw">华为云</th><th data-page-node-id="NxA1PttobcXzvrWHhxBHNR">百度智能云</th><th data-page-node-id="9fc2qLOlWEPFKY9Wj1YqiQ">火山引擎</th></tr>
+      </thead>
+      <tbody data-page-node-id="lxHDcBHFDWVedMNFvF2NNB">
+        <tr data-page-node-id="MGHdXyndk67r85qmZjTVpT"><td data-page-node-id="UmHje7xjsL9BhDvxHIdocv">云服务器</td><td data-page-node-id="K5mANbx7t0Q4oGco3gwMDO">ECS</td><td data-page-node-id="BosipJ5JMHab3va5CHYsd8">CVM</td><td data-page-node-id="SBNianLF1g7XsJC6Atx5be">ECS（弹性云服务器）</td><td data-page-node-id="zXMgACnLGwDyCArsOQHWXK">BCC</td><td data-page-node-id="oSVPEDEla3ZFAJsHNPev5p">ECS</td></tr>
+        <tr data-page-node-id="Rut0gyMh1WfjZfVFULKd7v"><td data-page-node-id="QwvbFWNLWWtkLjWBCfAPRr">K8s 容器服务</td><td data-page-node-id="qTtND6uy49kTCa6rJWVGAA">ACK</td><td data-page-node-id="oCCzt39MX8oo7eHAYlW1YI">TKE</td><td data-page-node-id="GKyIOG6nmJbNmyeL2u4XE9">CCE</td><td data-page-node-id="eNcYAcP1YXEK44ZL9QBJOi">CCE</td><td data-page-node-id="08nhBvFfaXL2hzzT8cTOxp">VKE</td></tr>
+        <tr data-page-node-id="RuJREH4194X1VdbLvZ0eYw"><td data-page-node-id="uoksVhAZLYeE0AtXuMQDz8">容器镜像仓库</td><td data-page-node-id="70wzpWvWI3vmZHKiBgcXWS">ACR</td><td data-page-node-id="WCZA2SxTKQwVDnrKQayc4P">TCR（原 CCR）</td><td data-page-node-id="Yk1xse4jf3OR2MpWkT7HAv">SWR</td><td data-page-node-id="mZ1hhEEqtnGVNrFmmlGwLl">容器镜像服务 CCR</td><td data-page-node-id="sbD8EgNE1QIgDiETGBNAdF">镜像仓库 CR</td></tr>
+        <tr data-page-node-id="niJdgtu6aAQ92GzHdg7JIf"><td data-page-node-id="fowU1DtdYUQblha1VQykdp">对象存储</td><td data-page-node-id="37fkDrBMNtXU6WBVqL03JO">OSS</td><td data-page-node-id="zB8K1XoGC59XsqcnAUlmkO">COS</td><td data-page-node-id="7YEuFmDN5KRHhogFaAe9wA">OBS</td><td data-page-node-id="ByNwIIJHynmEfaggiRMDWe">BOS</td><td data-page-node-id="9cIzZcHRsrJT6CK0HKyMGn">TOS</td></tr>
+        <tr data-page-node-id="5yb5rEttPOpEGvrksrQRXh"><td data-page-node-id="chwZT7W5ZPzJrhLonUPcFa">负载均衡</td><td data-page-node-id="G2eJ2y7gIvIO6ZiCOLtxG0">CLB（原 SLB）</td><td data-page-node-id="TKf8tppgBZr3XVFcAC5VGn">CLB</td><td data-page-node-id="HwNTdA4FfcTO9ccHks0jTs">ELB</td><td data-page-node-id="0pk8UsnYpaaAazV3XUcu48">BLB</td><td data-page-node-id="gTtQbIAaHFvPAXZ4XLrbHz">CLB</td></tr>
+        <tr data-page-node-id="Y6dB67qWExMj09HYMeitwG"><td data-page-node-id="3bL7utcTZ3J85sWIQ3bVUu">云盘 / 块存储</td><td data-page-node-id="BxECScGyIKZrIdtp3MJ3b8">ESSD 云盘</td><td data-page-node-id="C5NJQ1r7nYCXTeZDQD2RIr">CBS</td><td data-page-node-id="RxiQsE6vfEc0pHAuXQZbgV">EVS</td><td data-page-node-id="6o1qjpS9GJPWYZfCF520oa">CDS</td><td data-page-node-id="6ypHGH3mXTrBzrl0F0GvZx">EBS</td></tr>
+        <tr data-page-node-id="VJFjI6UuWxFCKwPSmInMQR"><td data-page-node-id="4JwF6V0zaALV2weS2EEDHT">VPC 网络</td><td data-page-node-id="LNEFpHsRzg3XWsjbAeL8W6">VPC</td><td data-page-node-id="Acz76WETf7xtYugIkM3h75">VPC</td><td data-page-node-id="Q1IagiblJsPtpbelqQttEQ">VPC</td><td data-page-node-id="ByyrL1GigqUvNF2GMkuqcD">VPC</td><td data-page-node-id="26ftK8EJ3ZAyXDuB0vRcJb">VPC</td></tr>
+        <tr data-page-node-id="0IpO33vGaAIxpxvwCvBSO3"><td data-page-node-id="YfkPD61I311OcH5AZvGrZR">域名解析</td><td data-page-node-id="TIt9ZrEPznx3BgMAVDXneP">云解析 DNS</td><td data-page-node-id="ycUyR6lxknVZwYwZqttYIO">DNSPod</td><td data-page-node-id="SnguvhkvHBpizcK3vFYjiU">云解析服务 DNS</td><td data-page-node-id="GnDkmAWQ9rSsdpbMRJ3MpK">云解析 DNS</td><td data-page-node-id="BQTp6AZubvFJFQ2hBA7SLF">云解析 DNS</td></tr>
+        <tr data-page-node-id="V4dTfJp4g9oPhNMSxoa19m"><td data-page-node-id="LpangV2N2WGk7zjUfjnTTx">CDN / 边缘</td><td data-page-node-id="giWoTG3bQWWy6aymQHS8As">CDN</td><td data-page-node-id="jBuLCljbgWkgOuCi7zX419">CDN / EdgeOne</td><td data-page-node-id="OhL3DFGawwn0tpFAUskEAd">CDN</td><td data-page-node-id="qNsVjjUuoyxjscPDxaozo1">CDN</td><td data-page-node-id="5ureQtfBc4HsvbuYN2tRix">CDN</td></tr>
+        <tr data-page-node-id="gvgDoKqqFv9jSEFUENdLTl"><td data-page-node-id="oU1pa1i5wjYojYPifKaiDT">函数计算</td><td data-page-node-id="wCHJTjfHSbHgEUikFZqozn">函数计算 FC</td><td data-page-node-id="cIe4muFQnIbzIp4wipuAhr">云函数 SCF</td><td data-page-node-id="2qgoz1Za6AepDwts9uxLQW">FunctionGraph</td><td data-page-node-id="HecGmKxrt3ZKFluJFCNkSt">函数计算 CFC</td><td data-page-node-id="VHjzlnwhlBKgTJAhlpMS0e">函数服务 veFaaS</td></tr>
+        <tr data-page-node-id="fTueEGTvbdEJeh3KqPL41w"><td data-page-node-id="Lcf9Rb8HqWIQJeyxqxGJXW">日志服务</td><td data-page-node-id="FV08DvXW1cNOiE4Dk17PM9">SLS</td><td data-page-node-id="XUcIQ0etK7HxzqHAaoga3G">CLS</td><td data-page-node-id="BlpyvBFrAmUCK61U2Y8EFE">LTS</td><td data-page-node-id="lbP2eybhPtnzyVygjOM5jJ">BLS</td><td data-page-node-id="JU6EvklQ5whDFHT2nnHmX0">TLS</td></tr>
+        <tr data-page-node-id="oyv6KAH0X3TETFBfrxDy2J"><td data-page-node-id="MjDvOcAUBXgIhxng5KqGgq">监控告警</td><td data-page-node-id="Ci3VkhAwfBRC0mwokmxFLo">云监控 / ARMS</td><td data-page-node-id="TKIfHGi0uLS5esbUICFThY">云监控</td><td data-page-node-id="Zy16n6V70IQRVkFDWByojC">云监控 CES / APM</td><td data-page-node-id="mM5Q1YiDzqKAMCK9q8D7xj">云监控 BCM</td><td data-page-node-id="v0KIlerG4AxdNUYOYA9YwI">云监控</td></tr>
+        <tr data-page-node-id="T5P3nDFQ4GBshE8uYkFUXB"><td data-page-node-id="KtzunzYDEupWOUWn4ELU8h">访问控制</td><td data-page-node-id="SfD6JiNBzYSdZRY5ddtwI8">RAM</td><td data-page-node-id="tdsQXIACOpcBP4f4vZLnw9">CAM</td><td data-page-node-id="lIgGKxw8EbHxrnYYY5eACO">IAM</td><td data-page-node-id="JT9FoyZVXjtrhK24yqGfOx">IAM</td><td data-page-node-id="NWxzyV6s8DoF6JPLD0DHPK">IAM</td></tr>
+        <tr data-page-node-id="Coa4wgOeBmYAmil9dOKptn"><td data-page-node-id="lvBCcDs1MEj5yyeqiv95BP">DevOps</td><td data-page-node-id="gUjtzEDBqYNeP2EtBoGgTE">云效 Flow</td><td data-page-node-id="G0DGZwsskjOKWbUcjXBy1S">CODING DevOps</td><td data-page-node-id="ExqK4bO8M0BFnG6jqyJqk9">CodeArts</td><td data-page-node-id="HlF2uOyM2AzQJMdJ3KauIu">效率云</td><td data-page-node-id="h7WOVHpwqY8AFlvwhY5lgq">持续交付 CP</td></tr>
+        <tr data-page-node-id="8wG8DBtnfY9oMexAzVGx4q"><td data-page-node-id="aTTRNAhN7yGqUuzJx3Y4ll">CLI 工具</td><td data-page-node-id="XcBO682Wclx295SDPL3PPd">aliyun</td><td data-page-node-id="lz9Q9KT1bcMYW5odr4Wz1P">tccli</td><td data-page-node-id="HIQiVBChMgXPLSoux11nvJ">hcloud（KooCLI）</td><td data-page-node-id="5VCrA8Kw29RTs3Uw5FwTEa">bcecmd</td><td data-page-node-id="oOMaOA882bBhB3uFgyR8Mr">OpenAPI / SDK</td></tr>
+      </tbody>
+    </table>
+    <div class="note warn" data-page-node-id="V6Ggk2wZLtoHioBPtkbRhd">
+      <span class="t" data-page-node-id="0QOTBlQCiBazOFAfNNBeBF">选型建议</span>
+      <p data-page-node-id="stj6OdbmNxQNfjtJVaYhhF">不要按“哪家便宜”选，优先看三件事：<b data-page-node-id="T5ZDxWPeKAH63XFF8IC5ZX">① 你的用户主要在哪个区域</b>（就近选地域）；<b data-page-node-id="RGmlO4hB7OhiZMHXhJWkgC">② 你已有的域名在哪家备案</b>（接入商与备案主体一致最省事）；<b data-page-node-id="TyAWaJ56NFTslAcBGbaZfE">③ 团队熟悉哪个控制台</b>。五家在国内主流地域的延迟差异，对绝大多数业务而言远小于架构与代码质量带来的差异。</p>
+    </div>
+
+    <!-- ============ 标准流程 ============ -->
+    <h2 id="flow" data-page-node-id="4XB1bnv65pHMqvopTvulZq"><span class="num" data-page-node-id="pzgAwb13vWMZ0Vokv4FoFn">02</span>标准部署流程（一句话版）</h2>
+    <ol class="steps" data-page-node-id="kAh4hioFnUcAiaBMZziLpe">
+      <li data-page-node-id="6cUIkAJ80RMDxf6TE7r6hK"><strong data-page-node-id="k8QdC3k8lsfnxePqCtz2Lv">开资源</strong><span class="d" data-page-node-id="KXEGRX8bAtVWI841lf5xpn">创建 VPC、安全组、密钥对，购买一台云服务器并绑定公网 IP。</span></li>
+      <li data-page-node-id="oIQudThLNsFsoNxm5p2reO"><strong data-page-node-id="yuJlbV6thWjMSBLCOtPxVU">连上去</strong><span class="d" data-page-node-id="WT4m6bwCYFqDNlVBu69wRA">用 SSH 密钥登录，创建部署专用用户，禁止 root 直登。</span></li>
+      <li data-page-node-id="n9xiYokJapRGXs5IugH8Je"><strong data-page-node-id="YACLekbBE6gRn6ojP6foEG">装环境</strong><span class="d" data-page-node-id="uRLfBvIK3IzhBg35ZhQjfs">系统更新、安装运行时（Node / Java / Python / Go）、安装 Nginx。</span></li>
+      <li data-page-node-id="f6vnbRHEzaL0NtuOWwFkaV"><strong data-page-node-id="H7ioazUwVin85YqVS31FlJ">传代码</strong><span class="d" data-page-node-id="D16BhmTDzPieD1wqncRdmD">本地构建产物打包上传，或用 Git 拉取后在服务器构建，软链接切换版本。</span></li>
+      <li data-page-node-id="hx330KSGX7XS6pbKXJbPv2"><strong data-page-node-id="2Wx7Z3VHYYbmOgQAZGE53C">跑起来</strong><span class="d" data-page-node-id="eMIAcQ3LiARx7C9ACCTcbu">配置 systemd 单元文件，设置开机自启与崩溃自动重启。</span></li>
+      <li data-page-node-id="hGiXYDMJeC4z0PKDp6Kp36"><strong data-page-node-id="I6vgeTUUeBpyGtNyJTayyn">接流量</strong><span class="d" data-page-node-id="xEJjPqhTb4BZzYorWHOO1G">Nginx 反向代理到应用端口，配置域名解析与免费 HTTPS 证书。</span></li>
+      <li data-page-node-id="WyYwmdYwupDJfUJwGuEEC6"><strong data-page-node-id="PNwmRElLcQMoMh2x2YkKYU">看得见</strong><span class="d" data-page-node-id="HhtsZeHZFwhgIFPKMxL99M">安装云监控插件，配置 CPU / 内存 / 磁盘 / 端口告警联系人。</span></li>
+    </ol>
+
+    <!-- ============ 前置清单 ============ -->
+    <h2 id="prep" data-page-node-id="3g7aZqIwWqrHUx3lmyRZqt"><span class="num" data-page-node-id="CugKfDY63RzVTAGTp8gEeg">03</span>部署前置清单</h2>
+    <p data-page-node-id="ZltI2ZZgYJpRwveOAPIv4R">开工前把下面这些确认完，能避免 80% 的返工。</p>
+    <ul class="checklist" data-page-node-id="ap7LnxQQqPAWKISDV5o9Np">
+      <li data-page-node-id="U6tdALl0fcqYPzvFNwIkqh">已确定<b data-page-node-id="6ZGxzFSVnak42wqRQlgCf1">部署地域</b>（建议与用户群就近，备案必须在大陆地域；港澳台及海外地域无需备案）</li>
+      <li data-page-node-id="BHeiWUrGTJBaPbXlrllpr0">已确定<b data-page-node-id="9FDZyTnNLOjqSWEFySXG4X">规格</b>：CPU / 内存 / 系统盘 / 带宽峰值，并预留 30% 余量</li>
+      <li data-page-node-id="MdHlBZflSbbEb3uVgM6jkX">已确定<b data-page-node-id="B4le8lbiy9XGKO0tmGenqt">操作系统</b>（推荐 Alibaba Cloud Linux / TencentOS / Ubuntu LTS / AlmaLinux，避免即将 EOL 的版本）</li>
+      <li data-page-node-id="fOoE2fvTAXuSgfAm1KUyNe">已创建<b data-page-node-id="7PTRy7BnA2HyJV9sGhICeN">SSH 密钥对</b>并妥善保存私钥（.pem 仅此一次下载机会）</li>
+      <li data-page-node-id="U7VAQInGhMjDzN75thMZ5j">已规划<b data-page-node-id="sDIrR8C8dPHJSs4BbmiGRc">端口清单</b>：22（SSH）、80、443、以及应用端口（默认只内网暴露）</li>
+      <li data-page-node-id="oj13teqbYWojhXzxG3Scuo">已准备<b data-page-node-id="5co4z1kUwbnGxPSrK10JVz">域名</b>并确认是否已完成 ICP 备案</li>
+      <li data-page-node-id="4Qy6SGzGMv8BdJbJATyrB4">已准备<b data-page-node-id="8tt8YZsi2pumlx2ytHTKFs">代码仓库地址</b>与部署所需的环境变量、密钥（不要写进代码库）</li>
+      <li data-page-node-id="zFsn5RGcU3esASqdEAUt4O">已确认<b data-page-node-id="7jEwX7nvBEkSXGf8XjeNa0">数据存放位置</b>：数据库用云托管还是自建，文件是否上对象存储</li>
+      <li data-page-node-id="oYlaDbu6g0uTAcEmsRzK6y">已确认<b data-page-node-id="QWxxPL4YjIAZo9lsGdHWyx">回滚方案</b>：上一版本产物是否保留，数据库变更是否可逆</li>
+    </ul>
+
+    <h3 id="account" data-page-node-id="7RwN5D7q8RPB3I40rEte1o">账号与权限</h3>
+    <p data-page-node-id="tbfSAKxKnDSCc7U7Hysfkc"><b data-page-node-id="oq4QsocRjr7D2tDvILM1QD">绝对不要用主账号的 AccessKey 做日常部署。</b>正确做法是创建子用户 / 角色，按需授予最小权限。</p>
+    <table data-page-node-id="yOpLtDZBCnpBVFYSSrCrSQ">
+      <thead data-page-node-id="3E0xtV6MZcfNSkkHfv7b2q"><tr data-page-node-id="AaH8noSYJCj4PBFaXALiZ9"><th data-page-node-id="JuOnhIx2s1HSSPYce3eBiq">平台</th><th data-page-node-id="8GcNH7Qck1V6vqZcFXoXc0">子账号体系</th><th data-page-node-id="HvEj4Y5Wv7O9dyyx9Kc59z">建议做法</th></tr></thead>
+      <tbody data-page-node-id="N53SrILZOMKhis7OGwxzsu">
+        <tr data-page-node-id="BaIQhqPc8XztyDRIlvNq9w"><td data-page-node-id="tclPPaiyiDqWrkZB3L7ofZ">阿里云</td><td data-page-node-id="kCRHSmqtZBTufAV8uP8Fko">RAM 用户 / RAM 角色</td><td data-page-node-id="5eVl9ZNsmZ6dp3EIn3XrdQ">为 CI 创建 RAM 用户，仅授予容器镜像服务与 ECS 的指定权限；服务器用实例 RAM 角色免密钥访问 OSS</td></tr>
+        <tr data-page-node-id="K9WOGDHyjZLbyk2v10ysdb"><td data-page-node-id="4AfGLtCbGtexqtGWtTJZ8a">腾讯云</td><td data-page-node-id="ID2WPr3MXXyWGjaCESrb2s">CAM 子账号 / 角色</td><td data-page-node-id="FfMitHa3JCab73Vw8G2kvk">子账号仅授予 QcloudCVMFullAccess 等必要策略，开启 MFA；COS 用临时密钥 STS 访问</td></tr>
+        <tr data-page-node-id="bMoh8oH0nGbYpqZcQHYWXa"><td data-page-node-id="oiZqv13SKyVc5oDD2m6oOo">华为云</td><td data-page-node-id="EbzPXRv2C1Kg4vbDktsW5s">IAM 用户 / 委托</td><td data-page-node-id="aK7rOTOve1tMPPq2rqmCUy">按项目分组授权，跨账号场景用委托（Agency）</td></tr>
+        <tr data-page-node-id="HRcNkJxETxEF9xhhKcrg44"><td data-page-node-id="3MD7tcCCAtl1JCcSC81Q4V">百度智能云</td><td data-page-node-id="tk633f5ZUwxxCHbrhUTVEl">IAM 用户 / 角色</td><td data-page-node-id="EFIo6arG387VMN0rtgDlng">按最小权限原则分配策略，开启操作审计</td></tr>
+        <tr data-page-node-id="N5UqcxTRBHCeuDjjhtFVrp"><td data-page-node-id="1xYFMArMpALeAZGEeElDX7">火山引擎</td><td data-page-node-id="9LESfPWaBZRpmJTz0GjATT">IAM 用户 / 角色</td><td data-page-node-id="qPXl1RZZvMukLST8HTnLSK">为流水线创建专用 IAM 用户并定期轮换密钥</td></tr>
+      </tbody>
+    </table>
+    <div class="note danger" data-page-node-id="GrhT8AUDlMyw4qtZRDvaz8">
+      <span class="t" data-page-node-id="NFJYC9h7WE1CCFfdHd2PrY">密钥安全红线</span>
+      <p data-page-node-id="BAGXiDkWW8VNSHp3HGVkXK">AccessKey 一旦提交进 Git 仓库，请<b data-page-node-id="c0caPlFwx5Ciy3AIXjATh6">立即禁用并轮换</b>，不要心存侥幸——公开仓库的密钥扫描机器人通常在几分钟内就会找上门。生产环境优先使用<b data-page-node-id="IBcbOo7TmdGZFZQSvVkcsm">实例角色 / 临时凭证</b>，从源头消除长期密钥。</p>
+    </div>
+
+    <h3 id="network" data-page-node-id="yGln80x25ukM8v9Sag4CcX">网络与安全组规划</h3>
+    <p data-page-node-id="89zibf0hqViysUtj8mK1fy">安全组是云上的虚拟防火墙，是<b data-page-node-id="BbiYFBfX1srrel0gKw5GNr">有状态</b>的：放行入方向后，出方向响应自动放行。</p>
+    <table data-page-node-id="5XxVHMWCZok6jUocAg5Su2">
+      <thead data-page-node-id="pLTJgb7kzlTzUUWTLKhcbZ"><tr data-page-node-id="ayPNEB48CFCbuB7AMzEDnD"><th data-page-node-id="AdF9H10yNVACJecKgTGoaa">方向</th><th data-page-node-id="YYtcb5pYmm3FcjaGlIdXuS">协议端口</th><th data-page-node-id="DxTHUHdFtKQpX5TzEmpGzz">来源</th><th data-page-node-id="I5cAu3BAS6zQBMnAME7vaI">说明</th></tr></thead>
+      <tbody data-page-node-id="GoiMj5M088CuChh8FeMFof">
+        <tr data-page-node-id="sjAqKL6RKxRHLlHpir44cX"><td data-page-node-id="Yiyi2G4EW2vM0fCtGzAnxj">入</td><td data-page-node-id="VSeZMT8iaAHdbEOll6WMAx">22 / TCP</td><td data-page-node-id="MNPsQJwbDDI9v6cN64IEaE">公司或家庭固定 IP/32</td><td data-page-node-id="09G7YR0RuKlpn44ZDgrEGq"><b data-page-node-id="qFiQJUXdJs9PPoApoVEwdy">不要对 0.0.0.0/0 开放</b>；无公网 IP 时用云上堡垒机或 VPN 接入</td></tr>
+        <tr data-page-node-id="msYTOnUV9Dgb25pLIJGSXE"><td data-page-node-id="kiEQRezSmctpiqzNpl2bpl">入</td><td data-page-node-id="Zw9AUiGiJCA1cAvtTmHLau">80 / TCP</td><td data-page-node-id="dFcU36eMAANn5lSluCBWHx">0.0.0.0/0</td><td data-page-node-id="tGRnLJal8OK8EFIOJmxl34">HTTP，通常配置为 301 跳转 HTTPS</td></tr>
+        <tr data-page-node-id="5KiFj9XDSU4lrDC1F7y70T"><td data-page-node-id="5jMEWv8BNjtLWxiYEH0aDR">入</td><td data-page-node-id="hJgstv731tRvrH5SFmtG04">443 / TCP</td><td data-page-node-id="5I9rA1yQSEeGydMQleaa8k">0.0.0.0/0</td><td data-page-node-id="r3XtrnYkhF6MrFZaFJAI4b">HTTPS</td></tr>
+        <tr data-page-node-id="pvSvztVvxWMdEpaUUOFlv9"><td data-page-node-id="Pha8ldLH9ddKMz7pNMYZgz">入</td><td data-page-node-id="6m8i7CajzqqyistNSte1jU">应用端口（如 3000）</td><td data-page-node-id="3PQDVkKXU3P8VikFymO8tP">仅负载均衡安全组 / 内网网段</td><td data-page-node-id="jaNIDMRJCwplnFQzVUN71d">应用端口<b data-page-node-id="tofGLS57jl8tRQOu4IJbSD">不应对公网开放</b>，由 Nginx 或 CLB 转发</td></tr>
+        <tr data-page-node-id="cB2lkUSPGTo036VYvyI6AM"><td data-page-node-id="Nrwx8Yd8VRyHL1fNl2PwZK">出</td><td data-page-node-id="dBUdlCXGaF3k0MRjtbRCEQ">全部</td><td data-page-node-id="7BoFZ8irosSreYBFsbIZ3v">0.0.0.0/0</td><td data-page-node-id="klDEl6ZgHS0hD4DGYDyCDX">默认允许；合规场景可收紧为白名单</td></tr>
+      </tbody>
+    </table>
+    <div class="note" data-page-node-id="43QAv86CdDKlxuM7b89vIy">
+      <span class="t" data-page-node-id="0RIENP5QDFCSBlyPSWNJ8u">经验值</span>
+      <p data-page-node-id="Il15kBI439pvxlkzVINfc4">至少准备<b data-page-node-id="HWk6wFTb2awQ8sxnv9OrFM">两个安全组</b>：一个 <code data-page-node-id="IVNNB0bfkMBxkBN8n0C5K3">sg-web</code>（80/443 对公网），一个 <code data-page-node-id="IiLsEekffPwMNLtwWhBGGP">sg-internal</code>（只对内网网段开放数据库、Redis、应用端口）。Web 层与数据层用不同安全组，是性价比最高的安全投入。</p>
+    </div>
+
+    <h3 id="domain-prep" data-page-node-id="wpq6lmRTbdXe6E0yYxH4wt">域名与 ICP 备案</h3>
+    <ul data-page-node-id="XGkBmZjOpiGeFrQkgRYASZ">
+      <li data-page-node-id="j01sYio9MCNdf2vo4dtsRL"><b data-page-node-id="JxJWzZC99UnFN28A1SSWmj">服务器在中国大陆地域，域名必须完成 ICP 备案</b>才能通过 80/443 对外提供服务；港澳台及海外地域不需要。</li>
+      <li data-page-node-id="F7xwzJTJxLoe2PjUHVAhCD">备案在服务<b data-page-node-id="NbezHYhWoDBfiDDR1F7HJb">接入商</b>处提交（阿里云备案、腾讯云备案、华为云备案等），由各省通信管理局审核，通常需 <b data-page-node-id="SU9JC2Ba9EvRKIknntY1ag">1–20 个工作日</b>，各省管局时效不同。</li>
+      <li data-page-node-id="qSRPBAIm6GvoeuxIT8i3mr">备案需：真实身份信息、域名证书、网站负责人核验（多数平台用 App 人脸核验）、服务器（或服务码）在对应平台。</li>
+      <li data-page-node-id="WcfIp72BMj2hrUMnr98jlI">网站开通后 <b data-page-node-id="DhOx3mfNDUKlqT1f8WpBJ4">30 日内</b>需完成公安备案（全国互联网安全管理服务平台）。</li>
+      <li data-page-node-id="BBZme5QUmbYlXN2VSzMgcs">提前规划：如果上线时间紧，建议<b data-page-node-id="vfYymuUJ9lOEyjAohh3ADe">先备案再开发收尾</b>，备案是整个链路里唯一无法靠加人加速的环节。</li>
+    </ul>
+
+    <h3 id="tools" data-page-node-id="CHVydX1BKP26Vz98HKbj0u">本地工具链</h3>
+    <div class="code-wrap hasbar" data-page-node-id="uKN7RUYeJqqCDJOjhByq0B"><div class="bar" data-page-node-id="RjkFzwewsHmNGOnnVnbNNb"><span data-page-node-id="HAycmiIBP27DPFYFTVhwAV">bash — 本地环境一次性准备</span><button class="copy" data-page-node-id="8MnaQfASpBzQRokvCzC5xv">复制</button></div>
+<pre data-page-node-id="hYKUPnT4ZMaDErgW2NIbME"><code data-page-node-id="NMJRlkEtFNA1QSC2AFZ98W"># SSH 客户端：Windows 用 PowerShell / Windows Terminal（内置 OpenSSH）或 Xshell
+ssh -V
+
+# 文件传输
+scp -i ~/.ssh/prod.pem ./dist.tar.gz deploy@1.2.3.4:/tmp/
+# 或更友好的 rsync（Git Bash / WSL / macOS 自带）
+rsync -avz -e "ssh -i ~/.ssh/prod.pem" ./dist/ deploy@1.2.3.4:/opt/app/
+
+# 容器
+docker --version          # 建议 24.x 及以上
+docker compose version
+
+# K8s
+kubectl version --client
+
+# 连通性检查
+curl -Iv https://example.com
+ping -c 4 1.2.3.4
+tracert 1.2.3.4           # Windows</code></pre>
+    </div>
+
+    <!-- ============ 一、云服务器部署 ============ -->
+    <h2 id="vm" data-page-node-id="6UOzpl1UDMuEDfLJxR8ydk"><span class="num" data-page-node-id="ZH4H2L8mz5EY274vGUKeZB">一</span>云服务器部署（通用做法）</h2>
+    <p data-page-node-id="3u6GK7H8s71KH8wDCPiSQb">这一章的流程在任意一家云上都适用，只在控制台入口上有差别。</p>
+
+    <h3 id="init" data-page-node-id="262QilvLBLk4ZJtuGqOTTZ">3.1 系统初始化</h3>
+    <div class="code-wrap hasbar" data-page-node-id="z3AVsIDK1F3HTx9jAs0Y7p"><div class="bar" data-page-node-id="1wZgs9BoOvnDRtmDnGyCbR"><span data-page-node-id="WU48P0HdVXO6GYJuCPJ1pW">bash — 首次登录后必做</span><button class="copy" data-page-node-id="XVd72ecZSKFZ1RIW4CB5oz">复制</button></div>
+<pre data-page-node-id="po9YTvJlQbCYni2vbolzs9"><code data-page-node-id="pf4v6osG5GxvqlFoY91a4z"># 1) 更新系统
+sudo apt update &amp;&amp; sudo apt upgrade -y          # Ubuntu / Debian
+# sudo dnf update -y                            # AlmaLinux / Rocky / TencentOS / OpenCloudOS
+# sudo yum update -y                            # CentOS 7
+
+# 2) 设置主机名与时区
+sudo hostnamectl set-hostname web-prod-01
+sudo timedatectl set-timezone Asia/Shanghai
+
+# 3) 创建部署用户（不要直接用 root 跑应用）
+sudo useradd -m -s /bin/bash deploy
+sudo passwd -l deploy            # 锁定密码登录，只允许密钥
+sudo mkdir -p /home/deploy/.ssh
+sudo cp ~/.ssh/authorized_keys /home/deploy/.ssh/
+sudo chown -R deploy:deploy /home/deploy/.ssh
+sudo chmod 700 /home/deploy/.ssh
+sudo chmod 600 /home/deploy/.ssh/authorized_keys
+echo "deploy ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/deploy
+
+# 4) 加固 SSH（改完先别断开，另开一个窗口验证能登录再关当前连接）
+sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo sshd -t &amp;&amp; sudo systemctl restart sshd
+
+# 5) 防火墙
+sudo ufw allow 22/tcp; sudo ufw allow 80/tcp; sudo ufw allow 443/tcp; sudo ufw enable   # Ubuntu
+# sudo firewall-cmd --permanent --add-service={ssh,http,https} &amp;&amp; sudo firewall-cmd --reload  # RHEL 系
+
+# 6) 应用目录
+sudo mkdir -p /opt/app /var/log/app
+sudo chown -R deploy:deploy /opt/app /var/log/app</code></pre>
+    </div>
+    <div class="note warn" data-page-node-id="gz0Dx1ZIcKPFAWcfpl29HW">
+      <span class="t" data-page-node-id="DfYFUBGW3Wk9JOxAuOsLrS">操作顺序警告</span>
+      <p data-page-node-id="Ufsr8KOJLn5SI3rRnWg54h">修改 <code data-page-node-id="U3WFG0bEKRF7Qf5iB8XRwP">sshd_config</code> 后务必：<code data-page-node-id="RCDGnxjOHBumwKc1BGiSPC">sudo sshd -t</code> 校验语法 → <b data-page-node-id="0j20n9AJ6xkHNSKe1vgihm">新开一个终端窗口测试能否登录</b> → 确认无误后再关闭原连接。顺序反了，你就会被锁在服务器外面，只能去控制台 VNC 救援。</p>
+    </div>
+
+    <h3 id="runtime" data-page-node-id="OIJ56cYjl9AIJttmb4jE2X">3.2 运行时安装</h3>
+    <div class="tabs" data-tabs="rt" data-page-node-id="s5NxvAHKO3BycalfTgeTBk">
+      <button class="on" data-t="rt-node" data-page-node-id="tAmtq01KEVcuCJNyAEAWlZ">Node.js</button>
+      <button data-t="rt-java" data-page-node-id="NJi2cp31VamhAbARBao0NI">Java</button>
+      <button data-t="rt-py" data-page-node-id="5pCocwLtPjrNreGbkWQxo9">Python</button>
+      <button data-t="rt-go" data-page-node-id="lNE7kQvxrfaMfSxXyIIN1e">Go</button>
+      <button data-t="rt-docker" data-page-node-id="UUGgAR2PHvES6DvK45Dcsn">Docker</button>
+    </div>
+    <div class="panel" id="rt-node" data-page-node-id="9cbeZFuYOZSYXtXcpgYTAq">
+      <div class="code-wrap hasbar" data-page-node-id="fwYz2DsJFXCcAHBNNlBn99"><div class="bar" data-page-node-id="ZYUls5RHtP5DIw9Aco2xdH"><span data-page-node-id="ogvCNuIQ1d0BDpfteaielt">bash — Node.js（用 nvm 便于多版本切换）</span><button class="copy" data-page-node-id="ksPetKNLHNDRiPQO1BzWdi">复制</button></div>
+<pre data-page-node-id="Q0csCQA9kFdMMERDb15AUr"><code data-page-node-id="z4QN8AipiOWcMETvDIy0ZH">curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+node -v &amp;&amp; npm -v
+
+# 生产建议：固定版本 + 使用 pnpm
+npm i -g pnpm
+pnpm -v
+
+# 国内 npm 源（可选，加速安装）
+npm config set registry https://registry.npmmirror.com</code></pre>
+      </div>
+    </div>
+    <div class="panel" id="rt-java" hidden data-page-node-id="XWXRLDwyb0F01XcZzsEwa6">
+      <div class="code-wrap hasbar" data-page-node-id="HqvDwSsnNToWEQ9U9QUBtq"><div class="bar" data-page-node-id="GQYAISUsxIYadAXAMnJau5"><span data-page-node-id="8GqAqIjiUMIKmtckq47u5A">bash — JDK 17</span><button class="copy" data-page-node-id="AvG25W1uPCzHDrMa66NGmT">复制</button></div>
+<pre data-page-node-id="3ll4krUAs3LOUH5PG5x6Fh"><code data-page-node-id="159DplslBzfgAERNqbKs9j">sudo apt install -y openjdk-17-jdk       # Ubuntu
+# sudo dnf install -y java-17-openjdk-devel   # RHEL 系
+java -version
+
+# 运行 Spring Boot
+nohup java -jar app.jar --spring.profiles.active=prod &gt; /var/log/app/app.log 2&gt;&amp;1 &amp;
+# 更推荐交给 systemd 管理，见 3.4 节</code></pre>
+      </div>
+    </div>
+    <div class="panel" id="rt-py" hidden data-page-node-id="oEKSF2g6XuPYsdXHh0t9ob">
+      <div class="code-wrap hasbar" data-page-node-id="V6i9mJzunKVSmI37cwWIrb"><div class="bar" data-page-node-id="xH8VtC5TkJwHNBelWCmm4j"><span data-page-node-id="DGeUN4Kw1frDUznKKrv0BT">bash — Python 虚拟环境</span><button class="copy" data-page-node-id="DAzRn2ItEvmzkV18ZIJLH0">复制</button></div>
+<pre data-page-node-id="TxveEbSaEX9Ar6G1HKGYkn"><code data-page-node-id="F92lBFxr32g0ZUIWhbDvH2">sudo apt install -y python3 python3-venv python3-pip
+cd /opt/app
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt gunicorn
+
+# 试运行
+gunicorn -w 4 -b 127.0.0.1:8000 "myapp:create_app()"</code></pre>
+      </div>
+    </div>
+    <div class="panel" id="rt-go" hidden data-page-node-id="LwZx3aZKPEFiztN5s4bzqi">
+      <div class="code-wrap hasbar" data-page-node-id="CpkNmN0xD16RqbxEhAPZ2A"><div class="bar" data-page-node-id="uF7seVtkWQIN0mqgeVmlWJ"><span data-page-node-id="ZlovrGMNTe568ZL7zwwAca">bash — Go</span><button class="copy" data-page-node-id="0cDvOt0m07XcMfc2HYilPo">复制</button></div>
+<pre data-page-node-id="KlUSjsMcOo7LMdavZjOMaC"><code data-page-node-id="tplVBTBtZxO6uvNLgDjQcc">VERSION=1.23.4
+wget -q https://go.dev/dl/go${VERSION}.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go &amp;&amp; sudo tar -C /usr/local -xzf go${VERSION}.linux-amd64.tar.gz
+echo 'export PATH=$PATH:/usr/local/go/bin' &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc
+go version
+
+# 交叉编译后只上传二进制，服务器上无需 Go 环境
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/app ./cmd/server</code></pre>
+      </div>
+    </div>
+    <div class="panel" id="rt-docker" hidden data-page-node-id="quHOwwjCkXUG1qEp3rUyqz">
+      <div class="code-wrap hasbar" data-page-node-id="yoIoZDym8EE8LBVbzyrfPo"><div class="bar" data-page-node-id="N0YKaJlu04WR9pzSS9JOrP"><span data-page-node-id="fYGWixSJ8qUQVEyLR3GU2O">bash — Docker 引擎</span><button class="copy" data-page-node-id="PiAxYaLoXNtLGrIBeWUn3r">复制</button></div>
+<pre data-page-node-id="W4dMUc7ePr2RWOsOPR0kFc"><code data-page-node-id="Olrui4g4VUW0xagSNZgnXa">curl -fsSL https://get.docker.com | sudo sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker deploy     # 重新登录后生效
+docker version
+
+# 配置镜像加速：登录各家云控制台，在「容器镜像服务 - 镜像加速器」获取专属地址
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json &lt;&lt;'EOF'
+{
+  "registry-mirrors": ["https://&lt;你的加速器地址&gt;"],
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "50m", "max-file": "3"}
+}
+EOF
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart docker</code></pre>
+      </div>
+    </div>
+
+    <h3 id="release" data-page-node-id="Yk7ZEI73qe9ptCC9HCSxpB">3.3 代码发布：目录约定与零停机切换</h3>
+    <p data-page-node-id="c2DGSjDY49KT9V6vfiIB6v">推荐的目录结构，支持秒级回滚：</p>
+    <div class="code-wrap hasbar" data-page-node-id="Bj9rNSZ8uxdwI4iawLxFfr"><div class="bar" data-page-node-id="3sonhjzn0wXUf4NHWriq2u"><span data-page-node-id="CbiEn86BIZZuZJ0UHvznx2">目录约定</span><button class="copy" data-page-node-id="zTrbRtdEXNF45YM7k4eoou">复制</button></div>
+<pre data-page-node-id="baHBAxitpwZnlSE5nera0q"><code data-page-node-id="nJiev17qn6a7oqWTEQVzoj">/opt/app/
+├── releases/
+│   ├── 2026-09-09-1015/      # 每次发布一个新目录（不可变）
+│   └── 2026-09-01-0930/      # 保留最近 5 个版本用于回滚
+├── shared/
+│   ├── .env                  # 环境变量，不进 Git
+│   └── uploads/              # 用户上传文件（建议改用对象存储）
+└── current -&gt; releases/2026-09-09-1015/   # 软链接，指向当前版本</code></pre>
+    </div>
+    <div class="code-wrap hasbar" data-page-node-id="0MKoRalU6sRYF8x7k5YinD"><div class="bar" data-page-node-id="9GmUIr4cLA0WUkU0QfCFMU"><span data-page-node-id="qpN9PosZrc5qIYmicbT4jX">bash — 发布脚本 deploy.sh</span><button class="copy" data-page-node-id="T8koLp1ISlawVTyWHim0FT">复制</button></div>
+<pre data-page-node-id="wESA29IxGGkTpRmKeLPiJO"><code data-page-node-id="rfALwyJX8vi1FdlS7TKCEv">#!/usr/bin/env bash
+set -euo pipefail
+APP_DIR=/opt/app
+KEEP=5
+
+# 用法：./deploy.sh dist.tar.gz
+TARBAL=$(readlink -f "$1")
+STAMP=$(date +%F-%H%M)
+REL=$APP_DIR/releases/$STAMP
+
+mkdir -p "$REL"
+tar -xzf "$TARBAL" -C "$REL"
+ln -sfn "$APP_DIR/shared/.env" "$REL/.env"
+
+# 安装依赖（Node 示例）
+cd "$REL" &amp;&amp; pnpm install --prod --frozen-lockfile
+
+# 原子切换
+ln -sfn "$REL" "$APP_DIR/current.tmp"
+mv -Tf "$APP_DIR/current.tmp" "$APP_DIR/current"
+
+# 重启服务
+sudo systemctl restart myapp
+sleep 3
+systemctl is-active --quiet myapp &amp;&amp; echo "deploy OK: $STAMP" || { echo "FAILED"; exit 1; }
+
+# 清理旧版本
+cd "$APP_DIR/releases" &amp;&amp; ls -1t | tail -n +$((KEEP+1)) | xargs -r rm -rf</code></pre>
+    </div>
+    <div class="note ok" data-page-node-id="PWeLvMeHiDGJBZf6CByZL0">
+      <span class="t" data-page-node-id="kjqxTXgRByf5ag4E6WjJL0">为什么用软链接</span>
+      <p data-page-node-id="UTVgZNFavmAFFHcPtamChj">切换版本只有 <code data-page-node-id="escJhLjHo6LHxHC3LY5q2z">mv -Tf</code> 一次原子操作，中间不存在“半个新版本”的状态。回滚就是把软链接指回上一个目录再重启，通常 5 秒内完成。</p>
+    </div>
+
+    <h3 id="daemon" data-page-node-id="MSlgpwdI75olUciVOsfnOx">3.4 进程守护：systemd</h3>
+    <div class="code-wrap hasbar" data-page-node-id="lX21RA8oqgOKzSlo000txG"><div class="bar" data-page-node-id="uZPKjwwBLkopKNqozEjGDF"><span data-page-node-id="QwtAVkhUG6ceUHs3N4OACO">/etc/systemd/system/myapp.service</span><button class="copy" data-page-node-id="3XaCt93ZuXsGLJ2V6tZmKv">复制</button></div>
+<pre data-page-node-id="XPZldmYHHYTMk8EFyc6TF0"><code data-page-node-id="x9amWkXiGWLaAd2KLlbEF3">[Unit]
+Description=My App Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/app/current
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/app/shared/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
+StandardOutput=append:/var/log/app/app.log
+StandardError=append:/var/log/app/app.log
+
+# 安全加固（按需开启）
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/app /opt/app/shared
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+    </div>
+    <div class="code-wrap hasbar" data-page-node-id="4BYX1GGlJN14Waw8uvaw6n"><div class="bar" data-page-node-id="mptfdLOmsWSBtfKj27ENBd"><span data-page-node-id="x5M3pqD7bcFFRhozRoIads">bash — 服务管理</span><button class="copy" data-page-node-id="htU9xxaGQ2Fo56wWGDgiaf">复制</button></div>
+<pre data-page-node-id="454tRB6EpmV1Yo46Ds2f68"><code data-page-node-id="VO0PcPAna68ALT9gDlZcSq">sudo systemctl daemon-reload
+sudo systemctl enable --now myapp
+sudo systemctl restart myapp
+systemctl status myapp -l
+journalctl -u myapp -f --since "10 min ago"     # 实时日志</code></pre>
+    </div>
+
+    <h3 id="nginx" data-page-node-id="s55MnoNwtFAQxNUG1hRlWM">3.5 Nginx 反向代理</h3>
+    <div class="code-wrap hasbar" data-page-node-id="Qhhi1huZa8Wx0drxPGwyAN"><div class="bar" data-page-node-id="Oj50plRdveDpEhqxj2eJi6"><span data-page-node-id="BdI1Ycj3BkRBwcYlbdsHYp">/etc/nginx/conf.d/myapp.conf</span><button class="copy" data-page-node-id="uDmtJZwov419HCEjv0iR8a">复制</button></div>
+<pre data-page-node-id="qlzQs2FS0pMlllWyAtrCAB"><code data-page-node-id="m32ZxVfygjnzGBycGaTDtJ">upstream myapp {
+    server 127.0.0.1:3000;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name example.com www.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    ssl_certificate     /etc/nginx/cert/example.com.pem;
+    ssl_certificate_key /etc/nginx/cert/example.com.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+
+    client_max_body_size 20m;
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript;
+
+    access_log /var/log/nginx/myapp.access.log;
+    error_log  /var/log/nginx/myapp.error.log;
+
+    # 前端静态资源
+    location /assets/ {
+        root /opt/app/current/public;
+        expires 7d;
+    }
+
+    # API 反向代理
+    location /api/ {
+        proxy_pass http://myapp;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+    }
+
+    # 单页应用路由回退
+    location / {
+        root /opt/app/current/public;
+        try_files $uri $uri/ /index.html;
+    }
+}</code></pre>
+    </div>
+    <div class="code-wrap hasbar" data-page-node-id="wyEFXB61sL5vy3VaBHA3CM"><div class="bar" data-page-node-id="0wLY3M8Ez5D5FYkPoUKufN"><span data-page-node-id="ONyNHgu0FbZjvUnhE0Pvds">bash — 校验与重载</span><button class="copy" data-page-node-id="2mputK08r4JPmnjtU2ke4S">复制</button></div>
+<pre data-page-node-id="ckMsUwLSzoN9hI5MbD0zV9"><code data-page-node-id="DeF1MO4NQOzEmgaUVOrruQ">sudo nginx -t                 # 一定要先测配置
+sudo systemctl reload nginx   # 平滑重载，不断连接
+sudo systemctl enable nginx</code></pre>
+    </div>
+
+    <h3 id="https" data-page-node-id="hEBZaGz3vFuoHaRcWC3uUj">3.6 HTTPS 证书</h3>
+    <p data-page-node-id="CXoYLIwuTjOVzAW0IRYyCC">两种方案，按场景选：</p>
+    <table data-page-node-id="ZfnIkb6XAJ1wybcpfYGHmZ">
+      <thead data-page-node-id="vQvEf4jIGinZa4BQAr7eDS"><tr data-page-node-id="KuDEulFoS9oAM3aoe4l7CT"><th data-page-node-id="fW7zrlAWHU8dCzpPFbnCwo">方案</th><th data-page-node-id="UfHKcop1GTKzTIDFnF6VDb">适用</th><th data-page-node-id="S2Sq673H7AVxiFHn1rvkw3">优点</th><th data-page-node-id="7YHnk112DdwBmxVCzeFe0d">注意</th></tr></thead>
+      <tbody data-page-node-id="M07XyIz3Bnwc8CjtyT0q6x">
+        <tr data-page-node-id="Cyx1ajAyJznqoYITKGqdik"><td data-page-node-id="yaWF4ZhpXCIe1Esdpkck7L">云平台免费 DV 证书 + 负载均衡 / CDN 托管</td><td data-page-node-id="6Rz61GYMwPh7p6j1ZtVOjR">单域名、推荐</td><td data-page-node-id="JlJOfSDfJaQS3EGUcByRgd">自动续期、免运维、可挂 CDN</td><td data-page-node-id="EzqCJWgfF6RVxBux2A97os">各平台免费额度与有效期不同，以控制台为准；不支持通配符</td></tr>
+        <tr data-page-node-id="RZLp2MfOPngn2aCFeX3AzZ"><td data-page-node-id="D4C69s1AQKEtDCeXFxaiPi">Let's Encrypt + certbot</td><td data-page-node-id="tUghaR5slFfNXWPkAsfUSN">需要通配符、多域名、自建 Nginx</td><td data-page-node-id="2I4B9E5LiaTZPbLCoOBkVm">免费、支持泛域名（需 DNS 验证）</td><td data-page-node-id="mBEBEc72uy9EXHERCwyDFg">90 天有效期，必须配置自动续期</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="yDPfUOo2551rrHwwTzjJaT"><div class="bar" data-page-node-id="PvaGreCMF1gX5Xxk8YzxxA"><span data-page-node-id="pj5e5wE9EUGc3WLBED7ZHA">bash — certbot 自动续期</span><button class="copy" data-page-node-id="aQxmxefDsINDPwe8PxV7Nd">复制</button></div>
+<pre data-page-node-id="tzXc2qrhowjraH0kVBqGcG"><code data-page-node-id="jMvrW5hCmmeH9GNHXSovIi">sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d example.com -d www.example.com
+
+# 泛域名（DNS 验证，需 API 密钥）
+# sudo certbot certonly --manual --preferred-challenges dns -d "*.example.com"
+
+# 自动续期（certbot 默认已写入定时任务，可手动验证）
+sudo certbot renew --dry-run
+systemctl list-timers | grep certbot</code></pre>
+    </div>
+
+    <!-- ============ 二、分平台实操 ============ -->
+    <h2 id="platforms" data-page-node-id="FKfDGw2VGi4xszXfmjX8Qm"><span class="num" data-page-node-id="hou2NaqFqRrAUVH2vySp7I">二</span>分平台实操要点</h2>
+    <p data-page-node-id="DgrfMKzOcqnBVRRhczkG0u">通用部分不再重复，这里只列每家的<b data-page-node-id="HdWzQ5SrijMFyhYa9rEmS6">特有入口、CLI 用法、镜像仓库格式</b>这些容易卡住人的点。</p>
+
+    <h3 id="aliyun" data-page-node-id="NWw6wwSIvyTWsQa3KSR7AE">2.1 阿里云</h3>
+    <table data-page-node-id="luWlMhFxKJqUEPaadDLE1G">
+      <thead data-page-node-id="ykJNZKfWnd2V58p2WifRUg"><tr data-page-node-id="0LUfRc6S8VLwGTMcD993yi"><th data-page-node-id="Klwfu0jjbQQOsyxAnnTl4p">事项</th><th data-page-node-id="NYVmRDw3JNgeC1ofzd4quL">路径 / 命令</th></tr></thead>
+      <tbody data-page-node-id="aLMhfXA6wPAud96TEZRjCo">
+        <tr data-page-node-id="U5MfTQ9TtimIlt9dfcVQry"><td data-page-node-id="2maFhC6bnYXgLVBEPllISk">创建 ECS</td><td data-page-node-id="Z7mP9PQQwVZE3r5YZmL97D">控制台 → 云服务器 ECS → 实例 → 创建实例；付费模式选「包年包月」或「按量付费」，网络选「专有网络 VPC」</td></tr>
+        <tr data-page-node-id="Zj1bhI97QLBDfQYOnHMZ4L"><td data-page-node-id="xxx6EGLTwjlT3ujkBXZfQo">密钥对</td><td data-page-node-id="eH5KyfgW9EY9pW5CoqPWHj">控制台 → 网络与安全 → 密钥对；创建后下载 <code data-page-node-id="QPBT8kZE7A4KUhi6VyuW62">.pem</code>，<b data-page-node-id="IgotJSU54mPNen19wVi7pv">仅一次机会</b></td></tr>
+        <tr data-page-node-id="3XoWWRlFBKQBJq0sRuF7GQ"><td data-page-node-id="MWOFULvkvwq9SFkGiZTeeI">安全组</td><td data-page-node-id="Qs8DhzbK54eSSNCylYchMn">ECS 实例详情 → 安全组 → 配置规则；按前面端口表添加</td></tr>
+        <tr data-page-node-id="g9HOSHeqvbQ9Wt3KTwmdze"><td data-page-node-id="1ZtaWbKUSD8MchTE5WjV96">远程连接</td><td data-page-node-id="QlrQqaddDdJ8mclqHUnSTv">控制台 → 远程连接 → Workbench（免 SSH 客户端，也可用于 VNC 救援）</td></tr>
+        <tr data-page-node-id="U4OAf1ggjTnS0unsNCCqQO"><td data-page-node-id="Xtr902jY3c4qzJ0i1g75GI">CLI</td><td data-page-node-id="Hb2lrb3kyO20ITml7guvLb">安装 aliyun CLI 后执行 <code data-page-node-id="rcAhpMknQzbhmj9Y1JyMmL">aliyun configure</code> 填 AccessKey + 地域，如 <code data-page-node-id="M09FMUQ3TG8ypwCAjGy11Y">cn-hangzhou</code></td></tr>
+        <tr data-page-node-id="n1NOsvlBGeoCizz8BQjRdG"><td data-page-node-id="3WOH1vbytO5NvVf3l3FUKg">镜像仓库</td><td data-page-node-id="Z0lDhKgePPFlTWgEzkKAUj">ACR 个人版/企业版，地址形如 <code data-page-node-id="PZZz5lMqANNNcRGiUWALs3">registry.cn-hangzhou.aliyuncs.com/&lt;命名空间&gt;/&lt;镜像&gt;</code></td></tr>
+        <tr data-page-node-id="zF5VQ2zkroG6jvavbmG5wP"><td data-page-node-id="96PGaAAwIB356CqrorCozN">镜像加速</td><td data-page-node-id="i3Aw7WrCnR1dCx5eEaZ2Fj">ACR 控制台 → 镜像加速器，每个账号有专属地址</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="twmgMEMdBnzVSo92YQ2DtP"><div class="bar" data-page-node-id="b2yoKiNCoEwV0nn7BAo0V7"><span data-page-node-id="XQ2wfCaFxDWGWpDjktKEHM">bash — 阿里云常用操作</span><button class="copy" data-page-node-id="h15fL7xFJzxVykY6lPWJzQ">复制</button></div>
+<pre data-page-node-id="HgpgmDcOFGTh0sLRa5nP4x"><code data-page-node-id="yHDHKwXZNcJ31si8RfZylV"># 配置 CLI
+aliyun configure      # 依次输入 AccessKey ID / Secret / RegionId（如 cn-hangzhou）/ 输出格式 json
+
+# 查看实例列表
+aliyun ecs DescribeInstances --RegionId cn-hangzhou
+
+# 登录 ACR 并推送镜像（个人版密码在控制台「设置 Registry 登录密码」处设置）
+docker login --username=&lt;阿里云账号全名&gt; registry.cn-hangzhou.aliyuncs.com
+docker tag myapp:1.0.0 registry.cn-hangzhou.aliyuncs.com/myteam/myapp:1.0.0
+docker push registry.cn-hangzhou.aliyuncs.com/myteam/myapp:1.0.0
+
+# 免密钥访问 OSS：给实例绑定 RAM 角色，SDK 自动获取临时凭证</code></pre>
+    </div>
+
+    <h3 id="tencent" data-page-node-id="4nHkiC9wDGpisGNKEW4YzQ">2.2 腾讯云</h3>
+    <table data-page-node-id="7cVRx4TmzLWq2lW5fi8DSg">
+      <thead data-page-node-id="Q8drsmrMyBsZNNgUnBpTcg"><tr data-page-node-id="vxvnqcxmvwdLOFsLPvFCwC"><th data-page-node-id="CqUU4UmxkmgiVLCEj20BWq">事项</th><th data-page-node-id="cMmRXcaUtUngvaPqijA4O0">路径 / 命令</th></tr></thead>
+      <tbody data-page-node-id="sPozYKGTULQD4nq71URwHN">
+        <tr data-page-node-id="wic3yJeXY8c35RWQDjyqQr"><td data-page-node-id="iUc1map6mGlgDKNN7FrpCh">创建 CVM</td><td data-page-node-id="mO0uiMiSG2zdEkUOkvEohb">控制台 → 云服务器 → 实例 → 新建；镜像可选 TencentOS Server / OpenCloudOS</td></tr>
+        <tr data-page-node-id="nILZHAZpK84sA8uAS4Pvgy"><td data-page-node-id="uufkhJu1LcaNMxyrLVFhBl">密钥对</td><td data-page-node-id="cU6PU68tMmahb207xQuWky">控制台 → SSH 密钥 → 创建密钥，绑定到实例后需<b data-page-node-id="mU37m8IFenHAfZ03ZenFij">重启</b>生效</td></tr>
+        <tr data-page-node-id="8TnYIl184mLCWJsOWw1cZZ"><td data-page-node-id="aagn6vklIcP90D9xPSaFb2">安全组</td><td data-page-node-id="w4KXZ8oI8xS0hSpwwnm68F">控制台 → 安全组 → 新建（建议选「放通 22,80,443」模板后按需收紧）</td></tr>
+        <tr data-page-node-id="tqJFpK6ryGR8AHTsr3hDja"><td data-page-node-id="EPzxDEpTiMXSD2xHFMbGnE">远程连接</td><td data-page-node-id="ZVKEdGeDWD3vBoAc39tCWP">控制台 → 登录 → 标准登录方式（WebShell），或用 OrcaTerm</td></tr>
+        <tr data-page-node-id="5jaMK0FPHbOtzVrMo9sh5A"><td data-page-node-id="EsapsAVqGgF4coOoFhGBDL">CLI</td><td data-page-node-id="D3LuU23zzYQo48XSEIcQ2x"><code data-page-node-id="kaGpeJuJjSYPOeODdbTsZG">pip install tccli</code> → <code data-page-node-id="j6Aw2mlkW8QqqxBjuyQMEC">tccli configure</code></td></tr>
+        <tr data-page-node-id="h9aV7GOVxS1lbTJVyUGWsI"><td data-page-node-id="G0OLjaBWQSUmi6kGlNBynx">镜像仓库</td><td data-page-node-id="JpfetsllcbClzgUET55hO4">TCR 企业版/个人版，地址形如 <code data-page-node-id="aJE8bPqHlzvQpWWjyW1f3q">&lt;实例&gt;.tencentcloudcr.com/&lt;命名空间&gt;/&lt;镜像&gt;</code>（以控制台为准）</td></tr>
+        <tr data-page-node-id="jcDwRZszTFx69HjGwA0GZZ"><td data-page-node-id="jbwbN4VlFOcyzIk0OVo3MT">备案</td><td data-page-node-id="rD5dKBQ1rJiWYwEFJMqlGy">微信小程序「腾讯云备案」可完成人脸核验，进度较快</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="wqW4HeWHAU871iDReCuKvD"><div class="bar" data-page-node-id="PxnFrPVCURo8v7VrDMx8AI"><span data-page-node-id="KXwySEMnf9wKPWBCXamPq9">bash — 腾讯云常用操作</span><button class="copy" data-page-node-id="e2dYbbezE1NlYSczMxgewy">复制</button></div>
+<pre data-page-node-id="QeG7Z9r4QYBjBqxxog0kA7"><code data-page-node-id="up7jSoQq7vcSdEDpSjFhzC">pip install tccli
+tccli configure        # 需要 SecretId / SecretKey / region（如 ap-guangzhou）
+
+# 查询实例
+tccli cvm DescribeInstances
+
+# 登录并推送镜像到 TCR
+docker login --username=&lt;账号&gt; &lt;实例&gt;.tencentcloudcr.com
+docker tag myapp:1.0.0 &lt;实例&gt;.tencentcloudcr.com/myteam/myapp:1.0.0
+docker push &lt;实例&gt;.tencentcloudcr.com/myteam/myapp:1.0.0
+
+# 静态站点：COS 控制台 → 存储桶 → 基础配置 → 静态网站，配合 CDN 回源</code></pre>
+    </div>
+
+    <h3 id="huawei" data-page-node-id="inQCbQRiCU6A6QrD66uJFy">2.3 华为云</h3>
+    <table data-page-node-id="QX3NI5FwyQncCA3HLbfDhC">
+      <thead data-page-node-id="qWBspAAFEJ6P2XIGABQQz0"><tr data-page-node-id="XnGmoRyCoFY8fXijwJBJct"><th data-page-node-id="hBV5KpIM2RHjqUii327YPn">事项</th><th data-page-node-id="eIPEgphiUXln9HwUPl23Ef">路径 / 命令</th></tr></thead>
+      <tbody data-page-node-id="73XW8foCEXofkIbO9iNbfj">
+        <tr data-page-node-id="2D9JtLfkKEjiPMUMOesDCF"><td data-page-node-id="tp0UO9PfdZjIjoZ7amCe26">创建 ECS</td><td data-page-node-id="CFCPVYHKBsjwok07Iggxyz">控制台 → 弹性云服务器 ECS → 购买弹性云服务器；区域如 <code data-page-node-id="cNWaMO3h2B1GwjEeatRx4G">cn-north-4</code>（北京四）</td></tr>
+        <tr data-page-node-id="LDiwUxCvQfNzILGPSjgN6C"><td data-page-node-id="H88eA0wDXRCDV1glds6wXK">密钥对</td><td data-page-node-id="pEliBiQKGxD6iRU7iqC26P">控制台 → 弹性云服务器 → 密钥对；也支持在创建实例时直接配置</td></tr>
+        <tr data-page-node-id="Q2jd0CkG4Jlz37kn4OuAF3"><td data-page-node-id="b9nid8RaQyAm0MVq4jt4Gz">安全组</td><td data-page-node-id="c72Q9GQiuJJ9qleGQ2old3">控制台 → 访问控制 → 安全组；默认放通出方向，入方向需手动添加</td></tr>
+        <tr data-page-node-id="nQLKy9J5gKEuyvuRS9MUw0"><td data-page-node-id="eOAOYp18FdoIgMdaQQfp1o">远程连接</td><td data-page-node-id="uSkOsxkagXpyrHHosHcoFH">控制台 → 远程登录 → CloudShell</td></tr>
+        <tr data-page-node-id="ZkFFj1v6FOxW2akDD8xC5e"><td data-page-node-id="TBXxV7VRTU0GRPK92GPUk2">CLI</td><td data-page-node-id="6WQ9xqAqsIPH8zpViOCqC9">KooCLI，命令名 <code data-page-node-id="pVuOcKha1uBuWx8nk7JlJm">hcloud</code>；<code data-page-node-id="mtZALbeI0cZxOYY44gbMdx">hcloud configure</code> 配置 AK/SK 与区域</td></tr>
+        <tr data-page-node-id="CMajJHhFztrFky8JEq7ZJ5"><td data-page-node-id="k1gbMjUvIfR2o3LRjDA961">镜像仓库</td><td data-page-node-id="K35gtQGykUKBRvpDNLI8TA">SWR，地址形如 <code data-page-node-id="0FlxrCtWECduZyIWaegxf9">swr.cn-north-4.myhuaweicloud.com/&lt;组织&gt;/&lt;镜像&gt;</code></td></tr>
+        <tr data-page-node-id="tJ3DdY2bVjBC4juJLlbZ1Z"><td data-page-node-id="EGcOQLgBZrXZC3U2ebOnhw">临时凭证</td><td data-page-node-id="7Vm5iJn7Id5qWl1bw2F7X5"><code data-page-node-id="9HdOqme2MP6jHPpNd9C0Rs">hcloud</code> 支持 AK/SK 与临时安全凭证两种方式</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="HN13j8xVDVNM9OBZ7gKJSA"><div class="bar" data-page-node-id="SdxLHtN5Qf5zhIoNqZ3rdz"><span data-page-node-id="0LkjGXinPlZAm7RTgoxwMy">bash — 华为云常用操作</span><button class="copy" data-page-node-id="Tyi3HZdKsI1ach4aH4SWDk">复制</button></div>
+<pre data-page-node-id="hfIVGlequUNGiE2x13eeOW"><code data-page-node-id="I1PtZMmsGp00Ff9iBNJzi5"># KooCLI 配置（在控制台「我的凭证 → 访问密钥」新建 AK/SK）
+hcloud configure
+
+# 查询 ECS 列表
+hcloud ECS NovaListServersDetails
+
+# 登录 SWR（用户名通常是区域名，密码为「我的凭证」中的登录密码／长期凭证）
+docker login -u cn-north-4@&lt;AK&gt; -p &lt;登录密钥&gt; swr.cn-north-4.myhuaweicloud.com
+docker tag myapp:1.0.0 swr.cn-north-4.myhuaweicloud.com/myteam/myapp:1.0.0
+docker push swr.cn-north-4.myhuaweicloud.com/myteam/myapp:1.0.0</code></pre>
+    </div>
+
+    <h3 id="baidu" data-page-node-id="VP2zQCouKqhNWb3L0GrBdW">2.4 百度智能云</h3>
+    <table data-page-node-id="ZE0LCMSoVURGgEzGGL2ttY">
+      <thead data-page-node-id="om2vPrLk90YAZfwslMTEFt"><tr data-page-node-id="Pflp7kN5GwEK0ZJcEvDGKY"><th data-page-node-id="p1AObqT4E6bCHiips8WBbL">事项</th><th data-page-node-id="NIsQbaTFMiAQ8RYv9yD1nI">路径 / 命令</th></tr></thead>
+      <tbody data-page-node-id="Gdz0btGfhZ91OiH5mLmMFO">
+        <tr data-page-node-id="mwBb79hh5mGM5y0UyQZIpq"><td data-page-node-id="EqXgyMmJDnWMSaZio5LBml">创建 BCC</td><td data-page-node-id="p8qh7XKrzAtReOxwMbJC02">控制台 → 云服务器 BCC → 创建实例；区域如 <code data-page-node-id="BKBBs0fExmO0mG3HQn4OCa">bj</code>（北京）、<code data-page-node-id="wXYYU1UMDN2sjvGBcaS9Bb">gz</code>（广州）</td></tr>
+        <tr data-page-node-id="I9YGz3ZSUAFrXRtHujRwPV"><td data-page-node-id="XVnBjV5Xpe21IDrIo8hhjk">密钥对</td><td data-page-node-id="IyEgagDa4jFJFEnD6YSPFn">控制台 → 云服务器 BCC → SSH 密钥对；创建后绑定实例并重启</td></tr>
+        <tr data-page-node-id="XKjZAmo419ESQeAinEV242"><td data-page-node-id="DlahvhP5pKK2r2HuDQd5h2">安全组</td><td data-page-node-id="DqyqUQLtaDdcDDGptINsZF">控制台 → 私有网络 VPC → 安全组（BCC 的安全组在 VPC 产品下）</td></tr>
+        <tr data-page-node-id="RsSUNdd2gbXiwKVr6rA8pW"><td data-page-node-id="hM59qhW15oh0vnbSXLqzON">CLI</td><td data-page-node-id="pWk5w9suFknF8ZOZAGserX">BCE 命令行工具 <code data-page-node-id="xFcghS8HjmUWiShoQrU5ms">bcecmd</code>，配置 AK/SK 与区域（以官方文档为准）</td></tr>
+        <tr data-page-node-id="1yxyh4RT9qyJ3tYLgyaDfe"><td data-page-node-id="Yrp2g2c0DFtzO2uGpFG7AJ">镜像仓库</td><td data-page-node-id="XURIIWYdfdDjY1U3Svd1Ng">容器镜像服务 CCR，地址形如 <code data-page-node-id="7EhlBsyVLoL5Ygbq6K0qiA">registry.baidubce.com/&lt;命名空间&gt;/&lt;镜像&gt;</code></td></tr>
+        <tr data-page-node-id="KSUNtEETu8H9g1UAUJ2iLE"><td data-page-node-id="c2MgTKi1rVFsF54fhTGt3j">特色</td><td data-page-node-id="fncxBmfA14zevyqgnFiX6A">与文心大模型、千帆平台同账号体系，AI 类应用接入较顺</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="wZCGkx1hQfLz5i6xJzYODc"><div class="bar" data-page-node-id="ZQ041W9m32bUwEAJt8ry49"><span data-page-node-id="7GbNa8TCVozQdtZI9cvnDW">bash — 百度智能云常用操作</span><button class="copy" data-page-node-id="2tuWAEU4X0bAFhMtqX5ouw">复制</button></div>
+<pre data-page-node-id="Gpl9Ln4RgsJmnXMHF84CHz"><code data-page-node-id="7Ra01E71ZxI4oHEnt7rYXC"># bcecmd 安装后在控制台「安全认证」获取 AK/SK
+bcecmd configure set --access-key-id &lt;AK&gt; --secret-access-key &lt;SK&gt; --region bj
+
+# 查询实例
+bcecmd bcc describe-instances
+
+# 推送镜像
+docker login --username=&lt;AK&gt; registry.baidubce.com
+docker tag myapp:1.0.0 registry.baidubce.com/myteam/myapp:1.0.0
+docker push registry.baidubce.com/myteam/myapp:1.0.0</code></pre>
+    </div>
+
+    <h3 id="volc" data-page-node-id="7y4Zuq1ByYPRoAdsBrWYSN">2.5 火山引擎</h3>
+    <table data-page-node-id="czncG9upizHaxV0gqGmlty">
+      <thead data-page-node-id="T5l79Z0R01RsiUm8qua3mJ"><tr data-page-node-id="5eJP8Cb4UHixBjrGdzqiCI"><th data-page-node-id="ngGtPq78CDYmhPuFOQkqoW">事项</th><th data-page-node-id="tfjxUsKpsd7mt2gCx1jLaY">路径 / 命令</th></tr></thead>
+      <tbody data-page-node-id="tTFPmGD1ykoAdKZ8lvLksV">
+        <tr data-page-node-id="RAAVEAZrcJnL5vuBS8lZpd"><td data-page-node-id="yJMBeAqenGnn4dDCpzWgnT">创建 ECS</td><td data-page-node-id="rbITKAMdHyt7lcGiTEUYig">控制台 → 云服务器 → 实例 → 创建实例；地域如 <code data-page-node-id="wrYjtUfIxB4J6FuTUuy85N">cn-beijing</code></td></tr>
+        <tr data-page-node-id="sEwNgd9yKDxaXpypCyeQCy"><td data-page-node-id="5URYkzJO6pQsWEoal086Zt">密钥对</td><td data-page-node-id="2mY8mhrNJx7JPEgZE9kNZz">控制台 → 云服务器 → 密钥对；支持创建时注入</td></tr>
+        <tr data-page-node-id="BwRRzGiEs7YJDe75Gfov3a"><td data-page-node-id="QNs0vcYqVU1PdwTzbYJ0uG">安全组</td><td data-page-node-id="noLInlXkn1gjTZysgw2oQb">控制台 → 私有网络 → 安全组；规则分入/出方向分别配置</td></tr>
+        <tr data-page-node-id="LZlWUFCgKvLXCxnvAuLFS6"><td data-page-node-id="C8IfUC6FAQPCldJpjzgkFs">远程连接</td><td data-page-node-id="gDPQTSI4IO9Yichyr4WYNj">控制台 → 实例 → 远程连接（WebTerminal）</td></tr>
+        <tr data-page-node-id="RbUDEm3QK97H6c6w3LJdg9"><td data-page-node-id="rYEQ7IyUPP4Q6l6coD8LUy">CLI / API</td><td data-page-node-id="2YJIGPnnvvif3ln21wo5uY">主要使用 OpenAPI 与官方 SDK（Go / Java / Python）；控制台提供云命令行</td></tr>
+        <tr data-page-node-id="EoYQyCflqPHMOugBO0qqOP"><td data-page-node-id="IPaAu3AFPuDHgewdYm11tZ">镜像仓库</td><td data-page-node-id="8wXv3HEeLsWuu4EKSJBiZC">镜像仓库 CR，控制台「镜像仓库 → 基本信息」查看访问地址与登录指令</td></tr>
+        <tr data-page-node-id="MsfJOObT19U8yg2nl5Zgx2"><td data-page-node-id="SZTBAHtOfVn2b0dFPrTX35">特色</td><td data-page-node-id="3yWDKRPY6gAKyt5ejZQtzh">弹性裸金属、veFaaS 函数服务，与字节系生态（如 veImageX 图片处理）打通</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="tdXrvx7QTQyEG6jLBJSupO"><div class="bar" data-page-node-id="c0eP0uBfrrYKLNl7I6EdwI"><span data-page-node-id="khSEDb5RXF8905K64qjl01">bash — 火山引擎常用操作</span><button class="copy" data-page-node-id="x6v7qozAddX9joBYsO855k">复制</button></div>
+<pre data-page-node-id="v5NTJtK0DJsqKL5vnBA90g"><code data-page-node-id="KqHgXFaCSBjJFQY4OJuPl8"># 推荐用官方 SDK / OpenAPI 完成自动化；控制台「镜像仓库」页可直接复制登录命令
+docker login --username=&lt;账号&gt; &lt;你的实例地址&gt;
+docker tag myapp:1.0.0 &lt;你的实例地址&gt;/myteam/myapp:1.0.0
+docker push &lt;你的实例地址&gt;/myteam/myapp:1.0.0
+
+# 通过 SDK 调用（Python 示例，安装：pip install volcengine-python-sdk）
+# from volcengine.ecs.ECSService import ECSService
+# svc = ECSService(); svc.set_ak('&lt;AK&gt;'); svc.set_sk('&lt;SK&gt;'); svc.set_host('open.volcengineapi.com')</code></pre>
+    </div>
+
+    <!-- ============ 三、容器化 ============ -->
+    <h2 id="container" data-page-node-id="6Vqygj181hHQD5Gf3V2zLn"><span class="num" data-page-node-id="hc5tWTCfpI5suIP4fBCC2n">三</span>容器化与 Kubernetes</h2>
+
+    <h3 data-page-node-id="f4tb3sWLoXJP5UHO298FQ1">3.1 写好 Dockerfile</h3>
+    <div class="code-wrap hasbar" data-page-node-id="6eHWde4H1Wvhtx6EIewZxb"><div class="bar" data-page-node-id="qb7cTjlF4BlHxHoxydeTrs"><span data-page-node-id="M1yeyiNwICnjEbUtcgpWdg">Dockerfile — Node 服务多阶段构建示例</span><button class="copy" data-page-node-id="zn0SYhKnDD48P3fMlYOOo3">复制</button></div>
+<pre data-page-node-id="PMplyZAE2TzcQ8KEBO1uom"><code data-page-node-id="OQMLzE0Ds83DdD1kkYc6J3"># ---------- 构建阶段 ----------
+FROM node:20-alpine AS builder
+WORKDIR /src
+COPY package.json pnpm-lock.yaml ./
+RUN npm i -g pnpm &amp;&amp; pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+
+# ---------- 运行阶段 ----------
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /src/package.json ./
+COPY --from=builder /src/node_modules ./node_modules
+COPY --from=builder /src/dist ./dist
+
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:3000/healthz || exit 1
+CMD ["node", "dist/server.js"]</code></pre>
+    </div>
+    <div class="note" data-page-node-id="XP16ErAyIcu2VY8kgzgYAR">
+      <span class="t" data-page-node-id="qxTsfjXkJiziJ7iNEZ4EcB">Dockerfile 五条硬规则</span>
+      <p data-page-node-id="GdFrsLsP9DdI3ZEQXR0lDw">① 用<b data-page-node-id="2CLpODuFhpWxEqJZfhECRj">多阶段构建</b>，运行镜像里不要有编译器和源码；② 依赖清单单独 COPY，充分利用构建缓存；③ 用 <code data-page-node-id="zrVhDUEf5AsL9TbXp4mh4F">.dockerignore</code> 排除 <code data-page-node-id="5LWuqy0SfwEIRwrObYP1ME">node_modules</code>、<code data-page-node-id="W8MYfDoLqTwG9rBdzojplz">.git</code>、<code data-page-node-id="lTi64oHNFJl8fBt8n0PrJi">.env</code>；④ <b data-page-node-id="w7fRvQEw0Cm1YZByTH4ayY">不要以 root 运行</b>；⑤ 配置 <code data-page-node-id="OIvQFJHbS9JAKZHBgKUyQy">HEALTHCHECK</code>，让编排系统能真正判断存活。</p>
+    </div>
+
+    <h3 data-page-node-id="C41EqbHnWRypRvAUoZfce3">3.2 镜像打标签的规矩</h3>
+    <div class="code-wrap hasbar" data-page-node-id="3if35q98LO0eJi15bPvr7K"><div class="bar" data-page-node-id="wu8AC1Ip5lqMzU6BJLgPr9"><span data-page-node-id="m1bPqwOziF8ZEfw75G81MB">bash — 标签策略</span><button class="copy" data-page-node-id="UWzhykPbeY9hyiPHV0oYPD">复制</button></div>
+<pre data-page-node-id="0Zb7fMbeB0k025tMZwWk0V"><code data-page-node-id="RZtSJrwxhS8fdCtcmQFvcX"># 永远不要只打 latest。推荐：git commit sha + 版本号 双标签
+GIT_SHA=$(git rev-parse --short HEAD)
+VERSION=1.4.2
+IMAGE=registry.example.com/myteam/myapp
+
+docker build -t $IMAGE:$GIT_SHA -t $IMAGE:$VERSION .
+docker push $IMAGE:$GIT_SHA
+docker push $IMAGE:$VERSION
+
+# 回滚时直接指定旧 sha 重新部署，可追溯、可复现</code></pre>
+    </div>
+
+    <h3 data-page-node-id="cygEY9ZoXho5lLYI4LlC1p">3.3 K8s 部署清单</h3>
+    <div class="code-wrap hasbar" data-page-node-id="ThlHbcnrSjQE8jGGWfA1aJ"><div class="bar" data-page-node-id="VobXZXcGrV05xme8O0Imn6"><span data-page-node-id="2l1ptfTr1ld3roSI0oXF2U">deployment.yaml</span><button class="copy" data-page-node-id="CJwRypuDosMo5oUidPsnlB">复制</button></div>
+<pre data-page-node-id="TKV5Yod7iucX8ixnr8Buju"><code data-page-node-id="rUi6SpAiBr3uUfLVzyFqeo">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: prod
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: myapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: myapp
+          image: registry.example.com/myteam/myapp:1.4.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: myapp-secret
+            - configMapRef:
+                name: myapp-config
+          resources:
+            requests: { cpu: "200m", memory: "256Mi" }
+            limits:   { cpu: "1",    memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: 3000 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]   # 等待 LB 摘除流量
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  namespace: prod
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+  ports:
+    - port: 80
+      targetPort: 3000</code></pre>
+    </div>
+    <div class="code-wrap hasbar" data-page-node-id="gnCGQ9R51bHONJKVCWgqmM"><div class="bar" data-page-node-id="Y3u5mWpCfyU0VZyEGBeJP1"><span data-page-node-id="X7o9Au4aSWLGP8t7OvImZE">bash — 发布与回滚</span><button class="copy" data-page-node-id="97LZoye1aUGUZXP8UeseSN">复制</button></div>
+<pre data-page-node-id="Jc59dD6eY839P6e95XGVZM"><code data-page-node-id="UPLhB2Lr0AytlecLRa9Fsj">kubectl apply -f deployment.yaml
+kubectl -n prod rollout status deploy/myapp --timeout=180s
+
+# 查看历史与回滚
+kubectl -n prod rollout history deploy/myapp
+kubectl -n prod rollout undo deploy/myapp
+kubectl -n prod rollout undo deploy/myapp --to-revision=3
+
+# 常用排查
+kubectl -n prod get pods -o wide
+kubectl -n prod describe pod &lt;pod&gt;
+kubectl -n prod logs -f deploy/myapp --tail=100
+kubectl -n prod exec -it &lt;pod&gt; -- sh</code></pre>
+    </div>
+    <div class="note warn" data-page-node-id="TGrE3kQnOGfeixcA8UR9lT">
+      <span class="t" data-page-node-id="1d54CiNOoV4ujbBmo289iK">三个最容易踩的坑</span>
+      <p data-page-node-id="ChOjxACJMvrecueGDe8ja1">① <b data-page-node-id="4eAC1L7jNYAASV7XCNfwcC">没配 readinessProbe</b>：滚动更新时新 Pod 还没就绪就被摘掉旧 Pod，导致短暂 502；② <b data-page-node-id="BBSQkyvrEvuxdR1BDGPCeA">没配 preStop</b>：Pod 直接退出，正在处理的请求被中断；③ <b data-page-node-id="lG3RGwLGxWCNF4KdMEAifz">没设 resources.limits</b>：单个 Pod 内存泄漏会拖垮整个节点。</p>
+    </div>
+
+    <h3 data-page-node-id="XcY4mOIBeQXeP0MZ7gIeWS">3.4 各托管 K8s 服务的差异</h3>
+    <table data-page-node-id="iW06gt8pQOeuBuK3l3m6sm">
+      <thead data-page-node-id="6nCvcIbY63W5VkgrMaaGYf"><tr data-page-node-id="JxZJq6DHNPWrSitjNpfo2b"><th data-page-node-id="HbJejd0BS7zaMb0kfI35cN">平台</th><th data-page-node-id="551b2FhqH7myESxpBkJlaY">产品</th><th data-page-node-id="8IAA52Iyi3zWeuv2W3lHlr">集群类型</th><th data-page-node-id="ACK0sj2UT4F0DJ5kNQpyzt">注意点</th></tr></thead>
+      <tbody data-page-node-id="YrgvLuBPl3IBFg9Id53uH7">
+        <tr data-page-node-id="SaHdS4zVvTjD00k8BmrUsz"><td data-page-node-id="YUmkeivmaSe9IQUTOyvutT">阿里云</td><td data-page-node-id="fT4H2fqX1o4rdpdgnDtbIT">ACK</td><td data-page-node-id="CisCnNQorSs1AiD8QAMNaE">Pro 版 / 基础版 / Serverless（ASK）</td><td data-page-node-id="AweMbhTho9SuKjRf2V85zP">Pro 版支持托管控制面 SLA；ASK 按 Pod 计费，适合波峰业务</td></tr>
+        <tr data-page-node-id="k6ig91UjhCIBeBiMMZczWc"><td data-page-node-id="hMTSJd5OVOdgnZ1Usp1IP7">腾讯云</td><td data-page-node-id="ntEd489PWkpLmvxRHoDun3">TKE</td><td data-page-node-id="iVugpSihidQ596IwuAYe7e">标准集群 / Serverless 集群（EKS）</td><td data-page-node-id="CtKIAOjAGeq0VhjrrQFwdD">Serverless 集群无需管理节点，按 Pod 资源量计费</td></tr>
+        <tr data-page-node-id="Nl9lfxpQ3q1ggqlhn5acqn"><td data-page-node-id="ZGq2JRaC7ALVirpFb4YCQ9">华为云</td><td data-page-node-id="afolD9KVydD4r5F2vcaJyE">CCE</td><td data-page-node-id="XV6NXBajaPjgK1I7Ja42Sx">混合集群 / Turbo 集群</td><td data-page-node-id="G3ElGoBTi6gDfmxvgsEW0X">Turbo 基于裸金属容器网络，网络性能更好</td></tr>
+        <tr data-page-node-id="WHLGsD2Yiy72Au9KAnJt2G"><td data-page-node-id="Bl8XKlIy9qNZiPaLehUWpL">百度智能云</td><td data-page-node-id="bRjyU2urSdM7xOBnELIaPB">CCE</td><td data-page-node-id="qH1FJaehBpvfek4Hd3YPen">托管集群 / 独立集群</td><td data-page-node-id="ONnST3LWwGD57FKsA9E8mY">与 BOS、BLB 联动配置 Ingress 较便捷</td></tr>
+        <tr data-page-node-id="YNsQglABhmmQJX9q5fo0iZ"><td data-page-node-id="JhRioQBmnLVUkjrk3b3eB3">火山引擎</td><td data-page-node-id="qHRGtITHtSKRTiDF92anlp">VKE</td><td data-page-node-id="B45BDfavtXQEywI7rfb7kK">托管集群 / 弹性容器 VCI</td><td data-page-node-id="P7Z9BQnve4oRrKSx8KO0Lz">VCI 可与 ECS 节点混部，突发流量用 VCI 兜底</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============ 四、Serverless ============ -->
+    <h2 id="serverless" data-page-node-id="fwEPRnovLzhbVg0bRQFJ48"><span class="num" data-page-node-id="ZYAtO1GD2ZGx7o1cHLtQGW">四</span>Serverless 与静态托管</h2>
+    <div class="cards" data-page-node-id="V1AZMg8DPD1vRzdvYFIcoO">
+      <div class="card" data-page-node-id="OeFTfW2meIt7VrkFKyHP66">
+        <h4 data-page-node-id="y0IBhHgqKf0EhnepdAnzB6">静态站点</h4>
+        <p data-page-node-id="yItN0HzeWgx6tTDHH4Myfv">构建产物上传到对象存储（OSS / COS / OBS / BOS / TOS），开启静态网站托管，再用 CDN 加速 + 自定义域名 + 免费证书。前端 SPA 记得配置<b data-page-node-id="E0adhVy23eiJwO2xa9KUOr">回退到 index.html</b> 的错误页规则（404 → index.html 返回 200）。</p>
+      </div>
+      <div class="card" data-page-node-id="dVo1hY7gPqUE2zE1P314Ke">
+        <h4 data-page-node-id="BW4j4vMBJz1jSefWUHQTFa">后端接口</h4>
+        <p data-page-node-id="hWOjJvbnxgpPLsl9L19JXN">函数计算（FC / SCF / FunctionGraph / CFC / veFaaS）+ API 网关 / HTTP 触发器。适合轻量接口、Webhook、定时任务。冷启动是主要成本，可配置预留实例缓解。</p>
+      </div>
+      <div class="card" data-page-node-id="9Ed49dSYImDntkKdw1THYI">
+        <h4 data-page-node-id="z0dFJaVtJShEeVY3DYGMk4">定时任务</h4>
+        <p data-page-node-id="9FDPzy7T6HDTnvOvOKycqP">用定时触发器替代服务器上的 crontab：天然高可用、有执行日志和重试记录，且不用为一台常驻机器付费。</p>
+      </div>
+    </div>
+    <div class="code-wrap hasbar" data-page-node-id="pKvPjsjA0r2q9eWBR8KTu2"><div class="bar" data-page-node-id="Vj7EYaCdXQ1eGGocFWNVDA"><span data-page-node-id="U8QH2sb9FNLWHJ97De5xI7">bash — 静态站点上传示例（以对象存储 CLI/工具为例）</span><button class="copy" data-page-node-id="jtjU4athMvb7fWOFHWfwid">复制</button></div>
+<pre data-page-node-id="mmwBSY77WUPtUNYPII4qi6"><code data-page-node-id="kV5HhYpaXSxYM7jJtPB8Dr"># 各平台都有自己的命令行工具（如 ossutil / coscli / obsutil / bcecmd / tosutil），用法高度相似
+# 通用流程：
+# 1. 本地构建
+pnpm build                     # 产物在 ./dist
+
+# 2. 上传（--delete 表示删除远端多余文件，保持与本地一致，务必先确认桶路径正确）
+&lt;平台CLI&gt; sync ./dist &lt;bucket-uri&gt;/ --delete
+
+# 3. 刷新 CDN 缓存（否则用户可能访问到旧版本）
+&lt;平台CLI&gt; cdn refresh --paths "https://example.com/"</code></pre>
+    </div>
+    <div class="note" data-page-node-id="0ToD2d1beSM0CY1V3pzbhB">
+      <span class="t" data-page-node-id="KjBZ5ZzIi2Tzjky9WkbVF7">前端部署最容易忘的一步</span>
+      <p data-page-node-id="KOSpkDhsfDkRn2K4Au7K1F">发布后一定要<b data-page-node-id="4oXgGdVFVXpuqauCuM5EHU">刷新 CDN 缓存</b>。另外给静态资源文件名加内容哈希（<code data-page-node-id="ZxWEpisX2hYcEwEk8FURoN">app.3f2a1c.js</code>），并让 <code data-page-node-id="gfvH2X4XZM5APIJyoA51Er">index.html</code> 设置 <code data-page-node-id="CkIAu4ttk6QTVbE0ZGWqcM">Cache-Control: no-cache</code>，这样既享受 CDN 加速，又不会出现“用户看到半新半旧页面”的诡异问题。</p>
+    </div>
+
+    <!-- ============ 五、CI/CD ============ -->
+    <h2 id="cicd" data-page-node-id="Inz3L83veCJeMnoBC6hTTo"><span class="num" data-page-node-id="GoLWOkHFliB7mhnTJQgaaL">五</span>CI/CD 流水线</h2>
+    <p data-page-node-id="Js4tN5eUGDsci9m8gZkAvX">流水线的目标只有一个：<b data-page-node-id="NkNoO2AIHEe2GJ0Z9dqWbs">让发布这件事不需要人记住步骤</b>。一条最小可用的流水线包含四个阶段。</p>
+    <table data-page-node-id="z1qLtk6x3HEZHmjEh6K5HZ">
+      <thead data-page-node-id="n3A9BSgnnOw6qUCBnIChMe"><tr data-page-node-id="41iM6R04qHyziOZDGFbDzo"><th data-page-node-id="1jSxi3obspdQf3dgSOYri8">阶段</th><th data-page-node-id="McEUH6B3fR0czyREbwB7x8">做什么</th><th data-page-node-id="ENIQb9vuqDU2kNNLL16vzf">失败即中断</th></tr></thead>
+      <tbody data-page-node-id="qIzgoTfxBrQEuP3TR9QIvC">
+        <tr data-page-node-id="WvnjPFe2DFhtfOFZNFj8bK"><td data-page-node-id="DCDnUITotqqJSQ6ifQZv86">Checkout</td><td data-page-node-id="TeomrCLhpwKwMR9SGRjWFR">拉取代码、安装依赖（带缓存）</td><td data-page-node-id="hyaa05CXJbyJzzFI29Z8Em">是</td></tr>
+        <tr data-page-node-id="CmBq5alQRyTDsJDytbsK91"><td data-page-node-id="wfEHiNOzmOJO7EU15xLL0V">Quality</td><td data-page-node-id="gYxSjcjFmwUOX1HfXyKnr0">Lint、单元测试、依赖漏洞扫描</td><td data-page-node-id="hImLO7oel9PdRdSWnSbYez">是</td></tr>
+        <tr data-page-node-id="euO4ZWYaWZzE7TeHQe9sBa"><td data-page-node-id="sq5gMmQv7HUvkZmoKzJguX">Build</td><td data-page-node-id="2A9ekuHz6QOihGAX15TMLe">构建产物 / 构建并推送镜像（打 sha 标签）</td><td data-page-node-id="h894wuvCRhYyOTp7MxodoD">是</td></tr>
+        <tr data-page-node-id="iyNwa2Vl9lKwX89NPagLzj"><td data-page-node-id="N5lpuSGu2GLHh836pv7sTc">Deploy</td><td data-page-node-id="7ulCvbIDhJfE5KAOiCHQzJ">按环境部署（预发自动、生产手动审批），部署后健康检查</td><td data-page-node-id="65Xsd3Zvubku57wIImn09s">是，并保留回滚入口</td></tr>
+      </tbody>
+    </table>
+    <div class="code-wrap hasbar" data-page-node-id="FQQDd4lB1SwSAFk0kyryM8"><div class="bar" data-page-node-id="96jfsqH1E8UtPReTsLNSDp"><span data-page-node-id="ETjjj1oshvPZhKDhGoBfrR">yaml — GitHub Actions 构建镜像并推送到云上仓库，然后 SSH 部署</span><button class="copy" data-page-node-id="HvgtsMqBOIuzSUCrPFn0vR">复制</button></div>
+<pre data-page-node-id="iR4GBBlQGCVh2xTL3bHP0X"><code data-page-node-id="QUmEPEDh7qf6bPdLEbvFAY">name: deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint &amp;&amp; pnpm test
+      - run: pnpm build
+
+      - name: 打包产物
+        run: tar -czf dist.tar.gz dist package.json pnpm-lock.yaml
+
+      - name: 上传并部署
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: dist.tar.gz
+          target: /tmp
+
+      - name: 远程执行发布脚本
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/app &amp;&amp; bash deploy.sh /tmp/dist.tar.gz</code></pre>
+    </div>
+    <div class="note ok" data-page-node-id="n6wOiwD1OFtAjlTuSpQocF">
+      <span class="t" data-page-node-id="ZbzjyU9v7YR71bwKa09SvI">密钥管理</span>
+      <p data-page-node-id="ZrGWnHogdrj58EnDEw7iWg">所有敏感信息走<b data-page-node-id="UA37t9jyQhMS7DKwWAx0bm">仓库 Secrets 或云平台凭据管理（KMS / 凭据管家）</b>，不要把 <code data-page-node-id="UuqHQwUbN14eVsMHPGhDyD">.env</code> 打进镜像，也不要在日志里打印环境变量。更进一步，用 <b data-page-node-id="3tnytGABf3KAmk9sBXZYVg">OIDC 角色扮演</b> 让流水线获取临时凭证，彻底不存长期密钥。</p>
+    </div>
+
+    <!-- ============ 接入层 ============ -->
+    <h2 id="access" data-page-node-id="2rX7SihavC3tNdPRwLzHul"><span class="num" data-page-node-id="lkxPTAMtCcHuCVRNn1IbPx">六</span>接入层：DNS 与 CDN</h2>
+    <table data-page-node-id="rJvOzLRNoGas4kim0GiiAc">
+      <thead data-page-node-id="wSc1LUtj9Ou4NzpbfMnAKL"><tr data-page-node-id="tAI0C3NdCUt4sJxgbowY0W"><th data-page-node-id="8fHNqGPhmWquaipXp6Ause">记录类型</th><th data-page-node-id="1hppDDZWFGIK2WoXBwz0Nf">用途</th><th data-page-node-id="KkFcvZUW5K8gNzAc2BBumc">示例</th></tr></thead>
+      <tbody data-page-node-id="5OkfzFiUqmIzpuKdGChQHQ">
+        <tr data-page-node-id="wbTkIIlNUqpUETd8Lf74BZ"><td data-page-node-id="9CNJ6XuYD7A4JC8UZp6Xub">A</td><td data-page-node-id="DGvho209ExwCDvR5x5DXGJ">域名指向 IPv4</td><td data-page-node-id="XHn0ngGjumjAa6HJufbEI0"><code data-page-node-id="Q7jxefrqMDJtIngqDaV9fZ">example.com → 1.2.3.4</code></td></tr>
+        <tr data-page-node-id="RnobTlQg4j4AGCGh7blj7b"><td data-page-node-id="SjYZC7Rot3HixGhSg9kWAq">CNAME</td><td data-page-node-id="sUEbitWARDBLHpCoUiwJR7">指向另一个域名（CDN、负载均衡常用）</td><td data-page-node-id="6zeBAGd9I5gVcQy4PTdrIx"><code data-page-node-id="ORqAl7JouaUpfuV8ZhcXRV">www → example.cdn.dnsv1.com</code></td></tr>
+        <tr data-page-node-id="cv56EfLXmEUFuHRHqKiP1C"><td data-page-node-id="KfsGsNrTIoobGChoKFHk7r">TXT</td><td data-page-node-id="1dZxCBRYpAt78zZhsU7UHX">域名所有权验证、证书 DNS 验证、SPF</td><td data-page-node-id="voU89aAxIkzB5CXKIpVHmU"><code data-page-node-id="NkyVAVeXJXY3n0u0uqII0L">_acme-challenge → xxxx</code></td></tr>
+        <tr data-page-node-id="svzpoJVesaqyQpX0Mhb02k"><td data-page-node-id="deXgMhEvgL3tOtsLLinvv5">MX</td><td data-page-node-id="a3dnxqh7E2HGhrIKrvTESf">邮件解析</td><td data-page-node-id="yT4QAASxuGXHQ7hNA0mnyT">企业邮箱配置</td></tr>
+      </tbody>
+    </table>
+    <ul data-page-node-id="MUUF2oH7crg8wMNOXmzM8C">
+      <li data-page-node-id="MunWah7w5aB06vQY5yTgcr">TTL 建议：稳定期 600s，<b data-page-node-id="aoMzpwjKsqxBjuiE6MjUla">准备切换前提前改为 60s</b>，切换完成后再调回。</li>
+      <li data-page-node-id="AHYRtEDcqeIvfvpywOOJvt">CDN 回源：静态资源走 CDN，动态 API 建议<b data-page-node-id="5srmJR1v5tuKNW6F70pnYf">不缓存</b>或只缓存短时；回源超时与缓存规则要逐一确认。</li>
+      <li data-page-node-id="p78n81KGu8KKz9O4iauiJZ">CDN 上配置 HTTPS 证书（多数平台支持免费证书一键部署到 CDN）。</li>
+      <li data-page-node-id="YjeXrGS4kiB9RYj1kimAaU">接入 CDN 后源站 IP 会被隐藏，Nginx 通过 <code data-page-node-id="rSzevj2cNEZ890szzL84po">X-Forwarded-For</code> 取真实 IP；同时<b data-page-node-id="Hv1TJ1A16UERCfJgvy2Fqe">务必在安全组里只放行 CDN 回源网段</b>，否则别人可以直接绕过 CDN 打源站。</li>
+    </ul>
+
+    <!-- ============ 运维 ============ -->
+    <h2 id="ops" data-page-node-id="UgEFWVXWPoVAbSBFtGvVZl"><span class="num" data-page-node-id="yovnUmhVP0SAbqcphGvFAb">七</span>监控、日志与告警</h2>
+    <h3 data-page-node-id="YG1dvlAvsCgRlK7xseSL4A">7.1 必须配置的告警项</h3>
+    <table data-page-node-id="OFbYsLaGc3fdogZRPG8GCd">
+      <thead data-page-node-id="SP50DcIcAm6M8Coivv1EZw"><tr data-page-node-id="jsgRDm0yApr4GQ6roc6mAV"><th data-page-node-id="1SW9orwsHoD3qZF4TL0Tkf">类别</th><th data-page-node-id="tXiPOBTLQgo5H1EzDV7Kn8">指标 / 检查</th><th data-page-node-id="y9C6DLEcgCjPWerKNBS2pp">建议阈值</th></tr></thead>
+      <tbody data-page-node-id="popLmQynTGkLgWrH9wHnyH">
+        <tr data-page-node-id="y46J7Yx4RBayZS9bkJYaHK"><td data-page-node-id="O5Ik7GKeSKNjnUsm3khCRp">主机</td><td data-page-node-id="HSnQ8MTkg3FwqSHi598bSp">CPU 使用率</td><td data-page-node-id="RY3gwtEPTVHoulmo29A9p9">持续 5 分钟 &gt; 80%</td></tr>
+        <tr data-page-node-id="tlWJXtpfPiBqGZ2gphabSr"><td data-page-node-id="zGgwhVcujIkvN0kjEx7VJx">主机</td><td data-page-node-id="SbJ1gGrEKJYG3jnLuRNlLX">内存使用率</td><td data-page-node-id="EJxvHj1eRAv7dMGdT9NRns">持续 5 分钟 &gt; 85%</td></tr>
+        <tr data-page-node-id="5A4tQcG6GoG1cWc2QCNVW4"><td data-page-node-id="aAWS6hwhgi1XT1lb8oIvVO">主机</td><td data-page-node-id="ko5gEIefPMgzxbKkon2Sb8">磁盘使用率</td><td data-page-node-id="gf3R0IOp9vxvdZTObkxWdJ">&gt; 85%（留足日志增长空间）</td></tr>
+        <tr data-page-node-id="YZxu9qvCShTJ9lK3lTbZ3i"><td data-page-node-id="cCHAwoQcADGdBlVGspl5id">网络</td><td data-page-node-id="1NEI2sO0EKCMvyzMVSHdOt">公网出带宽、连接数</td><td data-page-node-id="yC5cqVJwJAQdkZ4NhH52hQ">接近上限 80%</td></tr>
+        <tr data-page-node-id="7VJuOrXS1Vuk81vHSfZZc2"><td data-page-node-id="anD5BurIawViXRLsDDluuN">站点</td><td data-page-node-id="KsU4ghR073DmptPOCZjiPR">HTTP 状态码 5xx 占比</td><td data-page-node-id="LFA69aSZKb0j0yvf7UktkA">5 分钟内 &gt; 1%</td></tr>
+        <tr data-page-node-id="OkFaC6mAvRE0EZK7gwQaQS"><td data-page-node-id="YsIBkyBvRv8BxwPtbkHHFg">站点</td><td data-page-node-id="acbNFHfeytFc0n37KYKajf">域名可用性（拨测）</td><td data-page-node-id="95ZoHVCK9NbwENLXaY8wtm">连续 2 个探测点失败</td></tr>
+        <tr data-page-node-id="MAGie1l1B2693zWlvsmyiF"><td data-page-node-id="qUGY8UerhNhY1ixb9p15HT">证书</td><td data-page-node-id="XHBh2hltbBshxKwJ63zR3Y">HTTPS 证书剩余有效期</td><td data-page-node-id="cjzdQJvbycABtPM8uuEFdB">&lt; 15 天</td></tr>
+        <tr data-page-node-id="C6pdg5WtfsNgdy4kfzaHZh"><td data-page-node-id="GDsfDAHTIll5dG7Hn8W9K4">业务</td><td data-page-node-id="S3YYqBQbuID6ivouSumtpP">关键接口 P95 耗时、错误率</td><td data-page-node-id="kApD20sD70s6c847nM9MM7">按业务基线设定</td></tr>
+      </tbody>
+    </table>
+    <div class="note" data-page-node-id="NrErvFFWtaXGYerwRpKFxU">
+      <span class="t" data-page-node-id="oOA8mcfIJt2KESLwJHytcy">告警的三个原则</span>
+      <p data-page-node-id="1lgBmLpPVGsjFUdASrAMP9">① <b data-page-node-id="1jNnAv0ZKj96spojQ57JIw">告警必须可行动</b>——收到后不知道要做什么的告警，等于噪音，应该删掉或降级为看板指标；② <b data-page-node-id="KHuFNFtw2mBNQHH1axwkeR">区分等级</b>——电话/短信只给真正影响用户的问题，其余走企微/钉钉/邮件；③ <b data-page-node-id="STArV8gYxJEn9Z4MNNRG6R">每个人都要能收到</b>——告警只发给一个人，他休假时就是黑洞。</p>
+    </div>
+    <h3 data-page-node-id="5U99CIk1nN5op3XhuSd0X1">7.2 日志</h3>
+    <ul data-page-node-id="5A2uegQlKkh2BPVkZmtFQv">
+      <li data-page-node-id="yzJ1CUwBDhAHFHnkaWyFfi">应用日志统一输出到 <b data-page-node-id="mlVORoRuCIPkzVNVy7kMqB">stdout/stderr</b>，容器场景由运行时采集；非容器场景写入固定目录并配置轮转。</li>
+      <li data-page-node-id="JKn1Ue8aKtS1NOeO6HZb5X">日志务必带 <b data-page-node-id="rokGFd8GZ2YigJaz5IHJID">requestId / traceId</b>，否则线上排障只能靠猜。</li>
+      <li data-page-node-id="SNbQK6aEsO0RKQSFzfy4aR">用 logrotate 或 Docker 的 <code data-page-node-id="ODARSlplJRCA9EJH3kDPk2">log-opts</code> 限制日志大小，避免日志把磁盘写满导致宕机（这是最常见的线上事故之一）。</li>
+      <li data-page-node-id="1OFKWULOSledHmhqHE25W9">敏感信息脱敏：手机号、身份证、token 不应明文落盘。</li>
+    </ul>
+
+    <!-- ============ 安全 ============ -->
+    <h2 id="security" data-page-node-id="N1uptgA2h4YpboGiuBsb0e"><span class="num" data-page-node-id="EOS13pkAvvYIpW7n7fPUVd">八</span>安全加固</h2>
+    <ol data-page-node-id="Mc2nA2IymzCa84txNdWF2r">
+      <li data-page-node-id="aAXzDsCKKannlTafb40zLI"><b data-page-node-id="sHIOsB2XeISchsBgCmeLLs">最小权限</b>：子账号 + 角色授权，禁止共享主账号；开启 MFA；定期轮换 AccessKey。</li>
+      <li data-page-node-id="HsXDMbM58S2Ua9tkLHdxhN"><b data-page-node-id="4TTXxoZZjxf0BH1VTnaejz">网络收敛</b>：SSH 仅对固定 IP 或堡垒机开放；数据库、Redis 绝不对 <code data-page-node-id="qsn8DCkePDYoQXAHYFpApW">0.0.0.0/0</code> 开放。</li>
+      <li data-page-node-id="4PWYV71uagDDKQlmTcxoC3"><b data-page-node-id="EKQCs2At6TnoHKvEyWYwbI">主机加固</b>：禁用密码登录与 root 登录；开启自动安全更新；安装主机安全 agent（各云都有免费基础版）。</li>
+      <li data-page-node-id="dWuWkU6CJ3TYZS6A0nl1lq"><b data-page-node-id="AKs4d13wLHKxl5OdLvBI9R">应用防护</b>：接入 WAF（可先开通基础防护）；接口做鉴权、限流、参数校验；管理后台加二次验证。</li>
+      <li data-page-node-id="JzyYzc5BJSJx8FgpCBCHJY"><b data-page-node-id="EEiq59mG9E4nAj7fyETtFi">数据安全</b>：启用云盘自动快照策略（例如每日 1 次、保留 7 天）；数据库开启备份并<b data-page-node-id="3ZL1CPIxsUllhSpdHTHtk9">定期做恢复演练</b>——没验证过的备份不算备份。</li>
+      <li data-page-node-id="67P3Z898C4ioLDhoJv6Gyz"><b data-page-node-id="jtNO1tlNbr5I2H73uwrBqD">传输加密</b>：全站 HTTPS，开启 HSTS；内网服务间调用也尽量用 TLS。</li>
+      <li data-page-node-id="hbBum07yJAXAoPIksiJcxJ"><b data-page-node-id="NSCAEBniats1g6bNeT1gVs">依赖与镜像</b>：流水线中加入依赖漏洞扫描与镜像扫描；基础镜像定期更新。</li>
+      <li data-page-node-id="LtTwzTEDhO4CJ0qZwWzF3c"><b data-page-node-id="VBPfl0xBJFX8iFxtyAcmld">审计</b>：开启操作审计（ActionTrail / 云审计 / CTS 等），关键操作可追溯。</li>
+    </ol>
+
+    <!-- ============ 成本 ============ -->
+    <h2 id="cost" data-page-node-id="hDmOOKoUqnylIKeCdac1f6"><span class="num" data-page-node-id="JCdmSHoCWYx3F68Wa5ZlU8">九</span>成本优化</h2>
+    <table data-page-node-id="YAIEKH09HhWvmSaKyysLLQ">
+      <thead data-page-node-id="PCcaCdwOmHwih1GbIqjj85"><tr data-page-node-id="Bo076VV5xeurrTAEBppjDw"><th data-page-node-id="iQHSk5leVDTaqzXbW2KZGm">手段</th><th data-page-node-id="CMNgp4deJKzmOjDIIbvDQG">适用</th><th data-page-node-id="hOEslwrnX84Cx3DCE2b5id">说明</th></tr></thead>
+      <tbody data-page-node-id="IMQ5xpGc132MfKnOBzewtm">
+        <tr data-page-node-id="2rCZmtCjCPkDhuMiOKFuNI"><td data-page-node-id="kxsVD7nW58bspPEAiuVhXW">包年包月</td><td data-page-node-id="q75nGJvEgrR2aMFetX1qC0">长期稳定的基础负载</td><td data-page-node-id="uMqzmlQctb3nCFVoFMBeh8">相比按量付费有明显折扣；锁定 1 年或 3 年</td></tr>
+        <tr data-page-node-id="EBSQxOzQXQG9BxWJ8HKl3d"><td data-page-node-id="9f2BArjhE9LRVIKkMV559N">抢占式 / 竞价实例</td><td data-page-node-id="Ty7AOrhPNTjyiGnB7VeVLW">无状态、可中断任务</td><td data-page-node-id="qEv0wEnkEBdA98zF77GgDv">价格低但会被回收，用于批处理、CI runner、测试环境</td></tr>
+        <tr data-page-node-id="1qCOYA9lX0UNaBZBji5HAT"><td data-page-node-id="pBFDhu5iQnwJFy44nExJDw">节省计划 / 资源包</td><td data-page-node-id="kE5v9JHLjlWI7iqYpWM3td">用量可预测的稳态业务</td><td data-page-node-id="MqR3HrlftagCVDAEgRNGp8">承诺一定消费量换取折扣，需评估承诺风险</td></tr>
+        <tr data-page-node-id="AkS1U5W8zaaPAZ5JSob4H4"><td data-page-node-id="XH3pePcObu6g1eChH2ieBU">弹性伸缩</td><td data-page-node-id="YTDZKPm1xU4JNlZVP45CWx">流量有明显波峰波谷</td><td data-page-node-id="imkqsKTSh2db3cLJNSHTQC">按 CPU/请求量自动扩缩，低峰自动释放</td></tr>
+        <tr data-page-node-id="Q5zMtg52VZ8COYB4WKZEHD"><td data-page-node-id="vqYpDCa3NVe104RjOxQhIx">闲置资源清理</td><td data-page-node-id="VjL4Hei255KterFySVnWtX">所有账号</td><td data-page-node-id="N2ZleKSFERroRjO4rhC1hG">定期清理未绑定的弹性公网 IP、未挂载的云盘、过期快照、孤儿负载均衡</td></tr>
+        <tr data-page-node-id="BAoBFRm1fptXZVQDx6wbMo"><td data-page-node-id="8az27S2RbxuvryfD8wwUx6">存储分层</td><td data-page-node-id="11S8MNZlCYGgnoGrKlOkWc">对象存储量大</td><td data-page-node-id="ICCdtZ2mCx3PLH7wNmAsfm">低频访问 / 归档存储 + 生命周期规则自动沉降</td></tr>
+        <tr data-page-node-id="n4gc7u0BdfVwRlqfI9MjIk"><td data-page-node-id="ua5Eg6lxCc9nY32dCIwRay">CDN 回源优化</td><td data-page-node-id="ZbvDmg6gIyOegmcGS3BHCz">流量成本高</td><td data-page-node-id="GTWGO1ESLbu3HMfCyztBA0">提高缓存命中率、开启压缩、合理设置缓存时间</td></tr>
+        <tr data-page-node-id="kDPfmYiAfDHEuoVsD3hvyN"><td data-page-node-id="jP1GuKA4YhAxMlGWsQYn4D">标签体系</td><td data-page-node-id="au5blS32fqFvslTWJPwO0Y">多项目共用账号</td><td data-page-node-id="AMAvAc7S8aa1QrsNONPgRP">给每个资源打 <code data-page-node-id="nYjnR3IasVWPUIjgoLUoC2">项目/环境/负责人</code> 标签，成本才能归因到人</td></tr>
+      </tbody>
+    </table>
+    <div class="note" data-page-node-id="YYHQqu7NQsYs1lXqB5b8lj">
+      <span class="t" data-page-node-id="FNd0WQmOA52HRUIWa4ic4z">第一件事：开预算告警</span>
+      <p data-page-node-id="zpHORkJNf2WIVFjQ4Ftv2e">在任何优化之前，先在费用中心设置<b data-page-node-id="W0TEYkIcJ8X5MZ2erd8v7C">预算阈值告警</b>（如达到月度预算的 80% 时通知）。成本事故和线上事故一样，都是发现得越晚损失越大。</p>
+    </div>
+
+    <!-- ============ 排障 ============ -->
+    <h2 id="troubleshoot" data-page-node-id="AVdivRZZJokfgy96JTLYMW"><span class="num" data-page-node-id="LQv6bZyGPkntc44UeogVov">十</span>故障排查速查</h2>
+    <table data-page-node-id="ggKBHfExodll9gZFDCYe8G">
+      <thead data-page-node-id="KveNNaqccBXCOtZHYffaRu"><tr data-page-node-id="R8TzB7RyboJ5PdRnghNxUs"><th data-page-node-id="28N7gc8M2sIAuruoNNFCnN">现象</th><th data-page-node-id="qHWN28erRgyjo4psPNPPqK">常见原因</th><th data-page-node-id="WSiP9LyE3LizfQulQ7aiy2">排查命令 / 动作</th></tr></thead>
+      <tbody data-page-node-id="PJcz0uSFHghFQBkGnECkE0">
+        <tr data-page-node-id="F1eEusQJ15hmyL8t7W6781"><td data-page-node-id="E7zjJxVORcmPFBRuzurFHb">SSH 连不上</td><td data-page-node-id="O2671JSkFHwPrAJuuHPPvi">安全组未放行 22、私钥权限过宽、实例未开机、SSH 服务未启动</td><td data-page-node-id="VVtxUa0wEvRvnhDorTFuOe">控制台查看实例状态与安全组；本地 <code data-page-node-id="0E49JZzXz36C2h22qwG9Ua">chmod 600 key.pem</code>；用控制台 VNC / Workbench 登录检查 <code data-page-node-id="LASGEDn8EaZvIhwxskHEy4">systemctl status sshd</code></td></tr>
+        <tr data-page-node-id="tTRSul5hwLRLLoqEQKtVgO"><td data-page-node-id="FmSdEYk9ysD5NXzjWW3in4">能 ping 通但端口不通</td><td data-page-node-id="0AM7xLKKUEm2cpbBCsmJsS">安全组未放行、系统防火墙拦截、应用未监听</td><td data-page-node-id="Ya3tHIAN9pSMWPeoMv7tix"><code data-page-node-id="Z4UUhI74iSpZMSzVRUHUyb">ss -lntp | grep 3000</code>；<code data-page-node-id="VmYFsxAyp7hgJJpC8N4YDa">curl -I 127.0.0.1:3000</code>；检查 ufw/firewalld 与云安全组</td></tr>
+        <tr data-page-node-id="xLbL6I4J7tchlD6RVlCPQj"><td data-page-node-id="QHP7CahN7lfKkF6CT9YAuI">Nginx 502 Bad Gateway</td><td data-page-node-id="rqCahD4SepZygT6brx66vS">应用进程挂了、端口写错、上游超时</td><td data-page-node-id="JREtlqIEJfcIEo0j9tp5sm"><code data-page-node-id="3k9GGusgTLAq68BMtZfAyI">systemctl status myapp</code>；<code data-page-node-id="U0RKgiDxEHUAIztifAOB5I">tail -100 /var/log/nginx/myapp.error.log</code>；核对 upstream 端口</td></tr>
+        <tr data-page-node-id="c0rQTruW5HZVt2pTB8aPWK"><td data-page-node-id="DwwMx7DAXadDrdRP2GGPCR">访问 504</td><td data-page-node-id="rCmVTLrifULZVgMj5LFGEu">后端处理超时、慢查询</td><td data-page-node-id="bJ0jFO700zvhsIM2dEYFHG">调大 <code data-page-node-id="7xVaYjxmVFG6OLwCXvgu9r">proxy_read_timeout</code>；排查数据库慢查询与连接池</td></tr>
+        <tr data-page-node-id="RzveEEMg54QMIY8pgXj0ej"><td data-page-node-id="X1HO3toVsW3KUPjtCiDsD1">HTTPS 证书报错</td><td data-page-node-id="5ukrl6Df6y1SfJHPXDYxgt">证书过期、域名不匹配、证书链不完整</td><td data-page-node-id="QG3XZPd1fRhcGADW7smtvp"><code data-page-node-id="yev7dvNdGFxvoxDF0my9qA">echo | openssl s_client -connect example.com:443 -servername example.com 2&gt;/dev/null | openssl x509 -noout -dates</code>；使用完整证书链</td></tr>
+        <tr data-page-node-id="aY9J1I4c5bClS9QfyQfJZH"><td data-page-node-id="u5SZXl7iGG4wWHGnK809BY">域名解析不生效</td><td data-page-node-id="gvqGwzQAiwCk5CUoBFgfyM">TTL 未过期、记录填错、DNS 服务器未生效</td><td data-page-node-id="KnWM1FAlOwRBNrCloN5XHn"><code data-page-node-id="AJg52RvmK1ksB7AGhRAwsF">nslookup example.com</code>；<code data-page-node-id="LqfKDdFrWDIsczDiPI1Uul">dig example.com +short</code>；检查是否用了 CDN 的 CNAME</td></tr>
+        <tr data-page-node-id="v3wDyw8VEII5MTC4jOEamZ"><td data-page-node-id="eKbNF8FLSgTSS0pGEbgxrP">服务器磁盘满了</td><td data-page-node-id="wqsXltvKNdDCuh8HLvXU51">日志未轮转、Docker 层堆积、快照残留</td><td data-page-node-id="tx5gu1tflti3RTaR996VTX"><code data-page-node-id="rN369xOfn4UZ4Xa3xewT7H">df -h</code>；<code data-page-node-id="fRfzoaJgbDgroV4UE4HyIW">du -sh /var/log/* | sort -h</code>；<code data-page-node-id="tDB35mW3zcoe6SATEeVBTp">docker system df</code>；<code data-page-node-id="SAhQlYIEtSXF7yR8TIyIzu">docker system prune -a</code></td></tr>
+        <tr data-page-node-id="fhvqHCqeUSy5e98b53OKJn"><td data-page-node-id="dAK74CaEJ6tWWNoZgExkef">容器起不来 / 反复重启</td><td data-page-node-id="NZ11DBYVhuaXpSf3mdSVCq">配置缺失、探针过严、内存超限被 OOMKill</td><td data-page-node-id="kHYUDcK30419FXrSnPvybN"><code data-page-node-id="IMhFfVCBluO3OtxSZhXC7l">kubectl describe pod</code> 看 Events；<code data-page-node-id="SdQLy5WQcvtPfQvpGsvnxG">kubectl logs --previous</code>；核对 resources.limits</td></tr>
+        <tr data-page-node-id="gF8k6WwuJgy2usWw3lynpb"><td data-page-node-id="vu9Cp61hn0tCgq9H2j2GBF">镜像拉取失败</td><td data-page-node-id="WmK4Vy3wJntCFwIl4N7OxH">未登录仓库、镜像地址/标签错误、网络不通</td><td data-page-node-id="DFUC40nflU0OwmGU041pT6"><code data-page-node-id="WQycc1fj8fqgxbLI4kegGP">docker login</code> 后重试；核对仓库地域与命名空间；检查镜像加速器配置</td></tr>
+        <tr data-page-node-id="6isIVcK2gHOEMoMCos7nYS"><td data-page-node-id="nGb0QysotMr9oIY4DUwXcN">CPU 突然打满</td><td data-page-node-id="9Jxm3p4iIa0exHxJY4ScCO">死循环、流量异常、被扫描/挖矿</td><td data-page-node-id="IGuvBLBkSAVwOdZ9c1PuTU"><code data-page-node-id="z3stuCWF9qBVUNErln9L8X">top</code> / <code data-page-node-id="SRhJ4XTJmDQUo8YMGre8LY">htop</code>；<code data-page-node-id="37K1Yus4iTAupzl8s5I9Dl">ss -antp | wc -l</code>；查看访问日志 Top IP；检查计划任务与异常进程</td></tr>
+        <tr data-page-node-id="2sWQpic6tQJD5TARP13vFl"><td data-page-node-id="A2huWTCNcWwYivrNBKyq1O">发布后页面样式错乱</td><td data-page-node-id="JibSVh3Nu0puej589ixSO1">CDN 缓存了旧资源、index.html 被缓存</td><td data-page-node-id="NRn0u0E4v5M7bNHUNcn7vW">刷新 CDN 缓存；给 <code data-page-node-id="3DzP8zTchNAhJ7UAIKGHz5">index.html</code> 设置 <code data-page-node-id="wMmDBLayYGTPWUrLO1Gpyx">no-cache</code>；资源文件名加哈希</td></tr>
+        <tr data-page-node-id="hPSMw66evcTzHieTO3B7TF"><td data-page-node-id="gEbzDUG4ZnFzf7GzabDeXk">数据库连不上</td><td data-page-node-id="g4LBuG0iQA4lB0iqgK0wN4">白名单未加、连接数打满、密码错误</td><td data-page-node-id="GCgtCswxBKNlrp3QpdfWAH">检查数据库白名单与实例安全组；<code data-page-node-id="r3AcODm69ScF8x9GZVZxzu">show processlist</code>；确认账号权限与网络类型（内网/公网）</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============ 附录 ============ -->
+    <h2 id="appendix" data-page-node-id="mnfHxpM3szUHDCwBjWrauM"><span class="num" data-page-node-id="Db8RbxrcURmGIMUOgi6xAD">附</span>命令速查表</h2>
+    <div class="code-wrap hasbar" data-page-node-id="tldj5PsdG3LDfQz5GGUDpz"><div class="bar" data-page-node-id="eD1Xj71HTFFIPitav3T173"><span data-page-node-id="kB9A4jqVUp4oJrDBkANDVH">bash — 高频命令</span><button class="copy" data-page-node-id="u4PBfLkHeGDtZE9xelODHL">复制</button></div>
+<pre data-page-node-id="AG2gDQD76XXSzQZNBZntaI"><code data-page-node-id="7eB4xFT1rUahh0EGxjWBoe"># --- 连接 ---
+ssh -i ~/.ssh/prod.pem deploy@1.2.3.4
+scp -i key.pem file.tar.gz deploy@host:/tmp/
+rsync -avz -e "ssh -i key.pem" ./dist/ deploy@host:/opt/app/
+
+# --- 系统状态 ---
+uptime                    # 负载
+free -h                   # 内存
+df -h                     # 磁盘
+du -sh /var/log/* | sort -h | tail
+top / htop
+ss -lntp                  # 监听端口
+ss -antp | wc -l          # 连接数
+
+# --- 日志 ---
+journalctl -u myapp -f --since "30 min ago"
+tail -f /var/log/nginx/myapp.access.log
+grep "ERROR" /var/log/app/app.log | tail -50
+
+# --- 服务 ---
+systemctl status myapp
+systemctl restart myapp
+systemctl enable --now myapp
+nginx -t &amp;&amp; systemctl reload nginx
+
+# --- 进程 ---
+ps aux | grep node
+kill -TERM &lt;pid&gt;          # 优雅退出
+pkill -f "node server.js"
+
+# --- 网络 ---
+curl -Iv https://example.com
+curl -o /dev/null -s -w "%{http_code} %{time_total}s\n" https://example.com
+dig example.com +short
+nslookup example.com
+openssl s_client -connect example.com:443 -servername example.com &lt; /dev/null
+
+# --- Docker ---
+docker ps -a
+docker logs -f --tail=100 &lt;container&gt;
+docker exec -it &lt;container&gt; sh
+docker system df
+docker system prune -a          # 谨慎：会删除未使用的镜像与缓存
+
+# --- K8s ---
+kubectl get pods -A
+kubectl -n prod get pods -o wide
+kubectl -n prod logs -f deploy/myapp --tail=100
+kubectl -n prod describe pod &lt;pod&gt;
+kubectl -n prod rollout undo deploy/myapp
+kubectl -n prod scale deploy/myapp --replicas=5
+kubectl top pods -n prod</code></pre>
+    </div>
+
+    <h3 id="glossary" data-page-node-id="xLRE6CrQ6K5u14d0VvZwjl">名词对照</h3>
+    <table data-page-node-id="1EpuT6GtVrVdfEfcpjALgK">
+      <thead data-page-node-id="UJzF4s0npUK7Ba4hVDmWiC"><tr data-page-node-id="tfhZZvpPVkziJWmPDKdQTC"><th data-page-node-id="7iljmNcrMQ2wsdGU4pmHCp">缩写</th><th data-page-node-id="xb2E2o7YPHWCfa8X6f6YqC">全称 / 含义</th></tr></thead>
+      <tbody data-page-node-id="k1ShgJWMoC5H5GGyoiBRaB">
+        <tr data-page-node-id="MOCX9AMiwTZjldlzGhLcmG"><td data-page-node-id="cZWYjOBCvwdxoiGQoFRNoJ">VPC</td><td data-page-node-id="JmiAfuTbHWFANA3JX47WKB">虚拟私有云，云上隔离的私有网络环境</td></tr>
+        <tr data-page-node-id="GlrrLhQEi8Z7t6Sc5IvkcW"><td data-page-node-id="staqpAo8H5uJhSFCM7qvVJ">EIP</td><td data-page-node-id="XRuW9boNyBhZFVw362HK9p">弹性公网 IP，可动态绑定到实例的公网地址</td></tr>
+        <tr data-page-node-id="gG7LAmaKGJUN5phIf1YUOb"><td data-page-node-id="318LyGVpDTrsCWB2MnNryD">CLB / SLB / ELB / BLB</td><td data-page-node-id="DTOU6tIlqaJ7y0PKHyrrtT">负载均衡，把流量分发到多台后端</td></tr>
+        <tr data-page-node-id="QMCN1UdyOzAl0FDj4KLibJ"><td data-page-node-id="8uLS2hKgxsCmJAPu5FNyaQ">安全组</td><td data-page-node-id="2Kp0HzqBoBCIFqyRAiikFa">实例级别的有状态虚拟防火墙</td></tr>
+        <tr data-page-node-id="6IMIP5dnXQzZ8UODyPAAlR"><td data-page-node-id="6A6ETBQOszGzRiD1YpeNyf">ACL / NACL</td><td data-page-node-id="4ANLwOilM73jNd8Efi8Qcu">子网级别的无状态访问控制列表</td></tr>
+        <tr data-page-node-id="iSBFkY3w3fZRQK9HC1wgGJ"><td data-page-node-id="WiTaMLPCRGakbPaK4E9Z6m">快照</td><td data-page-node-id="M4lnfxfMLWPdm7UEUVcUHV">云盘某一时间点的数据副本，用于备份与回滚</td></tr>
+        <tr data-page-node-id="RCAoH6BpPpiDzU6dfSrhZj"><td data-page-node-id="hANhOcGcCQY71r9BS6WQkI">镜像</td><td data-page-node-id="XfCh6MAyh9ysLWovdYVDWM">包含操作系统与预装环境的模板，用于批量创建实例</td></tr>
+        <tr data-page-node-id="d4MrLCPExJYh3Sbxa5MMmg"><td data-page-node-id="cBZGiltWpKZSifngERXsVP">可用区（AZ）</td><td data-page-node-id="fmnA6toAlI9M7gwevkPxYD">同一地域内电力网络独立的物理区域，多 AZ 部署抗单点故障</td></tr>
+        <tr data-page-node-id="hsoyUZoq1mARRLkzKLSXdO"><td data-page-node-id="nhxhcUiEAYafSDqLOrjS1a">RAM / CAM / IAM</td><td data-page-node-id="DogJA46bzsFKnwSWiJpDHi">各家的身份与访问管理服务（子账号、角色、策略）</td></tr>
+        <tr data-page-node-id="vB9vDFv5OPCsJVkqstktoL"><td data-page-node-id="qDiZQQbEKRY5Le4OCcEBq4">STS</td><td data-page-node-id="4pj3ErC2NLJ3Hf0OQm4OHM">临时安全凭证服务，用于下发短期密钥</td></tr>
+        <tr data-page-node-id="HbIFyDS82LxxRrqAjbDcXI"><td data-page-node-id="ZDWmmGK2tP0wMwCuzQe651">OSS / COS / OBS / BOS / TOS</td><td data-page-node-id="dChD9sjJvk1Va0BeN7jX3J">各家对象存储服务，存放静态文件与备份</td></tr>
+        <tr data-page-node-id="ozmYbPu3w4bicbdElvEffz"><td data-page-node-id="DuSmEBcnu0hg1xl1dDeUI5">ACK / TKE / CCE / VKE</td><td data-page-node-id="WynyZ003yJhteJu3X2IBCk">各家的托管 Kubernetes 服务</td></tr>
+        <tr data-page-node-id="JIvwi1kYen12mYkzeWuSFH"><td data-page-node-id="qMCAOqB9uZCgafpyvcgFF7">Serverless / FaaS</td><td data-page-node-id="8wyVE5fAC57lialADWf4rY">函数即服务，按调用次数与运行时长计费</td></tr>
+        <tr data-page-node-id="WNJGbTro7IS5bHf5W1wInS"><td data-page-node-id="f2o3obTQZ8bfpaGcZRTShF">Ingress</td><td data-page-node-id="0dUolmMApEKZDrUaQVG3p8">K8s 中管理外部 HTTP 访问的规则集合</td></tr>
+        <tr data-page-node-id="UxoAePLAib3Ym4W8yo9Bgd"><td data-page-node-id="yLQmTD0OPFrGu2O0GqabgH">HPA</td><td data-page-node-id="fYJCq8w9qAqi1A13Yu7WtH">Horizontal Pod Autoscaler，Pod 水平自动扩缩容</td></tr>
+      </tbody>
+    </table>
+
+    <div class="footer" data-page-node-id="ArctSxJAXk6S8LAQuU0hBL">
+      <p data-page-node-id="CBO6zG8uRCv23dXpJp5DPZ">本手册内容为通用工程实践总结，各云平台控制台界面、产品命名与免费额度会随版本调整，实际操作请以官方文档与控制台当前显示为准。</p>
+      <p data-page-node-id="ThdtHaHdpUbOHC5DMkfnmJ">建议团队在使用时把本手册中「与你们相关」的部分抽出来，补充真实的内部域名、仓库地址、发布窗口与值班联系人，变成一份可执行的教学 runbook。</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  // ---------- 代码高亮 ----------
+  var KW = {
+    bash: ["if","then","fi","for","in","do","done","while","case","esac","function","return","export",
+           "sudo","apt","apt-get","yum","dnf","apk","curl","wget","ssh","scp","systemctl","service","docker",
+           "docker-compose","kubectl","git","npm","pnpm","python3","pip3","nginx","certbot","cd","ls","mkdir",
+           "chown","chmod","cat","tee","source","set","exit","echo","tar","rsync","grep","sed","env","nohup"],
+    yaml: ["apiVersion","kind","metadata","name","namespace","spec","template","selector","matchLabels","labels",
+           "ports","containerPort","image","replicas","type","targetPort","path","port","number","app","protocol",
+           "annotations","containers","env","envFrom","secretRef","configMapRef","resources","requests","limits",
+           "strategy","rollingUpdate","maxSurge","maxUnavailable","revisionHistoryLimit","uses","with","run","on","jobs","steps"],
+    nginx: ["server","listen","server_name","location","root","index","proxy_pass","proxy_set_header","upstream",
+            "ssl_certificate","ssl_certificate_key","ssl_protocols","ssl_session_cache","return","rewrite",
+            "try_files","include","client_max_body_size","gzip","gzip_types","access_log","error_log","keepalive","expires"],
+    dockerfile: ["FROM","RUN","CMD","ENTRYPOINT","WORKDIR","COPY","ADD","ENV","EXPOSE","USER","ARG","VOLUME",
+                 "LABEL","HEALTHCHECK","SHELL","AS"]
+  };
+  function esc(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function detect(code){
+    if(/^\s*(\w+):/.test(code) &amp;&amp; /^\s*-\s|\n\s{2,}\w+:/.test(code)) return "yaml";
+    if(/^\s*(server|location|upstream)\s*\{/m.test(code)) return "nginx";
+    if(/^\s*(FROM|RUN|COPY|ENTRYPOINT|CMD)\s/m.test(code)) return "dockerfile";
+    return "bash";
+  }
+  function highlight(code, lang){
+    var s = esc(code);
+    // 占位符 <xxx>
+    s = s.replace(/&lt;[^&<>]{1,40}?&gt;/g, function(m){ return "\u0001" + m + "\u0002"; });
+    // 注释
+    s = s.replace(/(^|\n)([ \t]*)([#].*)/g, function(m,a,b,c){ return a + b + "\u0003" + c + "\u0004"; });
+    s = s.replace(/(\/\/[^\n]*)/g, function(m){ return "\u0003" + m + "\u0004"; });
+    // 字符串
+    s = s.replace(/("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')/g, function(m){ return "\u0005" + m + "\u0006"; });
+    // 关键字
+    var list = KW[lang] || KW.bash;
+    list.forEach(function(w){
+      var re = new RegExp("(^|[^\\w\\$\\-\\/\u0001-\u0006])(" + w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&amp;") + ")(?![\\w-])","g");
+      s = s.replace(re, function(m,a,b){ return a + "\u0007" + b + "\u0008"; });
+    });
+    return s
+      .replace(/\u0003/g,'<span class="c">').replace(/\u0004/g,'</span>')
+      .replace(/\u0005/g,'<span class="s">').replace(/\u0006/g,'</span>')
+      .replace(/\u0007/g,'<span class="k">').replace(/\u0008/g,'</span>')
+      .replace(/\u0001/g,'<span class="p">').replace(/\u0002/g,'</span>');
+  }
+  document.querySelectorAll("pre code").forEach(function(el){
+    var raw = el.textContent;
+    var lang = detect(raw);
+    el.innerHTML = highlight(raw, lang);
+  });
+
+  // ---------- 复制 ----------
+  document.querySelectorAll(".code-wrap .copy").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var code = btn.closest(".code-wrap").querySelector("code").textContent;
+      var done = function(){ var t = btn.textContent; btn.textContent = "已复制"; setTimeout(function(){ btn.textContent = t; }, 1400); };
+      if(navigator.clipboard &amp;&amp; navigator.clipboard.writeText){
+        navigator.clipboard.writeText(code).then(done, function(){ fallback(code, done); });
+      } else { fallback(code, done); }
+    });
+  });
+  function fallback(text, cb){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); cb(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ---------- 标签页 ----------
+  document.querySelectorAll(".tabs").forEach(function(group){
+    group.addEventListener("click", function(e){
+      var b = e.target.closest("button[data-t]");
+      if(!b) return;
+      group.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      group.querySelectorAll("button").forEach(function(x){
+        var p = document.getElementById(x.getAttribute("data-t"));
+        if(p) p.hidden = (x !== b);
+      });
+    });
+  });
+
+  // ---------- 目录高亮 ----------
+  var links = Array.prototype.slice.call(document.querySelectorAll(".sidebar a[href^='#']"));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute("href").slice(1)); });
+  function onScroll(){
+    var y = window.scrollY + 110, idx = 0;
+    targets.forEach(function(t, i){ if(t &amp;&amp; t.offsetTop <= y) idx = i; });
+    links.forEach(function(a, i){ a.classList.toggle("active", i === idx); });
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+  // ---------- 移动目录 ----------
+  var sb = document.getElementById("sidebar");
+  document.getElementById("menuBtn").addEventListener("click", function(){ sb.classList.toggle("open"); });
+  sb.addEventListener("click", function(e){ if(e.target.tagName === "A") sb.classList.remove("open"); });
+
+  // ---------- 搜索 ----------
+  var q = document.getElementById("q"), sug = document.getElementById("sugg");
+  var index = [];
+  document.querySelectorAll("main h2, main h3").forEach(function(h){
+    var a = h.querySelector("a") || null;
+    var txt = h.textContent.replace(/^\s*\d+\s*/, "").trim();
+    index.push({ id: h.id, text: txt, tag: h.tagName.toLowerCase() });
+  });
+  q.addEventListener("input", function(){
+    var v = q.value.trim().toLowerCase();
+    if(!v){ sug.style.display = "none"; return; }
+    var hits = index.filter(function(i){ return i.text.toLowerCase().indexOf(v) > -1; }).slice(0, 12);
+    if(!hits.length){ sug.innerHTML = '<a href="javascript:void(0)">无匹配结果</a>'; }
+    else {
+      sug.innerHTML = hits.map(function(i){
+        return '<a href="#' + i.id + '" data-goto="' + i.id + '">' + (i.tag === "h2" ? "§ " : "· ") + i.text + '</a>';
+      }).join("");
+    }
+    sug.style.display = "block";
+  });
+  sug.addEventListener("click", function(e){
+    if(e.target.tagName === "A"){ sug.style.display = "none"; q.value = ""; }
+  });
+  document.addEventListener("click", function(e){
+    if(!e.target.closest(".searchbox")) sug.style.display = "none";
+  });
+
+  // ---------- 打印 ----------
+  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+})();
+</script>
+</body>
+</html>
