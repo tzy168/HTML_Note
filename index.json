@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T08:30:39.426Z",
+  "generatedAt": "2026-09-09T08:56:16.374Z",
   "tree": [
     {
       "name": "AI",
@@ -77,6 +77,11 @@
       "name": "TIME",
       "type": "file",
       "path": "TIME.html"
+    },
+    {
+      "name": "国内主流云平台项目部署手册",
+      "type": "file",
+      "path": "国内主流云平台项目部署手册.html"
     },
     {
       "name": "部署",
