@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>React 状态管理四件套：Redux / MobX / Zustand / Dva 用法速查</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f7f8fa;
+    --line:#e6e8ec;
+    --line-soft:#f0f1f4;
+    --text:#1d2129;
+    --text-2:#5a6069;
+    --text-3:#8a9099;
+    --redux:#764abc;
+    --mobx:#d97706;
+    --zustand:#c2410c;
+    --dva:#0e7490;
+    --radius:14px;
+    --mono: "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:76px}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.75; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+
+  /* ---------- nav ---------- */
+  .nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,.86); backdrop-filter:saturate(180%) blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{max-width:1180px; margin:0 auto; padding:0 24px; height:60px; display:flex; align-items:center; gap:28px}
+  .brand{font-weight:700; letter-spacing:.2px; white-space:nowrap}
+  .brand span{color:var(--text-3); font-weight:500; margin-left:8px; font-size:13px}
+  .nav-links{display:flex; gap:22px; margin-left:auto; overflow-x:auto}
+  .nav-links a{
+    color:var(--text-2); text-decoration:none; font-size:14px; white-space:nowrap;
+    padding:4px 0; border-bottom:2px solid transparent;
+  }
+  .nav-links a:hover{color:var(--text); border-bottom-color:var(--line)}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:1180px; margin:0 auto; padding:0 24px}
+  section{padding:64px 0; border-bottom:1px solid var(--line-soft)}
+  section:last-of-type{border-bottom:none}
+  h1{font-size:34px; line-height:1.35; margin:0 0 14px; letter-spacing:-.4px}
+  h2{font-size:24px; margin:0 0 8px; letter-spacing:-.2px}
+  h3{font-size:17px; margin:0 0 10px}
+  .lede{color:var(--text-2); max-width:760px; margin:0}
+  .sec-head{margin-bottom:28px}
+  .sec-head .eyebrow{
+    font-size:12px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-3);
+    font-weight:600; margin-bottom:8px;
+  }
+  p{margin:0 0 12px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 56px}
+  .hero-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:22px}
+  .tag{
+    font-size:12.5px; padding:4px 11px; border:1px solid var(--line); border-radius:999px;
+    color:var(--text-2); background:var(--bg-soft);
+  }
+
+  /* ---------- mind model cards ---------- */
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:16px}
+  .card{
+    border:1px solid var(--line); border-radius:var(--radius); padding:20px; background:#fff;
+    transition:box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover{box-shadow:0 8px 24px rgba(20,25,35,.06); transform:translateY(-2px)}
+  .card .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px}
+  .card h3{display:flex; align-items:center; font-size:16px; margin-bottom:4px}
+  .card .sub{font-size:12.5px; color:var(--text-3); margin-bottom:12px}
+  .card p{font-size:13.5px; color:var(--text-2); margin-bottom:10px}
+  .card ul{margin:0; padding-left:16px; font-size:13px; color:var(--text-2)}
+  .card li{margin-bottom:4px}
+
+  /* ---------- diagram ---------- */
+  .diagram-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:26px}
+  .diagram{border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:14px 10px 8px; text-align:center}
+  .diagram .d-title{font-size:13px; font-weight:600; margin-bottom:2px}
+  .diagram .d-sub{font-size:11.5px; color:var(--text-3); margin-bottom:6px}
+  .diagram svg{width:100%; height:auto}
+  .n-box{fill:#fff; stroke:var(--line); stroke-width:1.2}
+  .n-text{font-size:11px; fill:var(--text); font-family:-apple-system,"PingFang SC",sans-serif}
+  .n-hint{font-size:9.5px; fill:#9aa0a8}
+  .flow{stroke:#b6bcc6; stroke-width:1.4; fill:none}
+
+  /* ---------- table ---------- */
+  .table-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius)}
+  table{border-collapse:collapse; width:100%; min-width:820px; font-size:13.5px; background:#fff}
+  th,td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--line-soft); vertical-align:top}
+  thead th{background:var(--bg-soft); font-weight:600; font-size:13px; white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td:first-child{color:var(--text-3); white-space:nowrap; font-weight:500}
+  .pill{display:inline-block; font-size:11.5px; padding:2px 8px; border-radius:6px; background:var(--bg-soft); border:1px solid var(--line); color:var(--text-2)}
+  .pill.g{color:#2f7a4d; background:#f0f8f2; border-color:#d6ebdd}
+  .pill.a{color:#a86200; background:#fdf6ec; border-color:#f2e2c8}
+  .pill.r{color:#b03a2e; background:#fdf1ef; border-color:#f4d9d4}
+
+  /* ---------- tabs ---------- */
+  .tabbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px}
+  .tab{
+    border:1px solid var(--line); background:#fff; border-radius:10px; padding:9px 18px;
+    font-size:14px; cursor:pointer; color:var(--text-2); font-family:inherit; transition:.15s;
+  }
+  .tab:hover{border-color:#cfd4db; color:var(--text)}
+  .tab[aria-selected="true"]{color:#fff; border-color:transparent; font-weight:600}
+  .tab[aria-selected="true"][data-k="redux"]{background:var(--redux)}
+  .tab[aria-selected="true"][data-k="mobx"]{background:var(--mobx)}
+  .tab[aria-selected="true"][data-k="zustand"]{background:var(--zustand)}
+  .tab[aria-selected="true"][data-k="dva"]{background:var(--dva)}
+  .panel{display:none}
+  .panel.active{display:block; animation:fade .22s ease}
+  @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  .codeblock{margin:0 0 18px}
+  .code-head{
+    display:flex; align-items:center; gap:10px; padding:9px 14px; border:1px solid var(--line);
+    border-bottom:none; border-radius:10px 10px 0 0; background:var(--bg-soft);
+    font-size:12.5px; color:var(--text-2); font-family:var(--mono);
+  }
+  .copy{
+    margin-left:auto; border:1px solid var(--line); background:#fff; color:var(--text-2);
+    border-radius:6px; padding:2px 9px; font-size:11.5px; cursor:pointer; font-family:inherit;
+  }
+  .copy:hover{color:var(--text); border-color:#cfd4db}
+  pre{
+    margin:0; background:#fbfbfc; border:1px solid var(--line); border-radius:0 0 10px 10px;
+    padding:14px 16px; overflow-x:auto; font-family:var(--mono); font-size:12.6px; line-height:1.7;
+    color:#2a2f3a; tab-size:2;
+  }
+  .codeblock > pre:first-child{border-radius:10px}
+  .t-kw{color:#a626a4}
+  .t-str{color:#2f8f4e}
+  .t-cm{color:#a0a1a7; font-style:italic}
+  .t-num{color:#b76b00}
+  .t-fn{color:#1f6feb}
+  .t-tag{color:#c0392b}
+
+  .notes{border:1px solid var(--line); border-left:3px solid var(--text-3); border-radius:10px; padding:14px 18px; background:var(--bg-soft)}
+  .notes h4{margin:0 0 8px; font-size:14px}
+  .notes ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--text-2)}
+  .notes li{margin-bottom:6px}
+  code.inline{font-family:var(--mono); font-size:12.6px; background:var(--bg-soft); border:1px solid var(--line-soft); padding:1px 5px; border-radius:5px; color:#b3374a}
+
+  /* ---------- quiz ---------- */
+  .quiz{border:1px solid var(--line); border-radius:var(--radius); padding:24px; background:var(--bg-soft)}
+  .q{margin-bottom:18px}
+  .q .qt{font-size:14.5px; font-weight:600; margin-bottom:8px}
+  .opts{display:flex; gap:10px; flex-wrap:wrap}
+  .opt{
+    border:1px solid var(--line); background:#fff; border-radius:9px; padding:8px 14px;
+    font-size:13.5px; cursor:pointer; font-family:inherit; color:var(--text-2); transition:.15s;
+  }
+  .opt:hover{border-color:#c3c9d2}
+  .opt.sel{background:var(--text); color:#fff; border-color:var(--text)}
+  .result{margin-top:8px; padding:16px 18px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px}
+  .result .r-name{font-weight:700; font-size:16px; margin-bottom:4px}
+  .bars{margin-top:12px; display:grid; gap:6px}
+  .bar-row{display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-2)}
+  .bar-row .bl{width:70px}
+  .bar{height:6px; border-radius:3px; min-width:2px}
+
+  /* ---------- misc ---------- */
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .foot{padding:36px 0 56px; color:var(--text-3); font-size:13px}
+  .mini{font-size:12.5px; color:var(--text-3); margin-top:8px}
+  @media (max-width:960px){
+    .grid4,.diagram-grid{grid-template-columns:repeat(2,1fr)}
+    .cols,.two{grid-template-columns:1fr}
+    h1{font-size:27px}
+    .nav-links{display:none}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b6bcc6"/>
+    </marker>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a9099"/>
+    </marker>
+  </defs>
+</svg>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">状态管理四件套<span>Redux · MobX · Zustand · Dva</span></div>
+    <div class="nav-links">
+      <a href="#mind">心智模型</a>
+      <a href="#flow">数据流</a>
+      <a href="#compare">横向对比</a>
+      <a href="#usage">用法详解</a>
+      <a href="#choose">怎么选</a>
+      <a href="#pitfall">常见坑</a>
+    </div>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <h1>Redux / MobX / Zustand / Dva<br/>同一件事的四种解法</h1>
+  <p class="lede">
+    四个库解决的是同一个问题：<strong>谁持有状态、谁修改状态、状态变了谁重渲染</strong>。
+    差别只在"约束"和"样板代码"的比例 —— 约束越多越可预测，样板越少越自由。
+    这份速查给出可直接粘贴的最小可用代码，以及选型时真正起作用的判断维度。
+  </p>
+  <div class="hero-tags">
+    <span class="tag">Redux Toolkit</span>
+    <span class="tag">MobX 6</span>
+    <span class="tag">Zustand v5</span>
+    <span class="tag">Dva 2.x</span>
+    <span class="tag">React 18+</span>
+  </div>
+</header>
+
+<section id="mind" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">01 / Mind model</div>
+    <h2>一句话心智模型</h2>
+    <p class="lede">先记住这一句，代码细节都是它的展开。</p>
+  </div>
+  <div class="grid4">
+    <div class="card">
+      <h3><span class="dot" style="background:var(--redux)"></span>Redux</h3>
+      <div class="sub">单一数据源 + 显式不可变更新</div>
+      <p>全局一棵状态树，改状态必须 <code class="inline">dispatch(action)</code>，由纯函数 reducer 算出新 state。</p>
+      <ul>
+        <li>状态是"快照"，可回放</li>
+        <li>数据流单向且可追踪</li>
+        <li>样板代码靠 RTK 大幅压缩</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--mobx)"></span>MobX</h3>
+      <div class="sub">响应式 + 可变即更新</div>
+      <p>把对象变成 observable，直接赋值即可；谁读了谁就被自动追踪依赖，精准更新。</p>
+      <ul>
+        <li>像写普通对象一样写状态</li>
+        <li>自动依赖收集，无需手写选择器</li>
+        <li>细粒度到字段级重渲染</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--zustand)"></span>Zustand</h3>
+      <div class="sub">极简 store + hooks 订阅</div>
+      <p>一个 <code class="inline">create()</code> 就是 store，组件用选择器订阅需要的那一小块，<code class="inline">set</code> 即更新。</p>
+      <ul>
+        <li>不需要 Provider 包裹</li>
+        <li>React 之外也能读写</li>
+        <li>心智负担最低</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="background:var(--dva)"></span>Dva</h3>
+      <div class="sub">约定式 model + saga 副作用</div>
+      <p>redux + redux-saga 的框架化封装，按 <code class="inline">namespace/state/reducers/effects</code> 约定组织。</p>
+      <ul>
+        <li>异步用 generator，可读性好</li>
+        <li>与 umi / antd-pro 深度集成</li>
+        <li>约定大于配置</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="flow" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">02 / Data flow</div>
+    <h2>数据流对照</h2>
+    <p class="lede">同样的"点按钮 → 改数据 → 界面更新"，四张图的形状完全不同。</p>
+  </div>
+  <div class="diagram-grid">
+    <div class="diagram">
+      <div class="d-title" style="color:var(--redux)">Redux</div>
+      <div class="d-sub">单向、显式、可回放</div>
+      <svg viewBox="0 0 240 200" role="img" aria-label="Redux 数据流">
+        <rect class="n-box" x="70" y="8" width="100" height="30" rx="7"/>
+        <text class="n-text" x="120" y="27" text-anchor="middle">Action</text>
+        <path class="flow" d="M120,38 L120,60" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="52">dispatch</text>
+        <rect class="n-box" x="70" y="62" width="100" height="30" rx="7"/>
+        <text class="n-text" x="120" y="81" text-anchor="middle">Reducer</text>
+        <path class="flow" d="M120,92 L120,114" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="106">(state, action) =&gt; state'</text>
+        <rect class="n-box" x="70" y="116" width="100" height="30" rx="7"/>
+        <text class="n-text" x="120" y="135" text-anchor="middle">Store</text>
+        <path class="flow" d="M120,146 L120,168" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="160">subscribe</text>
+        <rect class="n-box" x="70" y="170" width="100" height="26" rx="7"/>
+        <text class="n-text" x="120" y="187" text-anchor="middle">View</text>
+        <path class="flow" d="M170,183 C222,183 222,23 172,23" marker-end="url(#ar)" stroke-dasharray="4 4"/>
+      </svg>
+    </div>
+
+    <div class="diagram">
+      <div class="d-title" style="color:var(--mobx)">MobX</div>
+      <div class="d-sub">响应式、自动依赖追踪</div>
+      <svg viewBox="0 0 240 200" role="img" aria-label="MobX 数据流">
+        <rect class="n-box" x="70" y="10" width="100" height="28" rx="7"/>
+        <text class="n-text" x="120" y="28" text-anchor="middle">View (observer)</text>
+        <path class="flow" d="M120,38 L120,62" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="54">read → 收集依赖</text>
+        <rect class="n-box" x="62" y="64" width="116" height="30" rx="7"/>
+        <text class="n-text" x="120" y="83" text-anchor="middle">Observable state</text>
+        <path class="flow" d="M120,94 L120,116" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="108">action 直接改</text>
+        <rect class="n-box" x="70" y="118" width="100" height="28" rx="7"/>
+        <text class="n-text" x="120" y="136" text-anchor="middle">Computed</text>
+        <path class="flow" d="M120,146 C60,146 34,110 34,60 C34,30 66,24 68,24" marker-end="url(#ar)"/>
+        <text class="n-hint" x="14" y="96">reaction → 重渲染</text>
+        <rect class="n-box" x="66" y="158" width="108" height="26" rx="7" stroke-dasharray="3 3"/>
+        <text class="n-text" x="120" y="175" text-anchor="middle">autorun / reaction</text>
+      </svg>
+    </div>
+
+    <div class="diagram">
+      <div class="d-title" style="color:var(--zustand)">Zustand</div>
+      <div class="d-sub">组件直连 store 切片</div>
+      <svg viewBox="0 0 240 200" role="img" aria-label="Zustand 数据流">
+        <rect class="n-box" x="66" y="10" width="108" height="28" rx="7"/>
+        <text class="n-text" x="120" y="28" text-anchor="middle">Component</text>
+        <path class="flow" d="M120,38 L120,64" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="55">useStore(selector)</text>
+        <rect class="n-box" x="60" y="66" width="120" height="34" rx="7"/>
+        <text class="n-text" x="120" y="81" text-anchor="middle">Store</text>
+        <text class="n-hint" x="120" y="94" text-anchor="middle">state + actions 在一起</text>
+        <path class="flow" d="M120,100 L120,126" marker-end="url(#ar)"/>
+        <text class="n-hint" x="126" y="118">set(partial)</text>
+        <rect class="n-box" x="66" y="128" width="108" height="26" rx="7"/>
+        <text class="n-text" x="120" y="145" text-anchor="middle">浅合并 → 通知订阅者</text>
+        <path class="flow" d="M174,141 C214,141 214,24 176,24" marker-end="url(#ar)"/>
+        <text class="n-hint" x="150" y="176">getState / setState（React 外也可用）</text>
+      </svg>
+    </div>
+
+    <div class="diagram">
+      <div class="d-title" style="color:var(--dva)">Dva</div>
+      <div class="d-sub">model 约定 + saga 副作用</div>
+      <svg viewBox="0 0 240 200" role="img" aria-label="Dva 数据流">
+        <rect class="n-box" x="70" y="6" width="100" height="26" rx="7"/>
+        <text class="n-text" x="120" y="23" text-anchor="middle">dispatch</text>
+        <path class="flow" d="M120,32 L120,52" marker-end="url(#ar)"/>
+        <rect class="n-box" x="62" y="54" width="116" height="30" rx="7"/>
+        <text class="n-text" x="120" y="67" text-anchor="middle">effects (saga)</text>
+        <text class="n-hint" x="120" y="80" text-anchor="middle">call / put / select</text>
+        <path class="flow" d="M120,84 L120,104" marker-end="url(#ar)"/>
+        <rect class="n-box" x="66" y="106" width="108" height="28" rx="7"/>
+        <text class="n-text" x="120" y="124" text-anchor="middle">reducers</text>
+        <path class="flow" d="M120,134 L120,154" marker-end="url(#ar)"/>
+        <rect class="n-box" x="66" y="156" width="108" height="28" rx="7"/>
+        <text class="n-text" x="120" y="174" text-anchor="middle">state → connect</text>
+        <path class="flow" d="M174,170 C216,170 216,22 172,19" marker-end="url(#ar)" stroke-dasharray="4 4"/>
+        <text class="n-hint" x="8" y="96">namespace/</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="compare" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">03 / Comparison</div>
+    <h2>横向对比</h2>
+    <p class="lede">体积一栏只做相对排序，不写具体数字 —— 不同打包配置差异很大，选型时不要被 KB 牵着走。</p>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:120px">维度</th>
+          <th>Redux Toolkit</th>
+          <th>MobX 6</th>
+          <th>Zustand v5</th>
+          <th>Dva 2.x</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>核心范式</td>
+          <td>函数式 / 不可变 / 单向流</td>
+          <td>响应式 / 可变 / 自动追踪</td>
+          <td>不可变 set + 选择器订阅</td>
+          <td>约定式 model + redux-saga</td>
+        </tr>
+        <tr>
+          <td>样板代码</td>
+          <td><span class="pill a">中等</span> RTK 已大幅简化</td>
+          <td><span class="pill g">最少</span></td>
+          <td><span class="pill g">很少</span></td>
+          <td><span class="pill a">中等</span> 靠约定省掉连接层</td>
+        </tr>
+        <tr>
+          <td>需要 Provider</td>
+          <td><span class="pill r">需要</span></td>
+          <td>可选（用 Context 注入）</td>
+          <td><span class="pill g">不需要</span></td>
+          <td><span class="pill r">需要</span></td>
+        </tr>
+        <tr>
+          <td>异步方案</td>
+          <td>createAsyncThunk / RTK Query</td>
+          <td>async 方法 + runInAction</td>
+          <td>store 里直接写 async 函数</td>
+          <td>effects + generator yield</td>
+        </tr>
+        <tr>
+          <td>重渲染粒度</td>
+          <td>依赖选择器写法，需 memo</td>
+          <td><span class="pill g">字段级自动最优</span></td>
+          <td>选择器 + shallow 控制</td>
+          <td>connect mapState 控制</td>
+        </tr>
+        <tr>
+          <td>DevTools</td>
+          <td><span class="pill g">时间旅行，最强</span></td>
+          <td>mobx-devtools（调试响应式）</td>
+          <td>Redux DevTools 插件</td>
+          <td> Redux DevTools + dva-loading</td>
+        </tr>
+        <tr>
+          <td>TypeScript</td>
+          <td><span class="pill g">优秀</span> 类型推导完整</td>
+          <td>良好（类字段有坑）</td>
+          <td><span class="pill g">优秀</span></td>
+          <td><span class="pill a">一般</span> 类型定义较旧</td>
+        </tr>
+        <tr>
+          <td>体积（相对）</td>
+          <td>较大</td>
+          <td>中等</td>
+          <td><span class="pill g">很小</span></td>
+          <td>较大（含 redux + saga）</td>
+        </tr>
+        <tr>
+          <td>生态 / 维护</td>
+          <td>官方标准，活跃</td>
+          <td>稳定活跃</td>
+          <td>非常活跃，社区首选</td>
+          <td>更新放缓，多为存量项目</td>
+        </tr>
+        <tr>
+          <td>适合</td>
+          <td>大型协作、强审计、复杂中间件</td>
+          <td>复杂领域模型、OOP 风格</td>
+          <td>新项目默认、中小规模</td>
+          <td>umi / antd-pro 存量项目</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="usage" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">04 / Usage</div>
+    <h2>用法详解</h2>
+    <p class="lede">同一个需求（计数器 + 异步拉取用户）的四种写法，左边定义状态，右边在组件里消费。</p>
+  </div>
+
+  <div class="tabbar" role="tablist">
+    <button class="tab" data-k="redux" aria-selected="true" role="tab">Redux Toolkit</button>
+    <button class="tab" data-k="mobx" aria-selected="false" role="tab">MobX</button>
+    <button class="tab" data-k="zustand" aria-selected="false" role="tab">Zustand</button>
+    <button class="tab" data-k="dva" aria-selected="false" role="tab">Dva</button>
+  </div>
+
+  <!-- ============ REDUX ============ -->
+  <div class="panel active" id="p-redux">
+    <div class="cols">
+      <div>
+        <div class="codeblock">
+          <div class="code-head">store/counterSlice.js<button class="copy">复制</button></div>
+<pre><code>import { configureStore, createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+
+// 异步 thunk：自动产出 pending / fulfilled / rejected 三个 action
+export const fetchUser = createAsyncThunk('counter/fetchUser', async (id) => {
+  const res = await fetch(`/api/users/${id}`)
+  return res.json()
+})
+
+const counterSlice = createSlice({
+  name: 'counter',
+  initialState: { value: 0, user: null, loading: false },
+  reducers: {
+    increment: (state) =&gt; { state.value += 1 },            // 内部 Immer，可"直接改"
+    addBy: (state, action) =&gt; { state.value += action.payload },
+  },
+  extraReducers: (builder) =&gt; {
+    builder
+      .addCase(fetchUser.pending, (state) =&gt; { state.loading = true })
+      .addCase(fetchUser.fulfilled, (state, action) =&gt; {
+        state.loading = false
+        state.user = action.payload
+      })
+  },
+})
+
+export const { increment, addBy } = counterSlice.actions
+export const selectValue = (state) =&gt; state.counter.value
+
+export const store = configureStore({
+  reducer: { counter: counterSlice.reducer },
+})</code></pre>
+        </div>
+      </div>
+      <div>
+        <div class="codeblock">
+          <div class="code-head">components/Counter.jsx<button class="copy">复制</button></div>
+<pre><code>import { useSelector, useDispatch } from 'react-redux'
+import { increment, addBy, fetchUser, selectValue } from '../store/counterSlice'
+
+function Counter() {
+  const value = useSelector(selectValue)
+  const loading = useSelector((s) =&gt; s.counter.loading)
+  const dispatch = useDispatch()
+
+  return (
+    &lt;div&gt;
+      &lt;span&gt;{value}&lt;/span&gt;
+      &lt;button onClick={() =&gt; dispatch(increment())}&gt;+1&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch(addBy(5))}&gt;+5&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch(fetchUser(1))}&gt;
+        {loading ? '加载中' : '拉取用户'}
+      &lt;/button&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+        </div>
+        <div class="codeblock">
+          <div class="code-head">main.jsx — 入口注入 Provider<button class="copy">复制</button></div>
+<pre><code>import { Provider } from 'react-redux'
+import { store } from './store/counterSlice'
+
+createRoot(document.getElementById('root')).render(
+  &lt;Provider store={store}&gt;
+    &lt;Counter /&gt;
+  &lt;/Provider&gt;
+)</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="notes" style="border-left-color:var(--redux)">
+      <h4>要点与常见坑</h4>
+      <ul>
+        <li>只在 <code class="inline">createSlice</code> 里可以"直接改" state，那是 Immer 的草稿；reducer 之外必须保持不可变。</li>
+        <li><code class="inline">useSelector</code> 返回新对象/新数组会每次重渲染，多个值要么拆成多个 selector，要么配合 <code class="inline">shallowEqual</code> / <code class="inline">createSelector</code>。</li>
+        <li>纯请求场景优先 <code class="inline">RTK Query</code>，自己写 loading / error / 缓存通常是在重复造轮子。</li>
+        <li>不要在 reducer 里做副作用（请求、随机数、Date.now），它们必须保持纯函数。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ MOBX ============ -->
+  <div class="panel" id="p-mobx">
+    <div class="cols">
+      <div>
+        <div class="codeblock">
+          <div class="code-head">stores/CounterStore.js<button class="copy">复制</button></div>
+<pre><code>import { makeAutoObservable, runInAction, configure } from 'mobx'
+
+configure({ enforceActions: 'observed' })   // 禁止在 action 外乱改状态
+
+class CounterStore {
+  value = 0
+  user = null
+  loading = false
+
+  constructor() {
+    makeAutoObservable(this)   // 字段→observable, getter→computed, 方法→action
+  }
+
+  get double() {                // computed：按依赖自动缓存
+    return this.value * 2
+  }
+
+  increment() { this.value += 1 }
+  addBy(n) { this.value += n }
+
+  async fetchUser(id) {
+    this.loading = true
+    const data = await fetch(`/api/users/${id}`).then((r) =&gt; r.json())
+    runInAction(() =&gt; {         // await 之后的修改必须包起来
+      this.user = data
+      this.loading = false
+    })
+  }
+}
+
+export const counterStore = new CounterStore()</code></pre>
+        </div>
+      </div>
+      <div>
+        <div class="codeblock">
+          <div class="code-head">components/Counter.jsx<button class="copy">复制</button></div>
+<pre><code>import { observer } from 'mobx-react-lite'
+import { counterStore } from '../stores/CounterStore'
+
+// observer 追踪"渲染期间读过的" observable，变了才重渲染
+const Counter = observer(() =&gt; (
+  &lt;div&gt;
+    &lt;span&gt;{counterStore.value} / {counterStore.double}&lt;/span&gt;
+    &lt;button onClick={() =&gt; counterStore.increment()}&gt;+1&lt;/button&gt;
+    &lt;button onClick={() =&gt; counterStore.addBy(5)}&gt;+5&lt;/button&gt;
+    &lt;button onClick={() =&gt; counterStore.fetchUser(1)}&gt;拉取用户&lt;/button&gt;
+  &lt;/div&gt;
+))</code></pre>
+        </div>
+        <div class="codeblock">
+          <div class="code-head">多 Store 用 Context 注入（可选）<button class="copy">复制</button></div>
+<pre><code>import { createContext, useContext } from 'react'
+import { useLocalObservable } from 'mobx-react-lite'
+
+const StoreContext = createContext(null)
+export const StoreProvider = StoreContext.Provider
+export const useStore = () =&gt; useContext(StoreContext)
+
+// 组件内局部状态也能响应式：
+const local = useLocalObservable(() =&gt; ({ count: 0, inc() { this.count++ } }))</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="notes" style="border-left-color:var(--mobx)">
+      <h4>要点与常见坑</h4>
+      <ul>
+        <li>忘记 <code class="inline">observer</code> 是最常见问题：组件不会响应更新，且没有任何报错。</li>
+        <li>异步 <code class="inline">await</code> 之后的赋值必须放进 <code class="inline">runInAction</code>，否则触发严格模式警告。</li>
+        <li>解构会切断响应式：先解构再渲染，组件就订阅不到变化了，直接 <code class="inline">store.xxx</code> 读取最稳。</li>
+        <li>TS 下用类字段需要把 <code class="inline">useDefineForClassFields</code> 设为 <code class="inline">false</code>，否则字段覆盖 observable。</li>
+        <li>computed 里别做副作用；它不是"会在变化时执行"，而是"被读取时才计算"。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ ZUSTAND ============ -->
+  <div class="panel" id="p-zustand">
+    <div class="cols">
+      <div>
+        <div class="codeblock">
+          <div class="code-head">store/useCounter.js<button class="copy">复制</button></div>
+<pre><code>import { create } from 'zustand'
+import { persist, devtools, subscribeWithSelector } from 'zustand/middleware'
+
+// TS 推荐柯里化写法：create&lt;State&gt;()(middleware(...))
+export const useCounter = create((set, get) =&gt; ({
+  value: 0,
+  user: null,
+
+  // 返回"部分状态"，与旧值浅合并
+  increment: () =&gt; set((s) =&gt; ({ value: s.value + 1 })),
+  addBy: (n) =&gt; set((s) =&gt; ({ value: s.value + n })),
+  reset: () =&gt; set({ value: 0, user: null }),
+
+  // 异步就是普通 async 函数，随时 set
+  fetchUser: async (id) =&gt; {
+    const data = await fetch(`/api/users/${id}`).then((r) =&gt; r.json())
+    set({ user: data })
+  },
+}))
+
+// 加中间件：持久化 + devtools + 精确订阅
+export const useCart = create(
+  devtools(
+    persist(
+      (set) =&gt; ({ items: [], add: (i) =&gt; set((s) =&gt; ({ items: [...s.items, i] })) }),
+      { name: 'cart-storage' }
+    )
+  )
+)</code></pre>
+        </div>
+      </div>
+      <div>
+        <div class="codeblock">
+          <div class="code-head">components/Counter.jsx<button class="copy">复制</button></div>
+<pre><code>import { useShallow } from 'zustand/react/shallow'
+import { useCounter } from '../store/useCounter'
+
+function Counter() {
+  // 按需订阅：selector 的返回值就是重渲染的触发条件
+  const value = useCounter((s) =&gt; s.value)
+  const increment = useCounter((s) =&gt; s.increment)
+
+  // 一次取多个值，用 useShallow 避免每次返回新对象导致重渲染
+  const { user, reset } = useCounter(
+    useShallow((s) =&gt; ({ user: s.user, reset: s.reset }))
+  )
+
+  return &lt;button onClick={increment}&gt;{value}&lt;/button&gt;
+}</code></pre>
+        </div>
+        <div class="codeblock">
+          <div class="code-head">React 之外读写 + 派生状态<button class="copy">复制</button></div>
+<pre><code>// 在普通函数 / 事件监听 / 请求拦截器里直接用
+useCounter.getState().value
+useCounter.setState({ value: 10 })
+const unsub = useCounter.subscribe((s) =&gt; console.log(s.value))
+
+// 派生值不要存进 store，用 selector 算
+const double = useCounter((s) =&gt; s.value * 2)
+
+// 跨请求共享：直接把 fetch 结果 set 进去即可，无需 dispatch</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="notes" style="border-left-color:var(--zustand)">
+      <h4>要点与常见坑</h4>
+      <ul>
+        <li>v5 起 selector 返回新对象会无限重渲染警告，多值一定用 <code class="inline">useShallow</code>。</li>
+        <li>action 和 state 放在同一个对象里即可，不需要区分 reducer / action creator。</li>
+        <li><code class="inline">set</code> 默认是浅合并；要替换整个状态用 <code class="inline">set(x, true)</code>。</li>
+        <li>嵌套对象更新要手动展开（或配 <code class="inline">immer</code> 中间件），不会自动深层合并。</li>
+        <li>persist 在 SSR / Next.js 上要注意 hydration，首次渲染服务端拿不到 localStorage。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ DVA ============ -->
+  <div class="panel" id="p-dva">
+    <div class="cols">
+      <div>
+        <div class="codeblock">
+          <div class="code-head">models/counter.js<button class="copy">复制</button></div>
+<pre><code>const delay = (ms) =&gt; new Promise((r) =&gt; setTimeout(r, ms))
+
+export default {
+  namespace: 'counter',           // 全局唯一，也是 state 挂在 store 上的 key
+  state: { value: 0, user: null },
+
+  reducers: {                     // 同步：纯函数，必须返回新 state
+    add(state, { payload }) {
+      return { ...state, value: state.value + payload }
+    },
+    saveUser(state, { payload }) {
+      return { ...state, user: payload }
+    },
+  },
+
+  effects: {                      // 异步：generator + redux-saga
+    *addDelay({ payload }, { call, put, select }) {
+      yield call(delay, 1000)
+      const value = yield select((s) =&gt; s.counter.value)
+      yield put({ type: 'add', payload: value + payload })   // 可省略 namespace
+    },
+    *fetchUser({ payload }, { call, put }) {
+      const data = yield call(fetchUserApi, payload)
+      yield put({ type: 'saveUser', payload: data })
+    },
+  },
+
+  subscriptions: {                // 订阅路由 / 键盘 / websocket 等外部源
+    setup({ dispatch, history }) {
+      return history.listen(({ pathname }) =&gt; {
+        if (pathname === '/') dispatch({ type: 'fetchUser', payload: 1 })
+      })
+    },
+  },
+}</code></pre>
+        </div>
+      </div>
+      <div>
+        <div class="codeblock">
+          <div class="code-head">index.js — 启动 dva<button class="copy">复制</button></div>
+<pre><code>import dva from 'dva'
+import createLoading from 'dva-loading'
+import counter from './models/counter'
+
+const app = dva()
+app.use(createLoading())      // 自动产出 loading.effects['counter/fetchUser']
+app.model(counter)            // 注册 model
+app.router(() =&gt; &lt;App /&gt;)
+app.start('#root')            // umi 项目里这些由框架接管</code></pre>
+        </div>
+        <div class="codeblock">
+          <div class="code-head">components/Counter.jsx<button class="copy">复制</button></div>
+<pre><code>import { connect } from 'dva'      // umi 项目：import { connect } from 'umi'
+
+function Counter({ value, loading, dispatch }) {
+  return (
+    &lt;div&gt;
+      &lt;span&gt;{value}&lt;/span&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'counter/add', payload: 1 })}&gt;+1&lt;/button&gt;
+      &lt;button onClick={() =&gt; dispatch({ type: 'counter/fetchUser', payload: 1 })}&gt;
+        {loading ? '加载中' : '拉取用户'}
+      &lt;/button&gt;
+    &lt;/div&gt;
+  )
+}
+
+export default connect(({ counter, loading }) =&gt; ({
+  value: counter.value,
+  loading: loading.effects['counter/fetchUser'],
+}))(Counter)</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="notes" style="border-left-color:var(--dva)">
+      <h4>要点与常见坑</h4>
+      <ul>
+        <li>reducers 必须返回新对象，直接改 state 不会触发更新（没有 Immer）。</li>
+        <li>effects 内部 <code class="inline">yield put({ type: 'add' })</code> 省略 namespace 表示当前 model，跨 model 必须写全 <code class="inline">'other/xxx'</code>。</li>
+        <li>namespace 冲突会静默覆盖，中大型项目建议加前缀规范。</li>
+        <li>dva 本质是 redux + redux-saga 的封装，底层概念仍通用；新项目启动前建议评估维护活跃度。</li>
+        <li><code class="inline">dva-loading</code> 几乎必装，否则要为每个请求手写 loading 字段。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="choose" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">05 / Decision</div>
+    <h2>怎么选</h2>
+    <p class="lede">回答三个问题，得到一个倾向性建议。权重是主观的，用来收敛讨论，不是判决书。</p>
+  </div>
+  <div class="quiz">
+    <div class="q">
+      <div class="qt">1. 项目规模与协作方式？</div>
+      <div class="opts" data-q="0">
+        <button class="opt" data-w='{"redux":3,"dva":2,"mobx":1,"zustand":1}'>多人协作，跨多个团队</button>
+        <button class="opt" data-w='{"zustand":3,"mobx":2,"redux":1}'>中小项目，一到三人</button>
+        <button class="opt" data-w='{"zustand":3,"redux":1}'>个人项目 / 快速验证</button>
+      </div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 团队更接受哪种写法？</div>
+      <div class="opts" data-q="1">
+        <button class="opt" data-w='{"redux":3,"dva":2,"zustand":2}'>显式数据流、不可变、可追溯</button>
+        <button class="opt" data-w='{"mobx":3,"zustand":1}'>直接赋值、少写样板</button>
+        <button class="opt" data-w='{"redux":3,"dva":1}'>喜欢 generator / 命令式流程编排</button>
+      </div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 现有技术栈？</div>
+      <div class="opts" data-q="2">
+        <button class="opt" data-w='{"dva":3,"redux":1}'>umi / ant-design-pro 存量项目</button>
+        <button class="opt" data-w='{"zustand":3,"redux":2}'>React 新项目，无历史包袱</button>
+        <button class="opt" data-w='{"mobx":3,"zustand":1}'>复杂领域模型（编辑器、表单、画布）</button>
+      </div>
+    </div>
+    <div class="result" id="result">
+      <div class="r-name">选择上面的选项后显示建议</div>
+      <div class="r-desc" style="color:var(--text-2); font-size:13.5px">未选择时，默认推荐：<strong>Zustand</strong> —— 新项目的低风险起点，迁移成本也最低。</div>
+      <div class="bars" id="bars"></div>
+    </div>
+  </div>
+
+  <div class="two" style="margin-top:22px">
+    <div class="card">
+      <h3>迁移成本参考</h3>
+      <p>Dva → Redux Toolkit / Zustand：model 结构天然对应，effects 改成 async 函数即可，成本可控。</p>
+      <p>MobX → Zustand：响应式心智需换成 selector 订阅，UI 层改动较多但逻辑基本可平移。</p>
+      <p>Zustand → Redux：通常在团队规模上升、需要审计与中间件时发生，方向相反的情况很少见。</p>
+    </div>
+    <div class="card">
+      <h3>一句话结论</h3>
+      <ul>
+        <li>新项目、没特殊诉求 → <strong>Zustand</strong></li>
+        <li>多人协作 + 强可追溯 + 复杂数据获取 → <strong>Redux Toolkit</strong></li>
+        <li>领域模型复杂、追求字段级精准更新 → <strong>MobX</strong></li>
+        <li>维护 umi / antd-pro 老项目 → 继续用 <strong>Dva</strong>，新模块不必再新增</li>
+      </ul>
+      <p class="mini">还有一个常被忽略的选项：先别上全局状态。Server 数据用 TanStack Query / SWR，URL 状态用路由参数，剩下的才是真正需要状态库的。</p>
+    </div>
+  </div>
+</section>
+
+<section id="pitfall" class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">06 / Pitfalls</div>
+    <h2>跨库通用坑</h2>
+  </div>
+  <div class="grid4" style="grid-template-columns:repeat(2,1fr)">
+    <div class="card">
+      <h3>把服务端数据塞进状态库</h3>
+      <p>请求缓存、失效、重试、去重，这些是数据获取库的活。状态库只放"客户端状态"（UI 开关、草稿、跨页共享的少量业务态）。</p>
+    </div>
+    <div class="card">
+      <h3>选择器返回新对象</h3>
+      <p>Redux / Zustand / Dva 都用引用比较，selector 里写 <code class="inline">{ a, b }</code> 或 <code class="inline">map/filter</code> 会每次产生新引用，导致无意义重渲染。</p>
+    </div>
+    <div class="card">
+      <h3>状态放得太深或太散</h3>
+      <p>嵌套过深导致更新和订阅都变复杂；拆得过多又变成跨 store 互相引用。按"页面/领域"切分，通常比按技术类型切分更好维护。</p>
+    </div>
+    <div class="card">
+      <h3>忽略 SSR 与持久化</h3>
+      <p>persist 在服务端渲染时读不到本地存储，容易 hydration 不一致；需要跳过首帧或延后恢复状态。</p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap foot">
+  四个库的 API 以官方文档为准：Redux Toolkit、MobX、Zustand、Dva（dva 2.x / umi 插件）。本页示例为最小可运行骨架，按项目实际结构调整目录即可。
+</div>
+
+<script>
+(function () {
+  // ---------- 极简 JS/JSX 高亮 ----------
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function highlight(src) {
+    var s = esc(src), store = [], P = function (i) { return '\uE000' + String.fromCharCode(0x100 + i) + '\uE001'; };
+    function stash(cls, text) { store.push('<span class="t-' + cls + '">' + text + '</span>'); return P(store.length - 1); }
+    s = s.replace(/(\/\/[^\n]*)/g, function (m) { return stash('cm', m); });
+    s = s.replace(/('(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`)/g, function (m) { return stash('str', m); });
+    s = s.replace(/\b(const|let|var|function|return|import|from|export|default|async|await|new|class|extends|constructor|this|get|set|if|else|for|of|in|try|catch|finally|throw|typeof|null|undefined|true|false|yield|switch|case|break|continue|while|delete|void|instanceof)\b/g,
+      '<span class="t-kw">$1</span>');
+    s = s.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="t-num">$1</span>');
+    s = s.replace(/&lt;\/?([A-Za-z][A-Za-z0-9_.]*)/g, function (m, name) {
+      return m.replace(name, '<span class="t-tag">' + name + '</span>');
+    });
+    s = s.replace(/\b([A-Za-z_$][A-Za-z0-9_$]*)(?=\s*\()/g, function (m) {
+      return (/^(?:const|let|var|function|return|import|from|export|default|async|await|new|class|extends|if|else|for|of|in|try|catch|finally|throw|typeof|yield|switch|case|break|continue|while|delete|void|instanceof|get|set)$/.test(m)) ? m : '<span class="t-fn">' + m + '</span>';
+    });
+    s = s.replace(/\uE000([\u0100-\uFFFF])\uE001/g, function (m, ch) { return store[ch.charCodeAt(0) - 0x100]; });
+    return s;
+  }
+  document.querySelectorAll('pre > code').forEach(function (el) {
+    el.innerHTML = highlight(el.textContent);
+  });
+
+  // ---------- Tab 切换 ----------
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.setAttribute('aria-selected', String(x === t)); });
+      document.querySelectorAll('.panel').forEach(function (p) {
+        p.classList.toggle('active', p.id === 'p-' + t.dataset.k);
+      });
+    });
+  });
+
+  // ---------- 复制 ----------
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.closest('.codeblock').querySelector('code').textContent;
+      var done = function () {
+        var old = btn.textContent;
+        btn.textContent = '已复制';
+        setTimeout(function () { btn.textContent = old; }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = code; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); done();
+      }
+    });
+  });
+
+  // ---------- 选型 quiz ----------
+  var LABEL = { redux: 'Redux Toolkit', mobx: 'MobX', zustand: 'Zustand', dva: 'Dva' };
+  var COLOR = { redux: '#764abc', mobx: '#d97706', zustand: '#c2410c', dva: '#0e7490' };
+  var WHY = {
+    redux: '多人协作 + 强可追溯，RTK 的 DevTools、中间件和类型推导能省下大量沟通成本。',
+    mobx: '状态之间依赖复杂、希望字段级精准更新，MobX 的自动依赖追踪最省力。',
+    zustand: '没有特殊约束，用最小的心智负担拿到够用的能力，后续要换也不难。',
+    dva: '已有 umi / antd-pro 体系，沿用 dva 比引入新库更划算；新模块可以不新增 model。'
+  };
+  var score = { redux: 0, mobx: 0, zustand: 0, dva: 0 };
+
+  function render() {
+    var max = Math.max.apply(null, Object.keys(score).map(function (k) { return score[k]; }));
+    var top = Object.keys(score).filter(function (k) { return score[k] === max && max > 0; });
+    var r = document.getElementById('result');
+    if (!top.length) return;
+    var win = top[0];
+    r.querySelector('.r-name').textContent = '推荐：' + LABEL[win];
+    r.querySelector('.r-name').style.color = COLOR[win];
+    r.querySelector('.r-desc').innerHTML = WHY[win] +
+      (top.length > 1 ? '（与 ' + top.slice(1).map(function (k) { return LABEL[k]; }).join('、') + ' 同分，可按团队熟悉度二选一）' : '');
+    var bars = document.getElementById('bars');
+    bars.innerHTML = Object.keys(score).map(function (k) {
+      var w = max ? Math.round(score[k] / max * 100) : 0;
+      return '<div class="bar-row"><span class="bl">' + LABEL[k] + '</span>' +
+        '<span class="bar" style="width:' + w + '%;background:' + COLOR[k] + '"></span>' +
+        '<span>' + score[k] + ' 分</span></div>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.opts').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('.opt');
+      if (!btn) return;
+      Array.prototype.slice.call(group.children).forEach(function (x) { x.classList.toggle('sel', x === btn); });
+      var prev = btn.__w;
+      var w = JSON.parse(btn.dataset.w);
+      Object.keys(w).forEach(function (k) { score[k] += w[k]; });
+      if (prev) Object.keys(prev).forEach(function (k) { score[k] -= prev[k]; });
+      btn.__w = w;
+      render();
+    });
+  });
+})();
+</script>
+</body>
+</html>
